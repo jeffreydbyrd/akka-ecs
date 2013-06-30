@@ -5,6 +5,8 @@ project/target
 /project/plugins/project
 target
 target/
+.target/
+bin/
 tmp
 .history
 dist
