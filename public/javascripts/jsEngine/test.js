@@ -17,7 +17,11 @@ $(document).ready( function() {
     };
 
     $("#send").click(function(){
-	ws.send("hello world");
+	var cmd = {
+	    type:'test',
+	    command:'test'
+	};
+	ws.send(JSON.stringify(cmd));
     });
 
     $("#close").click(function(){

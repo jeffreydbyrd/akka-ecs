@@ -3,17 +3,19 @@ package models
 import akka.actor.Actor
 import play.api.libs.iteratee.Enumerator
 import play.api.libs.iteratee.Concurrent
+import play.api.libs.json.JsValue
 
 /**
  * Defines a module used for handling WebSocket connections
  * @author biff
  */
-trait WebSocketHandler {
+trait WebSocketModule {
 
   // Actor Commands:
-  case class Message( msg: String )
+  case class Message( msg: JsValue )
   case class Start()
-  case class Connected( out: Enumerator[ String ] )
+  case class Connected( out: Enumerator[ JsValue ] )
+  case class NotConnected( msg: String )
 
   /**
    * An actor that gets instantiated for every new connection.
@@ -22,17 +24,19 @@ trait WebSocketHandler {
    * which connects to the enumerator
    * @author biff
    */
-  class WebSocketActor extends Actor {
-    val ( enumerator, channel ) = Concurrent.broadcast[ String ]
+  class DgConnectionActor extends DgConnection with Actor {
+    val ( enumerator, channel ) = Concurrent.broadcast[ JsValue ]
 
     override def receive = {
       case Start() ⇒
         sender ! Connected( enumerator )
 
-      case Message( msg ) ⇒
-        println( msg )
-        channel.push( msg )
+      case Message( cmd ) ⇒
+        println( cmd )
+        channel.push( cmd )
     }
   }
+
+  trait DgConnection
 
 }

@@ -16,7 +16,11 @@ import play.api.libs.iteratee.Concurrent
 import akka.pattern._
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits._
-import models.WebSocketHandler
+import models.WebSocketModule
+import play.api.libs.iteratee.Done
+import play.api.libs.iteratee.Input
+import play.api.libs.json.JsObject
+import play.api.libs.json.JsString
 
 object Application extends Application
 
@@ -25,7 +29,7 @@ object Application extends Application
  * WebSocket creation.
  * @author biff
  */
-trait Application extends Controller with WebSocketHandler {
+trait Application extends Controller with WebSocketModule {
 
   /**
    * Serves the main page
@@ -37,21 +41,31 @@ trait Application extends Controller with WebSocketHandler {
   implicit val timeout = akka.util.Timeout( 1 second )
 
   /**
-   * Establishes a WebSocket connection using Play's Iteratee-Enumerator model.
-   * In order to maintain state, we use the WebSocketActor and ask for a
-   * confirmation that it has started. The Connected response contains
-   * an Enumerator that will spit out data to the client.
-   * The Iteratee consumes data coming from the client. Play wires these
-   * constructs together behind the scenes. All we need to know is that
-   * the Iteratee simply forwards the data on to the WebSocketActor
+   * Asynchronously establishes a WebSocket connection using Play's Iteratee-Enumerator model.
+   * Not only is the function asynchronous, it uses an Akka actor to maintain state.
+   *
+   * We instantiate a WebSocketActor and ask for a confirmation that it has started. When it responds with Connected( Enumerator ),
+   * we create an Iteratee that forwards incoming messages from the client to the WebSocketActor. 'in' processes incoming data,
+   * while 'out' pushes outgoing data to the client. Populating 'out' is the WebSocketActor's job, and populating 'in' is Play's
+   * job. Play is also kind enough to wire 'in' and 'out' to the client for us.
+   *
+   * If the WebSocketActor responds with NotConnected( msg ), we return 'in' as a 'Done' Iteratee, and 'out' as a single-element
+   * Enumerator, delivering 'msg' to the client.
    */
-  def websocket = WebSocket.async[ String ] { implicit request ⇒
-    val actor = Akka.system.actorOf( Props( new WebSocketActor ) )
+  def websocket = WebSocket.async[ JsValue ] { implicit request ⇒
+    val actor = Akka.system.actorOf( Props( new DgConnectionActor ) )
     ( actor ? Start() ) map {
+
       case Connected( out ) ⇒
-        val in = Iteratee.foreach[ String ] { event ⇒
+        val in = Iteratee.foreach[ JsValue ] { event ⇒
           actor ! Message( event )
         }
+        ( in, out )
+
+      case NotConnected( msg ) ⇒
+        val in = Done[ JsValue, Unit ]( {}, Input.EOF )
+        val ret = JsObject( Seq( "error" -> JsString( msg ) ) )
+        val out = Enumerator[ JsValue ]( ret ) andThen Enumerator.enumInput( Input.EOF )
         ( in, out )
     }
   }
