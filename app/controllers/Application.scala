@@ -1,26 +1,29 @@
 package controllers
 
-import play.api.mvc.Controller
-import play.api.mvc.Action
-import views._
-import play.api.mvc.WebSocket
-import play.api.Play.current
-import play.api.libs.json.JsValue
-import play.api.libs.concurrent.Akka
-import play.api.libs.iteratee.Enumerator
-import play.api.libs.iteratee.Iteratee
-import play.api.libs.iteratee.PushEnumerator
-import akka.actor.Actor
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration.DurationInt
+
 import akka.actor.Props
-import play.api.libs.iteratee.Concurrent
-import akka.pattern._
-import scala.concurrent.duration._
-import scala.concurrent.ExecutionContext.Implicits._
-import models.WebSocketModule
+import akka.actor.actorRef2Scala
+import akka.pattern.ask
+import models.Commands.Connected
+import models.Commands.Command
+import models.Commands.NotConnected
+import models.Commands.Start
+import models.ConnectionModule
+import models.PlayerModule
+import play.api.Play.current
+import play.api.libs.concurrent.Akka
 import play.api.libs.iteratee.Done
+import play.api.libs.iteratee.Enumerator
 import play.api.libs.iteratee.Input
+import play.api.libs.iteratee.Iteratee
 import play.api.libs.json.JsObject
 import play.api.libs.json.JsString
+import play.api.libs.json.JsValue
+import play.api.mvc.Action
+import play.api.mvc.Controller
+import play.api.mvc.WebSocket
 
 object Application extends Application
 
@@ -29,7 +32,10 @@ object Application extends Application
  * WebSocket creation.
  * @author biff
  */
-trait Application extends Controller with WebSocketModule {
+trait Application
+    extends Controller
+    with ConnectionModule
+    with PlayerModule {
 
   /**
    * Serves the main page
@@ -37,8 +43,6 @@ trait Application extends Controller with WebSocketModule {
   def index = Action {
     Ok { views.html.index() }
   }
-
-  implicit val timeout = akka.util.Timeout( 1 second )
 
   /**
    * Asynchronously establishes a WebSocket connection using Play's Iteratee-Enumerator model.
@@ -52,13 +56,13 @@ trait Application extends Controller with WebSocketModule {
    * If the WebSocketActor responds with NotConnected( msg ), we return 'in' as a 'Done' Iteratee, and 'out' as a single-element
    * Enumerator, delivering 'msg' to the client.
    */
-  def websocket = WebSocket.async[ JsValue ] { implicit request ⇒
-    val actor = Akka.system.actorOf( Props( new DgConnectionActor ) )
-    ( actor ? Start() ) map {
+  def websocket( username: String ) = WebSocket.async[ JsValue ] { implicit request ⇒
+    val actor = Akka.system.actorOf( Props( new ConnectionActor ) )
+    ( actor ? Start( username ) ) map {
 
       case Connected( out ) ⇒
-        val in = Iteratee.foreach[ JsValue ] { event ⇒
-          actor ! Message( event )
+        val in = Iteratee.foreach[ JsValue ] {
+          json ⇒ actor ! Command( json )
         }
         ( in, out )
 
