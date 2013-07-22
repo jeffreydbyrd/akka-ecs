@@ -1,5 +1,7 @@
 $(document).ready( function() {
 
+    var xpos = 0;
+
     var wsUrl = "ws://127.0.0.1:9000/test?username=jb";
 
     var ws = new WebSocket(wsUrl);
@@ -16,16 +18,29 @@ $(document).ready( function() {
 	console.log(evt.data);
     };
 
-    $("#send").click(function(){
+
+    var keydown = false;
+
+    $('html').keydown(function(evt) {
+	if (!keydown) {
+	    keydown = true;
+	    var cmd = {
+		type: 'keydown',
+		data: evt.which
+	    };
+	    ws.send(JSON.stringify(cmd));
+	}
+    });
+
+
+    $('html').keyup(function(evt) {
+	keydown = false;
 	var cmd = {
-	    type:'test',
-	    command:'test'
+	    type:'keyup',
+	    data: evt.which
 	};
 	ws.send(JSON.stringify(cmd));
     });
 
-    $("#close").click(function(){
-	ws.close();
-    });
 
 });

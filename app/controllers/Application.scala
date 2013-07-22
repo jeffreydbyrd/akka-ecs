@@ -1,17 +1,11 @@
 package controllers
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration.DurationInt
 
 import akka.actor.Props
 import akka.actor.actorRef2Scala
 import akka.pattern.ask
-import models.Commands.Connected
-import models.Commands.Command
-import models.Commands.NotConnected
-import models.Commands.Start
-import models.ConnectionModule
-import models.PlayerModule
+import game.PlayerModule
 import play.api.Play.current
 import play.api.libs.concurrent.Akka
 import play.api.libs.iteratee.Done
@@ -34,7 +28,6 @@ object Application extends Application
  */
 trait Application
     extends Controller
-    with ConnectionModule
     with PlayerModule {
 
   /**
@@ -57,12 +50,12 @@ trait Application
    * Enumerator, delivering 'msg' to the client.
    */
   def websocket( username: String ) = WebSocket.async[ JsValue ] { implicit request ⇒
-    val actor = Akka.system.actorOf( Props( new ConnectionActor ) )
-    ( actor ? Start( username ) ) map {
+    val actor = Akka.system.actorOf( Props( new PlayerActor( username ) ) )
+    ( actor ? Start() ) map {
 
       case Connected( out ) ⇒
         val in = Iteratee.foreach[ JsValue ] {
-          json ⇒ actor ! Command( json )
+          json ⇒ actor ! JsonCommand( json )
         }
         ( in, out )
 
