@@ -16,6 +16,7 @@ $(document).ready( function() {
 
     ws.onmessage = function(evt) {
 	console.log(evt.data);
+	$('#xpos').html(evt.data)
     };
 
 

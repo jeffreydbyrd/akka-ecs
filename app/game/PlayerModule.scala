@@ -1,10 +1,13 @@
 package game
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.DurationInt
 
 import akka.actor.PoisonPill
 import akka.actor.actorRef2Scala
+import play.api.Play.current
 import play.api.data.validation.ValidationError
+import play.api.libs.concurrent.Akka
 import play.api.libs.functional.syntax.functionalCanBuildApplicative
 import play.api.libs.functional.syntax.toFunctionalBuilderOps
 import play.api.libs.iteratee.Concurrent
@@ -37,6 +40,8 @@ trait PlayerModule
   case class KeyUp( code: Int ) extends Event
   case class Click( x: Int, y: Int ) extends Event
   case class Invalid( msg: String ) extends Event
+  case class MoveCmd( dist: Int ) extends Event
+  case class StopMovingCmd() extends Event
 
   class PlayerActor( val name: String ) extends PlayerEventHandler with Player
 
@@ -64,19 +69,27 @@ trait PlayerModule
       case x                   ⇒ super.receive( x )
     }
 
-    override def handle( e: Event ) = e match {
+    override def handle = {
       case KeyDown( code: Int ) ⇒
-        println( s"keydown event: $code" )
-        channel push Json.obj( "keydown" -> code )
-      case KeyUp( code: Int ) ⇒
-        println( s"keyup event: $code" )
-        channel push Json.obj( "keyup" -> code )
+        if ( List( 65, 68, 37, 39 ).contains( code ) ) {
+          val dist = if ( code == 65 || code == 37 ) -1 else 1
+          this switchTo moving
+          self ! MoveCmd( dist )
+        }
+
+      case KeyUp( code: Int )      ⇒ if ( List( 65, 68, 37, 39 ).contains( code ) ) self ! StopMovingCmd()
       case Click( x: Int, y: Int ) ⇒
-        println( s"click: $x, $y" )
-      case Invalid( msg: String ) ⇒
-        println( s"error: $msg" )
-        channel push Json.obj( "error" -> msg )
-      case _ ⇒
+      case Invalid( msg: String )  ⇒
+      case _                       ⇒
+    }
+
+    def moving: Handle = {
+      case e @ MoveCmd( dist ) ⇒
+        this.xPos = this.xPos + dist
+        channel push Json.obj( "xpos" -> xPos )
+        Akka.system.scheduler.scheduleOnce( 100 milli )( self ! e )
+      case StopMovingCmd() ⇒ this switchTo handle
+      case x               ⇒ this.handle( x )
     }
 
   }
