@@ -45,15 +45,15 @@ trait EventModule {
    * to handle Events
    * @author biff
    */
-  trait EventHandlerActor extends EventHandler with akka.actor.Actor {
+  trait EventHandler extends GenericEventHandler with akka.actor.Actor {
     type Handler = ActorRef
 
     override def receive = {
-      case e: Event          ⇒ this.handler( e )
+      case e: Event          ⇒ this.handle( e )
       case Subscribe( ar )   ⇒ subscribers = subscribers :+ ar
       case UnSubscribe( ar ) ⇒ subscribers = subscribers.filterNot( _ == ar )
-      case Add( as )         ⇒ adjusters = ( adjusters ::: adjusters ::: as ).distinct
-      case Remove( as )      ⇒ adjusters = this.removeAll( as )
+      case Add( as )         ⇒ adjusters = ( adjusters ::: as ).distinct
+      case Remove( as )      ⇒ adjusters = EventHandler.this.removeAll( as )
     }
 
     /**
@@ -72,7 +72,7 @@ trait EventModule {
    * emitting them, or any combination of the three.
    * @author biff
    */
-  trait EventHandler {
+  trait GenericEventHandler {
     type Handler
     type Handle = Event ⇒ Unit
 
@@ -82,15 +82,14 @@ trait EventModule {
     /** A list of EventAdjusters that adjust an event before it is emitted */
     var adjusters: List[ Adjuster ] = _
 
-    /** Ultimately defines the behavior of this EventHandler */
-    var handler: Handle = handle
-
     /**
-     * Handles an Event object by either ignoring it, forwarding it,
-     * changing internal state, or any combination of the three.
+     * This represents the entry point for all Events into this EventHandler.
+     * It handles an Event by either ignoring it, forwarding it, changing internal
+     * state, or any combination of the three. This var can also be swapped out
+     * for other Handle functions
      */
-    protected def handle: Handle
-
+    var handle: Handle = standard
+    def standard: Handle
 
     /**
      * Pipes an Event through the 'adjusters' list and then sends the
@@ -102,21 +101,21 @@ trait EventModule {
      * Changes how this EventHandler handles Events by swapping in a new
      * Handle function.
      */
-    protected def switchTo( h: Handle ) = this.handler = h
+    protected def switchTo( h: Handle ) = this.handle = h
 
     /**
      * Removes all instances of adjuster 'a' from this.adjusters. Items
      * are matched based on their internal 'id' attributes.
      */
     protected def remove( a: Adjuster ): List[ Adjuster ] =
-      this.adjusters.filterNot( _.id == a.id )
+      GenericEventHandler.this.adjusters.filterNot( _.id == a.id )
 
     /**
      * Removes all adjusters specified in 'as' from this.adjusters.
      * Items are removed based on their internal 'id' attribute
      */
     protected def removeAll( as: List[ Adjuster ] ): List[ Adjuster ] =
-      as.foldLeft( this.adjusters ) { ( ( adjs, a ) ⇒ adjs.filterNot( _.id == a.id ) ) }
+      as.foldLeft( GenericEventHandler.this.adjusters ) { ( ( adjs, a ) ⇒ adjs.filterNot( _.id == a.id ) ) }
 
   }
 

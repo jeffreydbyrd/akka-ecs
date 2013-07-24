@@ -50,12 +50,12 @@ trait Application
    * Enumerator, delivering 'msg' to the client.
    */
   def websocket( username: String ) = WebSocket.async[ JsValue ] { implicit request ⇒
-    val actor = Akka.system.actorOf( Props( new PlayerActor( username ) ) )
+    val actor = Akka.system.actorOf( Props( new Player( username ) ) )
     ( actor ? Start() ) map {
 
       case Connected( out ) ⇒
         val in = Iteratee.foreach[ JsValue ] {
-          json ⇒ actor ! JsonCommand( json )
+          json ⇒ actor ! JsonCmd( json )
         }
         ( in, out )
 

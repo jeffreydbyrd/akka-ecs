@@ -23,9 +23,7 @@ import play.api.libs.json.__
  * Defines a module used for handling a Player
  * @author biff
  */
-trait PlayerModule
-    extends MobileModule
-    with EventModule {
+trait PlayerModule extends MobileModule {
 
   implicit val timeout = akka.util.Timeout( 1 second )
 
@@ -33,24 +31,20 @@ trait PlayerModule
   case class Start()
   case class Connected( out: Enumerator[ JsValue ] )
   case class NotConnected( msg: String )
-  case class JsonCommand( msg: JsValue )
+  case class JsonCmd( msg: JsValue )
 
   // Events:
   case class KeyDown( code: Int ) extends Event
   case class KeyUp( code: Int ) extends Event
   case class Click( x: Int, y: Int ) extends Event
-  case class Invalid( msg: String ) extends Event
-  case class MoveCmd( dist: Int ) extends Event
-  case class StopMovingCmd() extends Event
 
-  class PlayerActor( val name: String ) extends PlayerEventHandler with Player
+  class Player( val name: String ) extends EHPlayer
 
   /**
    * An asynchronous EventHandlerActor that handles communication
    * with the client and also interacts with the game world.
    */
-  trait PlayerEventHandler extends EventHandlerActor {
-    this: Player ⇒
+  trait EHPlayer extends EHMobile with GenericPlayer {
 
     abstract override def receive = {
       // this is basically a constructor for the actor
@@ -62,34 +56,34 @@ trait PlayerModule
           val ( enumerator, channel ) = Concurrent.broadcast[ JsValue ]
           sender ! Connected( enumerator )
           this.channel = channel
+          this switchTo standing
         }
 
-      case JsonCommand( json ) ⇒ handle( getCommand( json ) )
-
-      case x                   ⇒ super.receive( x )
+      case JsonCmd( json ) ⇒
+        println( json );
+        handle( getCommand( json ) )
+      case x ⇒ super.receive( x )
     }
 
-    override def handle = {
-      case KeyDown( code: Int ) ⇒
-        if ( List( 65, 68, 37, 39 ).contains( code ) ) {
-          val dist = if ( code == 65 || code == 37 ) -1 else 1
-          this switchTo moving
-          self ! MoveCmd( dist )
-        }
-
+    override def standard: Handle = {
       case KeyUp( code: Int )      ⇒ if ( List( 65, 68, 37, 39 ).contains( code ) ) self ! StopMovingCmd()
       case Click( x: Int, y: Int ) ⇒
       case Invalid( msg: String )  ⇒
+      case Moved( x, y )           ⇒ channel push Json.obj( "xpos" -> x )
       case _                       ⇒
     }
 
-    def moving: Handle = {
-      case e @ MoveCmd( dist ) ⇒
-        this.xPos = this.xPos + dist
-        channel push Json.obj( "xpos" -> xPos )
-        Akka.system.scheduler.scheduleOnce( 100 milli )( self ! e )
-      case StopMovingCmd() ⇒ this switchTo handle
-      case x               ⇒ this.handle( x )
+    def standing: Handle = {
+      case KeyDown( 65 ) ⇒ standing( KeyDown( 37 ) )
+      case KeyDown( 68 ) ⇒ standing( KeyDown( 39 ) )
+      case KeyDown( 37 ) ⇒ move( -1 )
+      case KeyDown( 39 ) ⇒ move( 1 )
+      case x             ⇒ standard( x )
+    }
+
+    def move( dist: Int ) {
+      this switchTo moving
+      moveScheduler = Akka.system.scheduler.schedule( 0 milli, speed milli, self, MoveCmd( dist ) )
     }
 
   }
@@ -99,7 +93,7 @@ trait PlayerModule
    * an Enumerator, but this trait doesn't care which. A Channel can connect
    * to multiple Enumerators and "broadcast" data to them.
    */
-  trait Player extends Mobile {
+  trait GenericPlayer extends Mobile {
     var channel: Channel[ JsValue ] = _
 
     /**
