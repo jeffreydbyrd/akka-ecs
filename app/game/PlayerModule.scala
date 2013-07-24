@@ -76,14 +76,14 @@ trait PlayerModule extends MobileModule {
     def standing: Handle = {
       case KeyDown( 65 ) ⇒ standing( KeyDown( 37 ) )
       case KeyDown( 68 ) ⇒ standing( KeyDown( 39 ) )
-      case KeyDown( 37 ) ⇒ move( -1 )
-      case KeyDown( 39 ) ⇒ move( 1 )
+      case KeyDown( 37 ) ⇒ move( -speed )
+      case KeyDown( 39 ) ⇒ move( speed )
       case x             ⇒ standard( x )
     }
 
     def move( dist: Int ) {
       this switchTo moving
-      moveScheduler = Akka.system.scheduler.schedule( 0 milli, speed milli, self, MoveCmd( dist ) )
+      moveScheduler = Akka.system.scheduler.schedule( 0 milli, 80 milli, self, MoveCmd( dist ) )
     }
 
   }

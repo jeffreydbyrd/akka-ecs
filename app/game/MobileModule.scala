@@ -16,7 +16,7 @@ trait MobileModule extends EventModule {
 
   trait EHMobile extends EventHandler with Mobile {
     var moveScheduler: Cancellable = _
-    val speed = 80
+    val speed = 1
 
     def standing: Handle
 
