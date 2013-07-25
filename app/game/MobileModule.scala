@@ -15,19 +15,27 @@ trait MobileModule extends EventModule {
   case class Moved( x: Int, y: Int ) extends Event
 
   trait EHMobile extends EventHandler with Mobile {
-    var moveScheduler: Cancellable = _
+    private var moveScheduler: Cancellable = _
     val speed = 1
 
+    /** Represents the state of a Mobile that is standing still */
     def standing: Handle
 
+    /** Represents the state of a moving Mobile */
     def moving: Handle = {
       case e @ MoveCmd( dist ) ⇒
         this.xpos = this.xpos + dist
         this handle Moved( xpos, ypos )
-      case StopMovingCmd() ⇒ 
-      	moveScheduler.cancel
-      	this switchTo standing
-      case x               ⇒ this.standard( x )
+      case StopMovingCmd() ⇒
+        moveScheduler.cancel
+        this switchTo standing
+      case x ⇒ this.standard( x )
+    }
+
+    /** Starts moving this mobile */
+    def move( dir: Int ) {
+      this switchTo moving
+      this.moveScheduler = Akka.system.scheduler.schedule( 0 milli, 80 milli, self, MoveCmd( dir ) )
     }
 
   }

@@ -48,25 +48,24 @@ trait PlayerModule extends MobileModule {
 
     abstract override def receive = {
       // this is basically a constructor for the actor
-      case Start() ⇒
-        setup map { msg ⇒ // if there's a message then something went wrong
-          sender ! NotConnected( msg )
-          self ! PoisonPill // failed to start... you know what to do :(
-        } getOrElse {
-          val ( enumerator, channel ) = Concurrent.broadcast[ JsValue ]
-          sender ! Connected( enumerator )
-          this.channel = channel
-          this switchTo standing
-        }
-
-      case JsonCmd( json ) ⇒
-        println( json );
-        handle( getCommand( json ) )
-      case x ⇒ super.receive( x )
+      case Start()         ⇒ start
+      case JsonCmd( json ) ⇒ handle( getCommand( json ) )
+      case x               ⇒ super.receive( x )
     }
 
+    def start =
+      setup map { msg ⇒ // if there's a message then something went wrong
+        sender ! NotConnected( msg )
+        self ! PoisonPill // failed to start... you know what to do :(
+      } getOrElse {
+        val ( enumerator, channel ) = Concurrent.broadcast[ JsValue ]
+        sender ! Connected( enumerator )
+        this.channel = channel
+        this switchTo standing
+      }
+
     override def standard: Handle = {
-      case KeyUp( code: Int )      ⇒ if ( List( 65, 68, 37, 39 ).contains( code ) ) self ! StopMovingCmd()
+      case KeyUp( code: Int )      ⇒ if ( List( 65, 68, 37, 39 ).contains( code ) ) this handle StopMovingCmd()
       case Click( x: Int, y: Int ) ⇒
       case Invalid( msg: String )  ⇒
       case Moved( x, y )           ⇒ channel push Json.obj( "xpos" -> x )
@@ -79,11 +78,6 @@ trait PlayerModule extends MobileModule {
       case KeyDown( 37 ) ⇒ move( -speed )
       case KeyDown( 39 ) ⇒ move( speed )
       case x             ⇒ standard( x )
-    }
-
-    def move( dist: Int ) {
-      this switchTo moving
-      moveScheduler = Akka.system.scheduler.schedule( 0 milli, 80 milli, self, MoveCmd( dist ) )
     }
 
   }
