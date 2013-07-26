@@ -47,12 +47,12 @@ trait PlayerModule extends MobileModule {
   trait EHPlayer extends EHMobile with GenericPlayer {
 
     abstract override def receive = {
-      // this is basically a constructor for the actor
       case Start()         ⇒ start
       case JsonCmd( json ) ⇒ handle( getCommand( json ) )
       case x               ⇒ super.receive( x )
     }
 
+    // this is basically a constructor for the actor
     def start =
       setup map { msg ⇒ // if there's a message then something went wrong
         sender ! NotConnected( msg )
