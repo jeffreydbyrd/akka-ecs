@@ -108,7 +108,7 @@ trait EventModule {
      * are matched based on their internal 'id' attributes.
      */
     protected def remove( a: Adjuster ): List[ Adjuster ] =
-      GenericEventHandler.this.adjusters.filterNot( _.id == a.id )
+      this.adjusters.filterNot( _.id == a.id )
 
     /**
      * Removes all adjusters specified in 'as' from this.adjusters.
