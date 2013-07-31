@@ -22,19 +22,19 @@ trait MobileModule extends EventModule {
     def standing: Handle
 
     /** Represents the state of a moving Mobile */
-    def moving: Handle = {
-      case e @ MoveCmd( dist ) ⇒
+    def moving = Handle {
+      case MoveCmd( dist ) ⇒
         this.xpos = this.xpos + dist
         this handle Moved( xpos, ypos )
       case StopMovingCmd() ⇒
         moveScheduler.cancel
-        this switchTo standing
-      case x ⇒ this.standard( x )
+        this.handle = standing ~ default
+      case _ ⇒
     }
 
     /** Starts moving this mobile */
     def move( dir: Int ) {
-      this switchTo moving
+      this.handle = moving ~ default
       this.moveScheduler = Akka.system.scheduler.schedule( 0 milli, 80 milli, self, MoveCmd( dir ) )
     }
 

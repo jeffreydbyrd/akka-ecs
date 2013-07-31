@@ -7,6 +7,10 @@ import play.api.libs.json.Json
 class PlayerModuleSpec
     extends PlayerModule
     with Specification {
+  
+  
+  
+  
 
   "getCommand(JsValue)" should {
     val kd: JsValue = Json.obj(
@@ -27,8 +31,16 @@ class PlayerModuleSpec
       )
     )
 
-    "return KeyUp( 65 ) when json = ku" in {
+    "return KeyUp( 65 ) when json = {type : 'keyup', data : 65}" in {
       getCommand( ku ) === KeyUp( 65 )
+    }
+
+    "retun KeyDown( 65 ) when json = {type : 'keydown', data : 65}" in {
+      getCommand( kd ) === KeyDown( 65 )
+    }
+
+    "retun Click( 42, 5 ) when json = {type : 'click', data : {x: 42, y:5}}" in {
+      getCommand( clk ) === Click( 42, 5 )
     }
   }
 

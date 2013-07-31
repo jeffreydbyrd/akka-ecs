@@ -15,6 +15,18 @@ trait EventModule {
 
   abstract class Event
 
+  /** A convenience object for quickly defining a Handle function */
+  object Handle {
+    def apply( f: Event ⇒ Unit ) = new Handle { def apply( e: Event ) = f( e ) }
+  }
+
+  trait Handle extends ( Event ⇒ Unit ) {
+    def ~( that: Handle ): Handle = Handle { e ⇒
+      this( e )
+      that( e )
+    }
+  }
+
   /** A function that takes an Event and returns an Event, and also has an internal 'id' */
   trait Adjuster extends ( Event ⇒ Event ) {
     val id: String
@@ -74,7 +86,6 @@ trait EventModule {
    */
   trait GenericEventHandler {
     type Handler
-    type Handle = Event ⇒ Unit
 
     /** A list of EventHandlers that subscribe to the Events emitted by this EventHandler */
     var subscribers: List[ Handler ] = _
@@ -88,20 +99,14 @@ trait EventModule {
      * state, or any combination of the three. This var can also be swapped out
      * for other Handle functions
      */
-    var handle: Handle = standard
-    def standard: Handle
+    var handle: Handle = default
+    def default: Handle
 
     /**
      * Pipes an Event through the 'adjusters' list and then sends the
      * end result to each of the 'subscribers'
      */
     protected def emit( e: Event ): Unit
-
-    /**
-     * Changes how this EventHandler handles Events by swapping in a new
-     * Handle function.
-     */
-    protected def switchTo( h: Handle ) = this.handle = h
 
     /**
      * Removes all instances of adjuster 'a' from this.adjusters. Items

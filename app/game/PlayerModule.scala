@@ -61,10 +61,10 @@ trait PlayerModule extends MobileModule {
         val ( enumerator, channel ) = Concurrent.broadcast[ JsValue ]
         sender ! Connected( enumerator )
         this.channel = channel
-        this switchTo standing
+        this.handle = standing ~ default
       }
 
-    override def standard: Handle = {
+    override def default = Handle {
       case KeyUp( code: Int )      ⇒ if ( List( 65, 68, 37, 39 ).contains( code ) ) this handle StopMovingCmd()
       case Click( x: Int, y: Int ) ⇒
       case Invalid( msg: String )  ⇒
@@ -72,12 +72,12 @@ trait PlayerModule extends MobileModule {
       case _                       ⇒
     }
 
-    def standing: Handle = {
+    def standing = Handle {
       case KeyDown( 65 ) ⇒ standing( KeyDown( 37 ) )
       case KeyDown( 68 ) ⇒ standing( KeyDown( 39 ) )
       case KeyDown( 37 ) ⇒ move( -speed )
       case KeyDown( 39 ) ⇒ move( speed )
-      case x             ⇒ standard( x )
+      case _             ⇒
     }
 
   }
