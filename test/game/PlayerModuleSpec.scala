@@ -1,23 +1,33 @@
 package game
 
 import org.specs2.mutable.Specification
-
 import akka.testkit.TestActorRef
 import play.api.Play.current
 import play.api.libs.concurrent.Akka
 import play.api.libs.json.JsValue
 import play.api.libs.json.Json
 import play.api.libs.json.Json.toJsFieldJsValueWrapper
-
+import akka.testkit.TestActorRef
+import scala.concurrent.duration._
+import scala.concurrent.Await
+import akka.pattern.ask
+import scala.util.Success
+import play.api.test.WithApplication
+import akka.actor.ActorSystem
 
 class PlayerModuleSpec
     extends PlayerModule
     with Specification {
-  
-  implicit val sys = Akka.system
-  val actorRef = TestActorRef(new Player("bleh"))
-  val actor = actorRef.underlyingActor
-  
+
+  implicit val sys = ActorSystem( "testSystem" )
+
+  "When a Player actor initializes, sending Start()" should {
+    "return Connected[ Enumerator ]" in {
+      val Success( result: Connected ) = { TestActorRef( new Player( "test0" ) ) ? Start() }.value.get
+      result.isInstanceOf[ Connected ]
+    }
+  }
+
   "getCommand(JsValue)" should {
     val kd: JsValue = Json.obj( "type" -> "keydown", "data" -> 65 )
     val ku: JsValue = Json.obj( "type" -> "keyup", "data" -> 65 )
