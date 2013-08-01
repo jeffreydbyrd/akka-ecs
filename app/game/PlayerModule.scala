@@ -1,13 +1,10 @@
 package game
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.DurationInt
 
 import akka.actor.PoisonPill
 import akka.actor.actorRef2Scala
-import play.api.Play.current
 import play.api.data.validation.ValidationError
-import play.api.libs.concurrent.Akka
 import play.api.libs.functional.syntax.functionalCanBuildApplicative
 import play.api.libs.functional.syntax.toFunctionalBuilderOps
 import play.api.libs.iteratee.Concurrent
@@ -49,7 +46,7 @@ trait PlayerModule extends MobileModule {
     abstract override def receive = {
       case Start()         ⇒ start
       case JsonCmd( json ) ⇒ handle( getCommand( json ) )
-      case x               ⇒ super.receive( x )
+      case x               ⇒ super[ EHMobile ].receive( x )
     }
 
     // this is basically a constructor for the actor
@@ -64,20 +61,20 @@ trait PlayerModule extends MobileModule {
         this.handle = standing ~ default
       }
 
-    override def default = Handle {
-      case KeyUp( code: Int )      ⇒ if ( List( 65, 68, 37, 39 ).contains( code ) ) this handle StopMovingCmd()
+    override def default: Handle = {
+      case KeyUp( code: Int ) if ( List( 65, 68, 37, 39 ).contains( code ) ) ⇒
+        this handle StopMovingCmd()
       case Click( x: Int, y: Int ) ⇒
       case Invalid( msg: String )  ⇒
       case Moved( x, y )           ⇒ channel push Json.obj( "xpos" -> x )
       case _                       ⇒
     }
 
-    def standing = Handle {
+    def standing: Handle = {
       case KeyDown( 65 ) ⇒ standing( KeyDown( 37 ) )
       case KeyDown( 68 ) ⇒ standing( KeyDown( 39 ) )
-      case KeyDown( 37 ) ⇒ move( -speed )
-      case KeyDown( 39 ) ⇒ move( speed )
-      case _             ⇒
+      case KeyDown( 37 ) ⇒ moveLeft
+      case KeyDown( 39 ) ⇒ moveRight
     }
 
   }

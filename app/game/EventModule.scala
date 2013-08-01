@@ -15,16 +15,15 @@ trait EventModule {
 
   abstract class Event
 
-  /** A convenience object for quickly defining a Handle function */
-  object Handle {
-    def apply( f: Event ⇒ Unit ) = new Handle { def apply( e: Event ) = f( e ) }
+  type Handle = PartialFunction[ Event, Unit ]
+
+  implicit def toRichHandle( f: Handle ) = new RichHandle {
+    override def apply( e: Event ) = f( e )
+    override def isDefinedAt( e: Event ) = f.isDefinedAt( e )
   }
 
-  trait Handle extends ( Event ⇒ Unit ) {
-    def ~( that: Handle ): Handle = Handle { e ⇒
-      this( e )
-      that( e )
-    }
+  trait RichHandle extends Handle {
+    def ~( that: Handle ): Handle = this orElse that
   }
 
   /** A function that takes an Event and returns an Event, and also has an internal 'id' */
@@ -57,8 +56,8 @@ trait EventModule {
    * to handle Events
    * @author biff
    */
-  trait EventHandler extends GenericEventHandler with akka.actor.Actor {
-    type Handler = ActorRef
+  trait EventHandler extends GenericEventHandler with Actor {
+    type T = ActorRef
 
     override def receive = {
       case e: Event          ⇒ this.handle( e )
@@ -66,6 +65,7 @@ trait EventModule {
       case UnSubscribe( ar ) ⇒ subscribers = subscribers.filterNot( _ == ar )
       case Add( as )         ⇒ adjusters = ( adjusters ::: as ).distinct
       case Remove( as )      ⇒ adjusters = EventHandler.this.removeAll( as )
+      case _                 ⇒
     }
 
     /**
@@ -85,10 +85,10 @@ trait EventModule {
    * @author biff
    */
   trait GenericEventHandler {
-    type Handler
+    type T
 
     /** A list of EventHandlers that subscribe to the Events emitted by this EventHandler */
-    var subscribers: List[ Handler ] = _
+    var subscribers: List[ T ] = _
 
     /** A list of EventAdjusters that adjust an event before it is emitted */
     var adjusters: List[ Adjuster ] = _
