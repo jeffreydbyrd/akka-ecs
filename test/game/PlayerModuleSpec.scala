@@ -17,11 +17,19 @@ class PlayerModuleSpec
 
   implicit val sys = ActorSystem( "testSystem" )
 
-  "When a Player actor initializes, sending Start()" should {
-    "return Connected[ Enumerator ]" in {
+  "When a Player actor initializes it" should {
+    "return None when I call setup" in {
+      new GenericPlayer {
+        val name = "test"
+        def test = setup
+      }.test must beNone
+    }
+
+    "return Connected[ Enumerator ] when I send Start()" in {
       val Success( result: Connected ) = { TestActorRef( new Player( "test0" ) ) ? Start() }.value.get
       result.isInstanceOf[ Connected ]
     }
+
   }
 
   "getCommand(JsValue)" should {

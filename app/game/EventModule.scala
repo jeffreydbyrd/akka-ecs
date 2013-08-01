@@ -38,8 +38,8 @@ trait EventModule {
    *   }
    */
   object Adjuster {
-    def apply( id0: String ) =
-      ( adj: Event ⇒ Event ) ⇒ new Adjuster {
+    def apply( id0: String )( adj: Event ⇒ Event ) =
+      new Adjuster {
         val id = id0;
         def apply( e: Event ) = adj( e )
       }
@@ -64,7 +64,7 @@ trait EventModule {
       case Subscribe( ar )   ⇒ subscribers = subscribers :+ ar
       case UnSubscribe( ar ) ⇒ subscribers = subscribers.filterNot( _ == ar )
       case Add( as )         ⇒ adjusters = ( adjusters ::: as ).distinct
-      case Remove( as )      ⇒ adjusters = EventHandler.this.removeAll( as )
+      case Remove( as )      ⇒ adjusters = this.removeAll( as )
       case _                 ⇒
     }
 

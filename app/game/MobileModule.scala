@@ -7,18 +7,23 @@ import play.api.Play.current
 import play.api.libs.concurrent.Akka
 import akka.actor.Cancellable
 
+/**
+ * Defines the behavior for all mobile entities (Players and NPCs)
+ */
 trait MobileModule extends EventModule {
+
+  // Define events:
   case class Invalid( msg: String ) extends Event
   case class MoveCmd( dist: Int ) extends Event
   case class StopMovingCmd() extends Event
-
   case class Moved( x: Int, y: Int ) extends Event
 
+  /** An EventHandling Mobile object */
   trait EHMobile extends EventHandler with Mobile {
     private var moveScheduler: Cancellable = _
     val speed = 1
 
-    /** Represents the state of a Mobile that is standing still */
+    /** a Mobile that is standing still */
     def standing: Handle
 
     /** Represents the state of a moving Mobile */
