@@ -1,19 +1,15 @@
 package game
 
+import scala.util.Success
+
 import org.specs2.mutable.Specification
+
+import akka.actor.ActorSystem
+import akka.pattern.ask
 import akka.testkit.TestActorRef
-import play.api.Play.current
-import play.api.libs.concurrent.Akka
 import play.api.libs.json.JsValue
 import play.api.libs.json.Json
 import play.api.libs.json.Json.toJsFieldJsValueWrapper
-import akka.testkit.TestActorRef
-import scala.concurrent.duration._
-import scala.concurrent.Await
-import akka.pattern.ask
-import scala.util.Success
-import play.api.test.WithApplication
-import akka.actor.ActorSystem
 
 class PlayerModuleSpec
     extends PlayerModule
