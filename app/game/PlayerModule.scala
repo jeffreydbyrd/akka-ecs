@@ -41,7 +41,9 @@ trait PlayerModule extends MobileModule {
    * An asynchronous EventHandlerActor that handles communication
    * with the client and also interacts with the game world.
    */
-  trait EHPlayer extends EHMobile with GenericPlayer {
+  trait EHPlayer
+      extends EHMobile
+      with GenericPlayer {
 
     abstract override def receive = {
       case Start()         ⇒ start

@@ -9,7 +9,7 @@ class EventModuleSpec
   case class Test( v: Int ) extends Event
 
   "GenericEventHandler#remove" should {
-    val adj = Adjuster( "test" ) { case x ⇒ x }
+    val adj: Adjuster = { case x ⇒ x }
     "remove an Adjuster from 'adjusters' if it is contained within the list" in {
       val geh = new GenericEventHandler {
         def default: Handle = { case _ ⇒ }
@@ -23,9 +23,9 @@ class EventModuleSpec
   }
 
   "GenericEventHandler#removeAll" should {
-    val adj0 = Adjuster( "test0" ) { case x ⇒ x }
-    val adj1 = Adjuster( "test1" ) { case Test( i ) ⇒ Test( 2 * i ) }
-    val adj2 = Adjuster( "test2" ) { case Test( i ) ⇒ Test( 3 * i ) }
+    val adj0: Adjuster = { case x ⇒ x }
+    val adj1: Adjuster = { case Test( i ) ⇒ Test( 2 * i ) }
+    val adj2: Adjuster = { case Test( i ) ⇒ Test( 3 * i ) }
     "remove a subset of Adjusters from 'adjusters'" in {
       val geh = new GenericEventHandler {
         def default: Handle = { case _ ⇒ }

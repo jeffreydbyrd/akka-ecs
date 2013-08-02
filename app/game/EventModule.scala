@@ -27,23 +27,21 @@ trait EventModule {
   }
 
   /** A function that takes an Event and returns an Event, and also has an internal 'id' */
-  trait Adjuster extends ( Event ⇒ Event ) {
-    val id: String
-  }
+  type Adjuster = Event => Event
 
-  /**
-   * This is mostly a convenience object. Use to create Adjusters easily:
-   *   val adj = Adjuster( "myadjuster" ) { event =>
-   *     //modify event and return new Event
-   *   }
-   */
-  object Adjuster {
-    def apply( id0: String )( adj: Event ⇒ Event ) =
-      new Adjuster {
-        val id = id0;
-        def apply( e: Event ) = adj( e )
-      }
-  }
+//  /**
+//   * This is mostly a convenience object. Use to create Adjusters easily:
+//   *   val adj = Adjuster( "myadjuster" ) { event =>
+//   *     //modify event and return new Event
+//   *   }
+//   */
+//  object Adjuster {
+//    def apply( id0: String )( adj: Event ⇒ Event ) =
+//      new Adjuster {
+//        val id = id0;
+//        def apply( e: Event ) = adj( e )
+//      }
+//  }
 
   // Actor messages:
   case class Subscribe( ar: ActorRef )
@@ -113,14 +111,14 @@ trait EventModule {
      * are matched based on their internal 'id' attributes.
      */
     protected def remove( a: Adjuster ): List[ Adjuster ] =
-      this.adjusters.filterNot( _.id == a.id )
+      this.adjusters.filterNot( _ == a )
 
     /**
      * Removes all adjusters specified in 'as' from this.adjusters.
      * Items are removed based on their internal 'id' attribute
      */
     protected def removeAll( as: List[ Adjuster ] ): List[ Adjuster ] =
-      as.foldLeft( GenericEventHandler.this.adjusters ) { ( ( adjs, a ) ⇒ adjs.filterNot( _.id == a.id ) ) }
+      as.foldLeft( GenericEventHandler.this.adjusters ) { ( ( adjs, a ) ⇒ adjs.filterNot( _ == a ) ) }
 
   }
 
