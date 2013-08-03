@@ -36,16 +36,9 @@ trait Application
   def index = Action {
     Ok { views.html.index() }
   }
-
-  trait EnumeratorChannel[ T ] extends ClientChannel[ T ] {
-    val chan: Channel[ T ]
-    override def push( data: T ) = chan push data
-  }
-
+  
   /**
    * Asynchronously establishes a WebSocket connection using Play's Iteratee-Enumerator model.
-   * Not only is the function asynchronous, it uses an Akka actor to maintain state.
-   *
    * We instantiate a Player actor and ask for a confirmation that it has started. When it responds with Connected( Enumerator ),
    * we create an Iteratee that forwards incoming messages from the client to the Player. 'In' processes incoming data,
    * while 'out' pushes outgoing data to the client. Populating 'out' is the Player actor's job, and populating 'in' is Play's
