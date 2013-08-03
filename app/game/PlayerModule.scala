@@ -82,6 +82,21 @@ trait PlayerModule extends MobileModule {
   }
 
   /**
+   * A channel is used to get a message to the client. Multiple clients
+   * are able to listen to a single channel. A channel is a queue, so
+   * messages are pushed into it and sent to client in order. However,
+   * once the message is sent, there is no guarantee that the client
+   * received it.
+   */
+  trait ClientChannel[ T ] {
+    /**
+     *  Pushes a chunk of data into the channel. This channel takes
+     *  care of getting it to the client(s)
+     */
+    def push( data: T ): Unit
+  }
+
+  /**
    * A Player has a Channel that it pushes data to. A Channel connects to
    * an Enumerator, but this trait doesn't care which. A Channel can connect
    * to multiple Enumerators and "broadcast" data to them.

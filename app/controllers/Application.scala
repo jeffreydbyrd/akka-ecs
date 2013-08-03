@@ -1,7 +1,6 @@
 package controllers
 
 import scala.concurrent.ExecutionContext.Implicits.global
-
 import akka.actor.Props
 import akka.actor.actorRef2Scala
 import akka.pattern.ask
@@ -18,6 +17,7 @@ import play.api.libs.json.JsValue
 import play.api.mvc.Action
 import play.api.mvc.Controller
 import play.api.mvc.WebSocket
+import play.api.libs.iteratee.Concurrent.Channel
 
 object Application extends Application
 
@@ -37,16 +37,21 @@ trait Application
     Ok { views.html.index() }
   }
 
+  trait EnumeratorChannel[ T ] extends ClientChannel[ T ] {
+    val chan: Channel[ T ]
+    override def push( data: T ) = chan push data
+  }
+
   /**
    * Asynchronously establishes a WebSocket connection using Play's Iteratee-Enumerator model.
    * Not only is the function asynchronous, it uses an Akka actor to maintain state.
    *
-   * We instantiate a WebSocketActor and ask for a confirmation that it has started. When it responds with Connected( Enumerator ),
-   * we create an Iteratee that forwards incoming messages from the client to the WebSocketActor. 'in' processes incoming data,
-   * while 'out' pushes outgoing data to the client. Populating 'out' is the WebSocketActor's job, and populating 'in' is Play's
+   * We instantiate a Player actor and ask for a confirmation that it has started. When it responds with Connected( Enumerator ),
+   * we create an Iteratee that forwards incoming messages from the client to the Player. 'In' processes incoming data,
+   * while 'out' pushes outgoing data to the client. Populating 'out' is the Player actor's job, and populating 'in' is Play's
    * job. Play is also kind enough to wire 'in' and 'out' to the client for us.
    *
-   * If the WebSocketActor responds with NotConnected( msg ), we return 'in' as a 'Done' Iteratee, and 'out' as a single-element
+   * If the Player actor responds with NotConnected( msg ), we return 'in' as a 'Done' Iteratee, and 'out' as a single-element
    * Enumerator, delivering 'msg' to the client.
    */
   def websocket( username: String ) = WebSocket.async[ JsValue ] { implicit request ⇒

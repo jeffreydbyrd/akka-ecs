@@ -15,6 +15,7 @@ trait EventModule {
 
   abstract class Event
 
+  type Adjuster = Event ⇒ Event
   type Handle = PartialFunction[ Event, Unit ]
 
   implicit def toRichHandle( f: Handle ) = new RichHandle {
@@ -26,22 +27,6 @@ trait EventModule {
     def ~( that: Handle ): Handle = this orElse that
   }
 
-  /** A function that takes an Event and returns an Event, and also has an internal 'id' */
-  type Adjuster = Event => Event
-
-//  /**
-//   * This is mostly a convenience object. Use to create Adjusters easily:
-//   *   val adj = Adjuster( "myadjuster" ) { event =>
-//   *     //modify event and return new Event
-//   *   }
-//   */
-//  object Adjuster {
-//    def apply( id0: String )( adj: Event ⇒ Event ) =
-//      new Adjuster {
-//        val id = id0;
-//        def apply( e: Event ) = adj( e )
-//      }
-//  }
 
   // Actor messages:
   case class Subscribe( ar: ActorRef )
