@@ -13,6 +13,7 @@ import play.api.libs.json.Json.toJsFieldJsValueWrapper
 
 class PlayerModuleSpec
     extends PlayerModule
+    with RoomModule
     with Specification {
 
   implicit val sys = ActorSystem( "testSystem" )

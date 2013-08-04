@@ -21,6 +21,7 @@ import play.api.libs.json.__
  * @author biff
  */
 trait PlayerModule extends MobileModule {
+  this: RoomModule ⇒
 
   implicit val timeout = akka.util.Timeout( 1 second )
 

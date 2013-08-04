@@ -18,17 +18,17 @@ import play.api.mvc.Action
 import play.api.mvc.Controller
 import play.api.mvc.WebSocket
 import play.api.libs.iteratee.Concurrent.Channel
+import game.RoomModule
 
-object Application extends Application
+object Application extends Application with PlayerModule with RoomModule
 
 /**
  * Defines a controller that serves the client-side engine and handles
  * WebSocket creation.
  * @author biff
  */
-trait Application
-    extends Controller
-    with PlayerModule {
+trait Application extends Controller {
+  this: PlayerModule with RoomModule ⇒
 
   /**
    * Serves the main page
@@ -36,7 +36,7 @@ trait Application
   def index = Action {
     Ok { views.html.index() }
   }
-  
+
   /**
    * Asynchronously establishes a WebSocket connection using Play's Iteratee-Enumerator model.
    * We instantiate a Player actor and ask for a confirmation that it has started. When it responds with Connected( Enumerator ),
