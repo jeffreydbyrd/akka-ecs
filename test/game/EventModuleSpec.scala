@@ -1,10 +1,13 @@
 package game
 
 import org.specs2.mutable.Specification
+import akka.actor.ActorSystem
 
 class EventModuleSpec
     extends EventModule
     with Specification {
+  
+  val system:ActorSystem = ActorSystem("EventModuleSpec")
 
   case class Test( v: Int ) extends Event
 

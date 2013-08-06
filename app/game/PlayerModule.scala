@@ -46,13 +46,13 @@ trait PlayerModule extends MobileModule {
    * with the client and also interacts with the game world.
    */
   trait EHPlayer
-      extends Mobile
+      extends EHMobile
       with GenericPlayer {
 
     abstract override def receive = {
       case Start()         ⇒ start
       case JsonCmd( json ) ⇒ handle( getCommand( json ) )
-      case x               ⇒ super[ Mobile ].receive( x )
+      case x               ⇒ super[ EHMobile ].receive( x )
     }
 
     // this is basically a constructor for the actor
@@ -65,6 +65,7 @@ trait PlayerModule extends MobileModule {
         sender ! Connected( enumerator )
         this.channel = channel
         this.handle = standing ~ default
+
       }
 
     override def default: Handle = {

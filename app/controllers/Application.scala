@@ -19,8 +19,11 @@ import play.api.mvc.Controller
 import play.api.mvc.WebSocket
 import play.api.libs.iteratee.Concurrent.Channel
 import game.RoomModule
+import akka.actor.ActorSystem
 
-object Application extends Application with PlayerModule with RoomModule
+object Application extends Application with PlayerModule with RoomModule {
+  val system:ActorSystem = Akka.system
+}
 
 /**
  * Defines a controller that serves the client-side engine and handles
@@ -28,7 +31,7 @@ object Application extends Application with PlayerModule with RoomModule
  * @author biff
  */
 trait Application extends Controller {
-  this: PlayerModule with RoomModule ⇒
+  this: PlayerModule ⇒
 
   /**
    * Serves the main page
@@ -48,7 +51,7 @@ trait Application extends Controller {
    * Enumerator, delivering 'msg' to the client.
    */
   def websocket( username: String ) = WebSocket.async[ JsValue ] { implicit request ⇒
-    val actor = Akka.system.actorOf( Props( new Player( username ) ) )
+    val actor = system.actorOf( Props( new Player( username ) ) )
     ( actor ? Start() ) map {
 
       case Connected( out ) ⇒

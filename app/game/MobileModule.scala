@@ -21,17 +21,13 @@ trait MobileModule extends EventModule {
   case class Moved( dir: Int ) extends Event
 
   /** An EventHandling Mobile object */
-  trait Mobile extends EventHandler {
-    val name: String
-    var xpos: Int = 0
-    var ypos: Int = 0
-
+  trait EHMobile extends EventHandler with Mobile {
     private var moveScheduler: Cancellable = _
     val speed = 1
 
     //temporary:
-    val roomRef = Akka.system.actorOf( Props( new Room( "test" ) ) )
-    subscribers = roomRef :: subscribers
+    val roomRef = system.actorOf( Props( new Room( "temp" ) ) )
+    subscribers = subscribers :+ roomRef
     this emit Arrived()
 
     /** a Mobile that is standing still */
@@ -54,5 +50,11 @@ trait MobileModule extends EventModule {
     def moveLeft = move( -speed )
     def moveRight = move( speed )
 
+  }
+
+  trait Mobile {
+    val name: String
+    var xpos: Int = 0
+    var ypos: Int = 0
   }
 }

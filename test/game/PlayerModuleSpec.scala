@@ -15,8 +15,8 @@ class PlayerModuleSpec
     extends PlayerModule
     with RoomModule
     with Specification {
-
-  implicit val sys = ActorSystem( "testSystem" )
+  
+  implicit val system:ActorSystem = ActorSystem("EventModuleSpec")
 
   "When a Player actor initializes it" should {
     "return None when I call setup" in {

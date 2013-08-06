@@ -6,12 +6,15 @@ import akka.actor.Actor
 import akka.actor.PoisonPill
 import akka.actor.actorRef2Scala
 import akka.actor.ActorRef
+import akka.actor.ActorSystem
 
 /**
  * Defines all Event driven functionality
  * @author biff
  */
 trait EventModule {
+  
+  val system: ActorSystem
 
   abstract class Event
 
@@ -26,7 +29,6 @@ trait EventModule {
   trait RichHandle extends Handle {
     def ~( that: Handle ): Handle = this orElse that
   }
-
 
   // Actor messages:
   case class Subscribe( ar: ActorRef )
@@ -71,10 +73,10 @@ trait EventModule {
     type T
 
     /** A list of EventHandlers that subscribe to the Events emitted by this EventHandler */
-    var subscribers: List[ T ] = _
+    var subscribers: List[ T ] = Nil
 
     /** A list of EventAdjusters that adjust an event before it is emitted */
-    var adjusters: List[ Adjuster ] = _
+    var adjusters: List[ Adjuster ] = Nil
 
     /**
      * This represents the entry point for all Events into this EventHandler.
