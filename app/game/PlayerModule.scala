@@ -3,8 +3,11 @@ package game
 import scala.concurrent.duration.DurationInt
 
 import akka.actor.PoisonPill
+import akka.actor.Props
 import akka.actor.actorRef2Scala
+import play.api.Play.current
 import play.api.data.validation.ValidationError
+import play.api.libs.concurrent.Akka
 import play.api.libs.functional.syntax.functionalCanBuildApplicative
 import play.api.libs.functional.syntax.toFunctionalBuilderOps
 import play.api.libs.iteratee.Concurrent
@@ -43,13 +46,13 @@ trait PlayerModule extends MobileModule {
    * with the client and also interacts with the game world.
    */
   trait EHPlayer
-      extends EHMobile
+      extends Mobile
       with GenericPlayer {
 
     abstract override def receive = {
       case Start()         ⇒ start
       case JsonCmd( json ) ⇒ handle( getCommand( json ) )
-      case x               ⇒ super[ EHMobile ].receive( x )
+      case x               ⇒ super[ Mobile ].receive( x )
     }
 
     // this is basically a constructor for the actor
@@ -69,7 +72,6 @@ trait PlayerModule extends MobileModule {
         this handle StopMovingCmd()
       case Click( x: Int, y: Int ) ⇒
       case Invalid( msg: String )  ⇒
-      case Moved( x, y )           ⇒ channel push Json.obj( "xpos" -> x )
       case _                       ⇒
     }
 
