@@ -36,7 +36,6 @@ trait PlayerModule extends MobileModule {
 
   // Events:
   case class KeyDown( code: Int ) extends Event
-  case class KeyUp( code: Int ) extends Event
   case class Click( x: Int, y: Int ) extends Event
 
   class Player( val name: String ) extends EHPlayer
@@ -69,8 +68,6 @@ trait PlayerModule extends MobileModule {
       }
 
     override def default: Handle = {
-      case KeyUp( code: Int ) if ( List( 65, 68, 37, 39 ).contains( code ) ) ⇒
-        this handle StopMovingCmd()
       case Click( x: Int, y: Int ) ⇒
       case Invalid( msg: String )  ⇒
       case _                       ⇒

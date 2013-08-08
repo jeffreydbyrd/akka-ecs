@@ -1,10 +1,13 @@
 package controllers
 
 import scala.concurrent.ExecutionContext.Implicits.global
+
+import akka.actor.ActorSystem
 import akka.actor.Props
 import akka.actor.actorRef2Scala
 import akka.pattern.ask
 import game.PlayerModule
+import game.RoomModule
 import play.api.Play.current
 import play.api.libs.concurrent.Akka
 import play.api.libs.iteratee.Done
@@ -17,12 +20,9 @@ import play.api.libs.json.JsValue
 import play.api.mvc.Action
 import play.api.mvc.Controller
 import play.api.mvc.WebSocket
-import play.api.libs.iteratee.Concurrent.Channel
-import game.RoomModule
-import akka.actor.ActorSystem
 
 object Application extends Application with PlayerModule with RoomModule {
-  val system:ActorSystem = Akka.system
+  override val system:ActorSystem = Akka.system
 }
 
 /**

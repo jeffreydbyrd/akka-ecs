@@ -16,9 +16,8 @@ trait MobileModule extends EventModule {
 
   // Define events:
   case class Invalid( msg: String ) extends Event
-  case class MoveCmd( dist: Int ) extends Event
-  case class StopMovingCmd() extends Event
-  case class Moved( dir: Int ) extends Event
+  case class KeyUp( code: Int ) extends Event
+  case class MoveAttempt( dir: Int ) extends Event
 
   /** An EventHandling Mobile object */
   trait EHMobile extends EventHandler with Mobile {
@@ -35,8 +34,10 @@ trait MobileModule extends EventModule {
 
     /** Represents the state of a moving Mobile */
     def moving: Handle = {
-      case Moved( dist ) ⇒ this.xpos = this.xpos + dist
-      case StopMovingCmd() ⇒
+      case Moved( ar, dist ) if ar == self ⇒
+        this.xpos = this.xpos + dist
+        println( this.xpos );
+      case KeyUp( code: Int ) if List( 65, 68, 37, 39 ) contains code ⇒
         moveScheduler.cancel
         this.handle = standing ~ this.default
     }
@@ -44,7 +45,7 @@ trait MobileModule extends EventModule {
     /** Starts moving this mobile */
     def move( dir: Int ) {
       this.handle = moving ~ default
-      this.moveScheduler = Akka.system.scheduler.schedule( 0 millis, 80 millis )( this emit Moved( dir ) )
+      this.moveScheduler = Akka.system.scheduler.schedule( 0 millis, 80 millis )( this emit MoveAttempt( dir ) )
     }
 
     def moveLeft = move( -speed )
