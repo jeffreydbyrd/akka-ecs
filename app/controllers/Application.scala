@@ -8,8 +8,6 @@ import akka.actor.actorRef2Scala
 import akka.pattern.ask
 import game.PlayerModule
 import game.RoomModule
-import play.api.Play.current
-import play.api.libs.concurrent.Akka
 import play.api.libs.iteratee.Done
 import play.api.libs.iteratee.Enumerator
 import play.api.libs.iteratee.Input
@@ -22,7 +20,7 @@ import play.api.mvc.Controller
 import play.api.mvc.WebSocket
 
 object Application extends Application with PlayerModule with RoomModule {
-  override val system:ActorSystem = Akka.system
+  override val system: ActorSystem = akka.actor.ActorSystem( "Doppelgamer" )
 }
 
 /**
@@ -51,7 +49,8 @@ trait Application extends Controller {
    * Enumerator, delivering 'msg' to the client.
    */
   def websocket( username: String ) = WebSocket.async[ JsValue ] { implicit request ⇒
-    val actor = system.actorOf( Props( new Player( username ) ) )
+    //    val actor = this.system.actorOf( Props( classOf[ Player ], username ) )
+    val actor = this.system.actorOf( Props( new Player( username ) ) )
     ( actor ? Start() ) map {
 
       case Connected( out ) ⇒

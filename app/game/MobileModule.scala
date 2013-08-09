@@ -24,11 +24,6 @@ trait MobileModule extends EventModule {
     private var moveScheduler: Cancellable = _
     val speed = 1
 
-    //temporary:
-    val roomRef = system.actorOf( Props( new Room( "temp" ) ) )
-    subscribers = subscribers :+ roomRef
-    this emit Arrived()
-
     /** a Mobile that is standing still */
     def standing: Handle
 

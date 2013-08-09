@@ -38,7 +38,12 @@ trait PlayerModule extends MobileModule {
   case class KeyDown( code: Int ) extends Event
   case class Click( x: Int, y: Int ) extends Event
 
-  class Player( val name: String ) extends EHPlayer
+  class Player( val name: String ) extends EHPlayer {
+    //temporary:
+//    val roomRef = system.actorOf( Props( classOf[ Room ], "temp" ) )
+//    subscribers = subscribers :+ roomRef
+//    this emit Arrived()
+  }
 
   /**
    * An asynchronous EventHandlerActor that handles communication

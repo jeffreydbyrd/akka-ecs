@@ -14,7 +14,7 @@ import akka.actor.ActorSystem
  */
 trait EventModule {
   
-  val system: ActorSystem
+  def system: ActorSystem
 
   abstract class Event
 
