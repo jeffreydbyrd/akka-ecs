@@ -2,11 +2,10 @@ package game
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.DurationInt
-import akka.actor.actorRef2Scala
+
+import akka.actor.Cancellable
 import play.api.Play.current
 import play.api.libs.concurrent.Akka
-import akka.actor.Cancellable
-import akka.actor.Props
 
 /**
  * Defines the behavior for all mobile entities (Players and NPCs)

@@ -3,11 +3,8 @@ package game
 import scala.concurrent.duration.DurationInt
 
 import akka.actor.PoisonPill
-import akka.actor.Props
 import akka.actor.actorRef2Scala
-import play.api.Play.current
 import play.api.data.validation.ValidationError
-import play.api.libs.concurrent.Akka
 import play.api.libs.functional.syntax.functionalCanBuildApplicative
 import play.api.libs.functional.syntax.toFunctionalBuilderOps
 import play.api.libs.iteratee.Concurrent
@@ -15,8 +12,6 @@ import play.api.libs.iteratee.Concurrent.Channel
 import play.api.libs.iteratee.Enumerator
 import play.api.libs.json.JsPath
 import play.api.libs.json.JsValue
-import play.api.libs.json.Json
-import play.api.libs.json.Json.toJsFieldJsValueWrapper
 import play.api.libs.json.__
 
 /**

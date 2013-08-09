@@ -1,12 +1,9 @@
 package game
 
 import akka.actor.Actor
-import scala.concurrent.duration.DurationInt
-import akka.actor.Actor
-import akka.actor.PoisonPill
-import akka.actor.actorRef2Scala
 import akka.actor.ActorRef
 import akka.actor.ActorSystem
+import akka.actor.actorRef2Scala
 
 /**
  * Defines all Event driven functionality
