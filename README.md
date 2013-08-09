@@ -2,37 +2,32 @@
 
 This is a Scala app written on top of the [Play! Framework](http://www.playframework.com/). In order to run it you will need to install [scala](http://www.scala-lang.org/)
 
-```
-#!bash
+```bash
 $ brew install scala
 ```
 
 Install [sbt](http://www.scala-sbt.org/)
 
-```
-#!bash
+```bash
 $ brew install sbt
 ```
 
 Download and install the [Play! Framework](http://www.playframework.com/download). After downloading, unpackage the .zip and add the new folder to your PATH. For example:
 
-```
-#!bash
+```bash
 export PATH=/Users/biff/play-2.1.1/:$PATH
 ```
 
 Now you should be able to clone the repo and cd to the project's root directory
 
-```
-#!bash
+```bash
 $ git clone git@bitbucket.org:biffbyrd/scalatree.git
 $ cd scalatree
 ```
 
 and run the app.
 
-```
-#!bash
+```bash
 $ play run
 ```
 
@@ -40,8 +35,7 @@ $ play run
 
 First cd to the project root directory and run
 
-```
-#!bash
+```bash
 $ play eclipse
 ```
 
