@@ -18,7 +18,5 @@ trait RoomModule extends EventModule {
       case MoveAttempt( dist ) ⇒ this emit Moved( sender, dist )
       case _                   ⇒
     }
-
   }
-
 }

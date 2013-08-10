@@ -1,9 +1,7 @@
 package game
 
 import scala.concurrent.duration.DurationInt
-
 import akka.actor.PoisonPill
-import akka.actor.actorRef2Scala
 import play.api.data.validation.ValidationError
 import play.api.libs.functional.syntax.functionalCanBuildApplicative
 import play.api.libs.functional.syntax.toFunctionalBuilderOps
@@ -13,6 +11,7 @@ import play.api.libs.iteratee.Enumerator
 import play.api.libs.json.JsPath
 import play.api.libs.json.JsValue
 import play.api.libs.json.__
+import akka.actor.Props
 
 /**
  * Defines a module used for handling a Player
@@ -35,9 +34,9 @@ trait PlayerModule extends MobileModule {
 
   class Player( val name: String ) extends EHPlayer {
     //temporary:
-//    val roomRef = system.actorOf( Props( classOf[ Room ], "temp" ) )
-//    subscribers = subscribers :+ roomRef
-//    this emit Arrived()
+    val roomRef = system.actorOf( Props( new Room("temp") ) )
+    subscribers = subscribers :+ roomRef
+    this emit Arrived()
   }
 
   /**

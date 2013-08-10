@@ -2,10 +2,10 @@ package game
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.DurationInt
-
 import akka.actor.Cancellable
 import play.api.Play.current
 import play.api.libs.concurrent.Akka
+import akka.actor.ActorRef
 
 /**
  * Defines the behavior for all mobile entities (Players and NPCs)
@@ -39,7 +39,7 @@ trait MobileModule extends EventModule {
     /** Starts moving this mobile */
     def move( dir: Int ) {
       this.handle = moving ~ default
-      this.moveScheduler = Akka.system.scheduler.schedule( 0 millis, 80 millis )( this emit MoveAttempt( dir ) )
+      this.moveScheduler = system.scheduler.schedule( 0 millis, 80 millis )( this emit MoveAttempt( dir ) )
     }
 
     def moveLeft = move( -speed )
