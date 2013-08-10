@@ -8,8 +8,6 @@ import akka.actor.actorRef2Scala
 import akka.pattern.ask
 import game.PlayerModule
 import game.RoomModule
-import play.api.Play.current
-import play.api.libs.concurrent.Akka
 import play.api.libs.iteratee.Done
 import play.api.libs.iteratee.Enumerator
 import play.api.libs.iteratee.Input

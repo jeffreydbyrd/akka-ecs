@@ -1,7 +1,10 @@
 package game
 
 import scala.concurrent.duration.DurationInt
+
 import akka.actor.PoisonPill
+import akka.actor.Props
+import akka.actor.actorRef2Scala
 import play.api.data.validation.ValidationError
 import play.api.libs.functional.syntax.functionalCanBuildApplicative
 import play.api.libs.functional.syntax.toFunctionalBuilderOps
@@ -11,7 +14,6 @@ import play.api.libs.iteratee.Enumerator
 import play.api.libs.json.JsPath
 import play.api.libs.json.JsValue
 import play.api.libs.json.__
-import akka.actor.Props
 
 /**
  * Defines a module used for handling a Player
