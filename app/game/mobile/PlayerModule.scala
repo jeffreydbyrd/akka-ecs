@@ -48,8 +48,15 @@ trait PlayerModule extends MobileModule {
       with GenericPlayer[ String ] {
 
     override def receive = { case Start() ⇒ start }
-    
+
     def playing: Receive = { case JsonCmd( json ) ⇒ handle( getCommand( json ) ) }
+
+    /** Temporary: testing to see if 'cs' can send updates to the client */
+    def testing: Receive = {
+      case m @ Moved( ar, dir ) if ar == self ⇒
+        cs send s"xpos = $xpos"
+        super.receive( m )
+    }
 
     // this is basically a constructor for the actor
     def start =
@@ -59,7 +66,7 @@ trait PlayerModule extends MobileModule {
       } getOrElse {
         sender ! Connected()
         this.handle = standing ~ default
-        context become { playing orElse super.receive }
+        context become { playing orElse testing orElse super.receive }
       }
 
     override def default: Handle = {
