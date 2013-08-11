@@ -1,10 +1,11 @@
-package game
+package game.mobile
 
 import scala.concurrent.duration.DurationInt
 
 import akka.actor.PoisonPill
 import akka.actor.Props
 import akka.actor.actorRef2Scala
+import game.world.RoomModule
 import play.api.data.validation.ValidationError
 import play.api.libs.functional.syntax.functionalCanBuildApplicative
 import play.api.libs.functional.syntax.toFunctionalBuilderOps
@@ -36,7 +37,7 @@ trait PlayerModule extends MobileModule {
 
   class Player( val name: String ) extends EHPlayer {
     //temporary:
-    val roomRef = system.actorOf( Props( new Room("temp") ) )
+    val roomRef = system.actorOf( Props( new Room( "temp" ) ) )
     subscribers = subscribers :+ roomRef
     this emit Arrived()
   }

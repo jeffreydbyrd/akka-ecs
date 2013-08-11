@@ -1,9 +1,11 @@
-package game
+package game.mobile
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.DurationInt
 
 import akka.actor.Cancellable
+import game.EventModule
+import game.world.RoomModule
 
 /**
  * Defines the behavior for all mobile entities (Players and NPCs)

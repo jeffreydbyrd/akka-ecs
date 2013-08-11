@@ -6,8 +6,8 @@ import akka.actor.ActorSystem
 import akka.actor.Props
 import akka.actor.actorRef2Scala
 import akka.pattern.ask
-import game.PlayerModule
-import game.RoomModule
+import game.mobile.PlayerModule
+import game.world.RoomModule
 import play.api.libs.iteratee.Done
 import play.api.libs.iteratee.Enumerator
 import play.api.libs.iteratee.Input

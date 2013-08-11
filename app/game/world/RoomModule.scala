@@ -1,12 +1,14 @@
-package game
+package game.world
 
 import akka.actor.ActorRef
+import game.EventModule
+import game.mobile.PlayerModule
 
 trait RoomModule extends EventModule {
   this: PlayerModule ⇒
 
   case class Arrived() extends Event
-  case class Moved( ar:ActorRef, dist: Int ) extends Event
+  case class Moved( ar: ActorRef, dist: Int ) extends Event
 
   class Room( override val id: String ) extends EHRoom
 

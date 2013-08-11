@@ -1,4 +1,4 @@
-package game
+package game.mobile
 
 import scala.util.Success
 
