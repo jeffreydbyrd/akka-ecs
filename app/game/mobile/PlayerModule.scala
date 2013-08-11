@@ -15,6 +15,8 @@ import play.api.libs.iteratee.Enumerator
 import play.api.libs.json.JsPath
 import play.api.libs.json.JsValue
 import play.api.libs.json.__
+import scala.util.parsing.json.JSON._
+import scala.util.parsing.json._
 
 /**
  * Defines a module used for handling a Player
