@@ -1,28 +1,27 @@
 package game.mobile
 
 import scala.concurrent.duration.DurationInt
+import scala.util.parsing.json.JSON
+import scala.util.parsing.json.JSONObject
 
 import akka.actor.PoisonPill
 import akka.actor.Props
 import akka.actor.actorRef2Scala
+import game.ConnectionModule
 import game.world.RoomModule
-import play.api.libs.iteratee.Concurrent
-import play.api.libs.iteratee.Concurrent.Channel
-import play.api.libs.iteratee.Enumerator
-import scala.util.parsing.json._
 
 /**
  * Defines a module used for handling a Player
  * @author biff
  */
 trait PlayerModule extends MobileModule {
-  this: RoomModule ⇒
+  this: RoomModule with ConnectionModule ⇒
 
   implicit val timeout = akka.util.Timeout( 1 second )
 
   // Player-Client Communication
   case class Start()
-  case class Connected( out: Enumerator[ String ] )
+  case class Connected()
   case class NotConnected( msg: String )
   case class JsonCmd( msg: String )
 
@@ -30,11 +29,14 @@ trait PlayerModule extends MobileModule {
   case class KeyDown( code: Int ) extends Event
   case class Click( x: Int, y: Int ) extends Event
 
-  class Player( val name: String ) extends EHPlayer {
+  class Player( val name: String, val cs: ClientService[ String ] ) extends EHPlayer {
     //temporary:
-    val roomRef = system.actorOf( Props( new Room( "temp" ) ) )
-    subscribers = subscribers :+ roomRef
-    this emit Arrived()
+    override def setup = {
+      val roomRef = system.actorOf( Props( new Room( "temp" ) ) )
+      subscribers = subscribers :+ roomRef
+      roomRef ! Subscribe()
+      None
+    }
   }
 
   /**
@@ -43,13 +45,11 @@ trait PlayerModule extends MobileModule {
    */
   trait EHPlayer
       extends EHMobile
-      with GenericPlayer {
+      with GenericPlayer[ String ] {
 
-    abstract override def receive = {
-      case Start()         ⇒ start
-      case JsonCmd( json ) ⇒ handle( getCommand( json ) )
-      case x               ⇒ super[ EHMobile ].receive( x )
-    }
+    override def receive = { case Start() ⇒ start }
+    
+    def playing: Receive = { case JsonCmd( json ) ⇒ handle( getCommand( json ) ) }
 
     // this is basically a constructor for the actor
     def start =
@@ -57,10 +57,9 @@ trait PlayerModule extends MobileModule {
         sender ! NotConnected( msg )
         self ! PoisonPill // failed to start... you know what to do :(
       } getOrElse {
-        val ( enumerator, channel ) = Concurrent.broadcast[ String ]
-        sender ! Connected( enumerator )
-        this.channel = channel
+        sender ! Connected()
         this.handle = standing ~ default
+        context become { playing orElse super.receive }
       }
 
     override def default: Handle = {
@@ -83,15 +82,17 @@ trait PlayerModule extends MobileModule {
    * an Enumerator, but this trait doesn't care which. A Channel can connect
    * to multiple Enumerators and "broadcast" data to them.
    */
-  trait GenericPlayer extends Mobile {
-    var channel: Channel[ String ] = _
+  trait GenericPlayer[ D ] extends Mobile {
+    val cs: ClientService[ D ]
 
     /**
      * Sets up this Player object by retrieving state from the database.
      * If something goes wrong, we return Some[String] to deliver an error message,
      * otherwise we return None to indicate that everything's fine.
      */
-    protected def setup: Option[ String ] = None
+    protected def setup: Option[ String ] = {
+      None
+    }
   }
 
   /**

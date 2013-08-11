@@ -16,7 +16,6 @@ trait RoomModule extends EventModule {
     val id: String
 
     def default: Handle = {
-      case Arrived()           ⇒ subscribers = subscribers :+ sender
       case MoveAttempt( dist ) ⇒ this emit Moved( sender, dist )
       case _                   ⇒
     }

@@ -6,8 +6,11 @@ import akka.actor.ActorSystem
 import akka.actor.Props
 import akka.actor.actorRef2Scala
 import akka.pattern.ask
+import game.ConnectionModule
 import game.mobile.PlayerModule
 import game.world.RoomModule
+import play.api.libs.iteratee.Concurrent
+import play.api.libs.iteratee.Concurrent.Channel
 import play.api.libs.iteratee.Done
 import play.api.libs.iteratee.Enumerator
 import play.api.libs.iteratee.Input
@@ -18,7 +21,11 @@ import play.api.mvc.Action
 import play.api.mvc.Controller
 import play.api.mvc.WebSocket
 
-object Application extends Application with PlayerModule with RoomModule {
+object Application
+    extends Application
+    with PlayerModule
+    with ConnectionModule
+    with RoomModule {
   override val system: ActorSystem = akka.actor.ActorSystem( "Doppelsystem" )
 }
 
@@ -28,7 +35,12 @@ object Application extends Application with PlayerModule with RoomModule {
  * @author biff
  */
 trait Application extends Controller {
-  this: PlayerModule ⇒
+  this: PlayerModule with ConnectionModule with RoomModule ⇒
+
+  /** A simple service that uses a Play Channel object to get data to the client */
+  case class Play2ClientService( val c: Channel[ String ] ) extends ClientService[ String ] {
+    def send( d: String ) = c push d
+  }
 
   /**
    * Serves the main page
@@ -39,23 +51,24 @@ trait Application extends Controller {
 
   /**
    * Asynchronously establishes a WebSocket connection using Play's Iteratee-Enumerator model.
-   * We instantiate a Player actor and ask for a confirmation that it has started. When it responds with Connected( Enumerator ),
+   * We instantiate a Player actor and ask for a confirmation that it has started. When it responds with Connected(),
    * we create an Iteratee that forwards incoming messages from the client to the Player. 'In' processes incoming data,
    * while 'out' pushes outgoing data to the client. Populating 'out' is the Player actor's job, and populating 'in' is Play's
-   * job. Play is also kind enough to wire 'in' and 'out' to the client for us.
+   * job. Play wires 'in' and 'out' to the client for us.
    *
    * If the Player actor responds with NotConnected( msg ), we return 'in' as a 'Done' Iteratee, and 'out' as a single-element
    * Enumerator, delivering 'msg' to the client.
    */
   def websocket( username: String ) = WebSocket.async[ String ] { implicit request ⇒
-    val player = system.actorOf( Props( new Player( username ) ) )
+    lazy val ( enumerator, channel ) = Concurrent.broadcast[ String ]
+    val player = system.actorOf( Props( new Player( username, Play2ClientService( channel ) ) ) )
     ( player ? Start() ) map {
 
-      case Connected( out ) ⇒
+      case Connected() ⇒
         val in = Iteratee.foreach[ String ] {
           json ⇒ player ! JsonCmd( json )
         }
-        ( in, out )
+        ( in, enumerator )
 
       case NotConnected( msg ) ⇒
         val in = Done[ String, Unit ]( {}, Input.EOF )

@@ -10,7 +10,7 @@ import akka.actor.actorRef2Scala
  * @author biff
  */
 trait EventModule {
-  
+
   def system: ActorSystem
 
   abstract class Event
@@ -28,8 +28,8 @@ trait EventModule {
   }
 
   // Actor messages:
-  case class Subscribe( ar: ActorRef )
-  case class UnSubscribe( ar: ActorRef )
+  case class Subscribe()
+  case class UnSubscribe()
   case class Add( as: List[ Adjuster ] )
   case class Remove( as: List[ Adjuster ] )
 
@@ -42,12 +42,12 @@ trait EventModule {
     type T = ActorRef
 
     override def receive = {
-      case e: Event          ⇒ this.handle( e )
-      case Subscribe( ar )   ⇒ subscribers = subscribers :+ ar
-      case UnSubscribe( ar ) ⇒ subscribers = subscribers.filterNot( _ == ar )
-      case Add( as )         ⇒ adjusters = ( adjusters ::: as ).distinct
-      case Remove( as )      ⇒ adjusters = this.removeAll( as )
-      case _                 ⇒
+      case e: Event      ⇒ this.handle( e )
+      case Subscribe()   ⇒ subscribers = subscribers :+ sender
+      case UnSubscribe() ⇒ subscribers = subscribers.filterNot( _ == sender )
+      case Add( as )     ⇒ adjusters = ( adjusters ::: as ).distinct
+      case Remove( as )  ⇒ adjusters = this.removeAll( as )
+      case _             ⇒
     }
 
     /**

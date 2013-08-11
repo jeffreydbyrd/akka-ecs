@@ -7,28 +7,37 @@ import org.specs2.mutable.Specification
 import akka.actor.ActorSystem
 import akka.pattern.ask
 import akka.testkit.TestActorRef
+import game.ConnectionModule
 import game.world.RoomModule
-import play.api.libs.json.JsValue
-import play.api.libs.json.Json
-import play.api.libs.json.Json.toJsFieldJsValueWrapper
 
 class PlayerModuleSpec
     extends PlayerModule
+    with ConnectionModule
     with RoomModule
     with Specification {
 
   implicit val system: ActorSystem = ActorSystem( "EventModuleSpec" )
 
-  "When a Player actor initializes it" should {
+  val NOOP: ClientService[ String ] = new ClientService[ String ] {
+    override def send( d: String ) = {}
+  }
+
+  class Dummy extends EHPlayer {
+    val cs: ClientService[ String ] = NOOP
+    val name = "dummy"
+  }
+
+  "When a Player actor is initialized, it" should {
     "return None when I call setup" in {
-      new GenericPlayer {
+      new GenericPlayer[ String ] {
+        val cs: ClientService[ String] = NOOP
         val name = "test"
         def test = setup
       }.test must beNone
     }
 
-    "return Connected[ Enumerator ] when I send Start()" in {
-      val Success( result: Connected ) = { TestActorRef( new Player( "test0" ) ) ? Start() }.value.get
+    "return Connected when I send Start()" in {
+      val Success( result: Connected ) = { TestActorRef( new Dummy ) ? Start() }.value.get
       result.isInstanceOf[ Connected ]
     }
 
@@ -72,9 +81,9 @@ class PlayerModuleSpec
     }
 
     "return Invalid('A click command expects 'x' and 'y' integer values') when the input " +
-    "type is 'click' but 'data' doesn't follow the expected schema" in {
-      getCommand( clk1 ) === Invalid( "A click command expects 'x' and 'y' integer values" )
-    }
+      "type is 'click' but 'data' doesn't follow the expected schema" in {
+        getCommand( clk1 ) === Invalid( "A click command expects 'x' and 'y' integer values" )
+      }
   }
 
 }
