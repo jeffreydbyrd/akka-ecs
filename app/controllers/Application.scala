@@ -48,20 +48,20 @@ trait Application extends Controller {
    * If the Player actor responds with NotConnected( msg ), we return 'in' as a 'Done' Iteratee, and 'out' as a single-element
    * Enumerator, delivering 'msg' to the client.
    */
-  def websocket( username: String ) = WebSocket.async[ JsValue ] { implicit request ⇒
+  def websocket( username: String ) = WebSocket.async[ String ] { implicit request ⇒
     val actor = system.actorOf( Props( new Player( username ) ) )
     ( actor ? Start() ) map {
 
       case Connected( out ) ⇒
-        val in = Iteratee.foreach[ JsValue ] {
+        val in = Iteratee.foreach[ String ] {
           json ⇒ actor ! JsonCmd( json )
         }
         ( in, out )
 
       case NotConnected( msg ) ⇒
-        val in = Done[ JsValue, Unit ]( {}, Input.EOF )
+        val in = Done[ String, Unit ]( {}, Input.EOF )
         val ret = JsObject( Seq( "error" -> JsString( msg ) ) )
-        val out = Enumerator[ JsValue ]( ret ) andThen Enumerator.enumInput( Input.EOF )
+        val out = Enumerator[ String ]( ret.toString ) andThen Enumerator.enumInput( Input.EOF )
         ( in, out )
     }
   }

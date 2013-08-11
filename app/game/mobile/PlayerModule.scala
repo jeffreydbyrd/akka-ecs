@@ -6,16 +6,9 @@ import akka.actor.PoisonPill
 import akka.actor.Props
 import akka.actor.actorRef2Scala
 import game.world.RoomModule
-import play.api.data.validation.ValidationError
-import play.api.libs.functional.syntax.functionalCanBuildApplicative
-import play.api.libs.functional.syntax.toFunctionalBuilderOps
 import play.api.libs.iteratee.Concurrent
 import play.api.libs.iteratee.Concurrent.Channel
 import play.api.libs.iteratee.Enumerator
-import play.api.libs.json.JsPath
-import play.api.libs.json.JsValue
-import play.api.libs.json.__
-import scala.util.parsing.json.JSON._
 import scala.util.parsing.json._
 
 /**
@@ -29,9 +22,9 @@ trait PlayerModule extends MobileModule {
 
   // Player-Client Communication
   case class Start()
-  case class Connected( out: Enumerator[ JsValue ] )
+  case class Connected( out: Enumerator[ String ] )
   case class NotConnected( msg: String )
-  case class JsonCmd( msg: JsValue )
+  case class JsonCmd( msg: String )
 
   // Events:
   case class KeyDown( code: Int ) extends Event
@@ -64,7 +57,7 @@ trait PlayerModule extends MobileModule {
         sender ! NotConnected( msg )
         self ! PoisonPill // failed to start... you know what to do :(
       } getOrElse {
-        val ( enumerator, channel ) = Concurrent.broadcast[ JsValue ]
+        val ( enumerator, channel ) = Concurrent.broadcast[ String ]
         sender ! Connected( enumerator )
         this.channel = channel
         this.handle = standing ~ default
@@ -92,7 +85,7 @@ trait PlayerModule extends MobileModule {
    * to multiple Enumerators and "broadcast" data to them.
    */
   trait GenericPlayer extends Mobile {
-    var channel: Channel[ JsValue ] = _
+    var channel: Channel[ String ] = _
 
     /**
      * Sets up this Player object by retrieving state from the database.
@@ -111,23 +104,18 @@ trait PlayerModule extends MobileModule {
    * Depending on the type, 'data' will be wrapped in the appropriate Command object.
    * If there is an error while parsing, Invalid[ String ] is returned.
    */
-  def getCommand( json: JsValue ): Event = {
-    // defines a function that composes a string of error messages for every path in 'errs'
-    // and returns an Invalid command object
-    val errFun =
-      ( errs: Seq[ ( JsPath, Seq[ ValidationError ] ) ] ) ⇒
-        Invalid( ( for { ( p, seq ) ← errs; e1 ← seq } yield { e1.message } ).mkString( ", " ) )
-
-    ( json \ "type" ).validate[ String ].fold( errFun, str ⇒ {
-      val datapath = ( __ \ "data" )
-      val key_ = ( datapath.read[ Int ] ).reads( json )
-      str match {
-        case "keyup"   ⇒ key_.fold( errFun, KeyUp )
-        case "keydown" ⇒ key_.fold( errFun, KeyDown )
-        case "click" ⇒
-          ( ( datapath \ "x" ).read[ Int ] ~ ( datapath \ "y" ).read[ Int ] )( Click ).reads( json ).fold( errFun, x ⇒ x )
-      }
-    } )
+  def getCommand( json: String ): Event = JSON.parseRaw( json ) match {
+    case Some( JSONObject( map ) ) ⇒ ( map.get( "type" ), map.get( "data" ) ) match {
+      case ( Some( "keyup" ), Some( d: Double ) )   ⇒ KeyUp( d.toInt )
+      case ( Some( "keydown" ), Some( d: Double ) ) ⇒ KeyDown( d.toInt )
+      case ( Some( "click" ), Some( JSONObject( pos: Map[ String, Any ] ) ) ) ⇒
+        ( pos.get( "x" ), pos.get( "y" ) ) match {
+          case ( Some( x: Double ), Some( y: Double ) ) ⇒ Click( x.toInt, y.toInt )
+          case _                                        ⇒ Invalid( "A click command expects 'x' and 'y' integer values" )
+        }
+      case _ ⇒ Invalid( "Unrecognized command." )
+    }
+    case _ ⇒ Invalid( "Failed to parse JSON string." )
   }
 
 }

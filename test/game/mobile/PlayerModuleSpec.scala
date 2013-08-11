@@ -16,8 +16,8 @@ class PlayerModuleSpec
     extends PlayerModule
     with RoomModule
     with Specification {
-  
-  implicit val system:ActorSystem = ActorSystem("EventModuleSpec")
+
+  implicit val system: ActorSystem = ActorSystem( "EventModuleSpec" )
 
   "When a Player actor initializes it" should {
     "return None when I call setup" in {
@@ -34,13 +34,19 @@ class PlayerModuleSpec
 
   }
 
-  "getCommand(JsValue)" should {
-    val kd: JsValue = Json.obj( "type" -> "keydown", "data" -> 65 )
-    val ku: JsValue = Json.obj( "type" -> "keyup", "data" -> 65 )
-    val clk = Json.obj(
-      "type" -> "click",
-      "data" -> Json.obj( "x" -> 42, "y" -> 5 )
-    )
+  "getCommand(String)" should {
+    val ku = """{"type" : "keyup", "data" : 65.0}"""
+    val kd = """{"type" : "keydown", "data" : 65}"""
+    val clk = """{"type" : "click", "data" : {"x" : 42, "y" : 5}}"""
+
+    val inv0 = """{'type' : 'keydown', 'data' : 65}"""
+    val inv1 = """{"type" : "keydown" "data" : 65}"""
+    val inv2 = """{"type" : "keydown", "data" : 65"""
+
+    val unrec0 = """ {"type" : "keydown", "data" : "STRING"} """
+    val unrec1 = """ {"type" : "keydown", "KEY" : 65} """
+
+    val clk1 = """ {"type" : "click", "data" : {"x" : "STRING"}} """
 
     "return KeyUp( 65 ) when json = {type : 'keyup', data : 65}" in {
       getCommand( ku ) === KeyUp( 65 )
@@ -52,6 +58,22 @@ class PlayerModuleSpec
 
     "retun Click( 42, 5 ) when json = {type : 'click', data : {x: 42, y:5}}" in {
       getCommand( clk ) === Click( 42, 5 )
+    }
+
+    "return Invalid('Failed to parse JSON string.') when the input doesn't follow JSON spec" in {
+      getCommand( inv0 ) === Invalid( "Failed to parse JSON string." )
+      getCommand( inv1 ) === Invalid( "Failed to parse JSON string." )
+      getCommand( inv2 ) === Invalid( "Failed to parse JSON string." )
+    }
+
+    "return Invalid('Unrecognized command.') when the input doesn't follow the schema" in {
+      getCommand( unrec0 ) === Invalid( "Unrecognized command." )
+      getCommand( unrec1 ) === Invalid( "Unrecognized command." )
+    }
+
+    "return Invalid('A click command expects 'x' and 'y' integer values') when the input " +
+    "type is 'click' but 'data' doesn't follow the expected schema" in {
+      getCommand( clk1 ) === Invalid( "A click command expects 'x' and 'y' integer values" )
     }
   }
 
