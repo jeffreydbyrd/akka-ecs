@@ -61,7 +61,6 @@ trait PlayerModule extends MobileModule {
         sender ! Connected( enumerator )
         this.channel = channel
         this.handle = standing ~ default
-
       }
 
     override def default: Handle = {
@@ -92,17 +91,15 @@ trait PlayerModule extends MobileModule {
      * If something goes wrong, we return Some[String] to deliver an error message,
      * otherwise we return None to indicate that everything's fine.
      */
-    protected def setup: Option[ String ] = {
-      None
-    }
+    protected def setup: Option[ String ] = None
   }
 
   /**
    * Creates a Command object based on the contents of 'json'. The schema of the content is
    * simply : { type: ..., data: ...}.
    * There are only a few types of commands a client can send: keydown, keyup, click.
-   * Depending on the type, 'data' will be wrapped in the appropriate Command object.
-   * If there is an error while parsing, Invalid[ String ] is returned.
+   * Depending on the type, 'data' will be wrapped in the appropriate Event object.
+   * If there is an error while parsing, Invalid is returned.
    */
   def getCommand( json: String ): Event = JSON.parseRaw( json ) match {
     case Some( JSONObject( map ) ) ⇒ ( map.get( "type" ), map.get( "data" ) ) match {

@@ -14,7 +14,6 @@ import play.api.libs.iteratee.Input
 import play.api.libs.iteratee.Iteratee
 import play.api.libs.json.JsObject
 import play.api.libs.json.JsString
-import play.api.libs.json.JsValue
 import play.api.mvc.Action
 import play.api.mvc.Controller
 import play.api.mvc.WebSocket
@@ -49,12 +48,12 @@ trait Application extends Controller {
    * Enumerator, delivering 'msg' to the client.
    */
   def websocket( username: String ) = WebSocket.async[ String ] { implicit request ⇒
-    val actor = system.actorOf( Props( new Player( username ) ) )
-    ( actor ? Start() ) map {
+    val player = system.actorOf( Props( new Player( username ) ) )
+    ( player ? Start() ) map {
 
       case Connected( out ) ⇒
         val in = Iteratee.foreach[ String ] {
-          json ⇒ actor ! JsonCmd( json )
+          json ⇒ player ! JsonCmd( json )
         }
         ( in, out )
 
