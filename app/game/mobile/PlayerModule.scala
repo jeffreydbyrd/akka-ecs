@@ -66,20 +66,23 @@ trait PlayerModule extends MobileModule {
       } getOrElse {
         sender ! Connected()
         this.handle = standing ~ default
-        context become { playing orElse testing orElse super.receive }
+        context become { playing orElse super.receive }
       }
 
     override def default: Handle = {
       case Click( x: Int, y: Int ) ⇒
       case Invalid( msg: String )  ⇒
+      case KeyDown( 81 )           ⇒ quit
       case _                       ⇒
     }
 
     def standing: Handle = {
-      case KeyDown( 65 ) ⇒ standing( KeyDown( 37 ) )
-      case KeyDown( 68 ) ⇒ standing( KeyDown( 39 ) )
-      case KeyDown( 37 ) ⇒ moveLeft
-      case KeyDown( 39 ) ⇒ moveRight
+      case KeyDown( c ) if List( 65, 37 ) contains c ⇒ moveLeft
+      case KeyDown( c ) if List( 68, 39 ) contains c ⇒ moveRight
+    }
+    
+    def quit {
+      println("quit")
     }
 
   }

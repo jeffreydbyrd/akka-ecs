@@ -31,7 +31,7 @@ trait MobileModule extends EventModule {
       case Moved( ar, dist ) if ar == self ⇒
         this.xpos = this.xpos + dist
         println( this.xpos );
-      case KeyUp( code: Int ) if List( 65, 68, 37, 39 ) contains code ⇒
+      case KeyUp( c ) if List( 65, 68, 37, 39 ) contains c ⇒
         moveScheduler.cancel
         this.handle = standing ~ this.default
     }

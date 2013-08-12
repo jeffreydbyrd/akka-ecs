@@ -19,29 +19,19 @@ $(document).ready( function() {
 	$('#xpos').html(evt.data);
     };
 
-
-    var keydown = false;
-
-    $('html').keydown(function(evt) {
-	if (!keydown) {
-	    keydown = true;
-	    var cmd = {
-		type: 'keydown',
-		data: evt.which
-	    };
-	    ws.send(JSON.stringify(cmd));
-	}
-    });
-
-
-    $('html').keyup(function(evt) {
-	keydown = false;
-	var cmd = {
-	    type:'keyup',
-	    data: evt.which
-	};
+    function onKey(evt) {
+	var cmd = { type: evt.type, data: evt.keyCode };
 	ws.send(JSON.stringify(cmd));
-    });
+    }    
 
+    $('html').keydown( onKey );
+
+    $('html').keyup( onKey );
+    
+    $(window).unload(function(evt) {
+	evt.type = 'keyup';
+	evt.keyCode = '81'; // Q for quit
+	onKey(evt);
+    });
 
 });
