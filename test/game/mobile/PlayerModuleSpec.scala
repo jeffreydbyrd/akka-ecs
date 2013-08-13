@@ -20,6 +20,7 @@ class PlayerModuleSpec
 
   val NOOP: ClientService[ String ] = new ClientService[ String ] {
     override def send( d: String ) = {}
+    override def close {}
   }
 
   class Dummy extends EHPlayer {
