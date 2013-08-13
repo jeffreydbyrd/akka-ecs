@@ -39,7 +39,8 @@ trait Application extends Controller {
 
   /** A simple service that uses a Play Channel object to get data to the client */
   case class Play2ClientService( val c: Channel[ String ] ) extends ClientService[ String ] {
-    def send( d: String ) = c push d
+    override def send( d: String ) = c push d
+    override def close = c.eofAndEnd
   }
 
   /**

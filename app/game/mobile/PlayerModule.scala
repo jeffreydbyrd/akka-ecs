@@ -73,7 +73,7 @@ trait PlayerModule extends MobileModule {
     override def default: Handle = {
       case Click( x: Int, y: Int ) ⇒
       case Invalid( msg: String )  ⇒
-      case KeyUp( 81 )             ⇒ quit
+      case KeyUp( 81 )             ⇒ self ! PoisonPill
       case _                       ⇒
     }
 
@@ -82,10 +82,11 @@ trait PlayerModule extends MobileModule {
       case KeyDown( c ) if List( 68, 39 ) contains c ⇒ moveRight
     }
 
-    def quit {
+    override def postStop {
       this emit Quit
       this.subscribers.map { _ ! Unsubscribe }
-      self ! PoisonPill
+      cs send "quit"
+      cs.close
     }
 
   }
