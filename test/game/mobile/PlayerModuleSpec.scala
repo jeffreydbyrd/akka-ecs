@@ -23,22 +23,29 @@ class PlayerModuleSpec
     override def close {}
   }
 
-  class Dummy extends EHPlayer {
+  trait Dummy extends GenericPlayer[ String ] {
     val cs: ClientService[ String ] = NOOP
     val name = "dummy"
   }
 
   "When a Player actor is initialized, it" should {
     "return None when I call setup" in {
-      new GenericPlayer[ String ] {
-        val cs: ClientService[ String] = NOOP
-        val name = "test"
-        def test = setup
-      }.test must beNone
+      new Dummy { def test = setup }.test must beNone
     }
 
-    "return Connected when I send Start()" in {
-      { TestActorRef( new Dummy ) ? Start }.value.get.get === Connected
+    "return Connected when I send Start" in {
+      { TestActorRef( new Dummy with EHPlayer ) ? Start }.value.get.get === Connected
+    }
+
+    "return NotConnected( msg ) when setup returns Some( msg )" in {
+      {
+        TestActorRef(
+          new Dummy with EHPlayer {
+            override def setup = Some( "message" )
+            def test = setup
+          }
+        ) ? Start
+      }.value.get.get === NotConnected( "message" )
     }
 
   }
