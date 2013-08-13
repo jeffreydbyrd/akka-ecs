@@ -37,8 +37,7 @@ class PlayerModuleSpec
     }
 
     "return Connected when I send Start()" in {
-      val Success( result: Connected ) = { TestActorRef( new Dummy ) ? Start() }.value.get
-      result.isInstanceOf[ Connected ]
+      { TestActorRef( new Dummy ) ? Start }.value.get.get === Connected
     }
 
   }

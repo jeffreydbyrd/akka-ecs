@@ -20,21 +20,22 @@ trait PlayerModule extends MobileModule {
   implicit val timeout = akka.util.Timeout( 1 second )
 
   // Player-Client Communication
-  case class Start()
-  case class Connected()
+  case object Start
+  case object Connected
   case class NotConnected( msg: String )
   case class JsonCmd( msg: String )
 
   // Events:
   case class KeyDown( code: Int ) extends Event
   case class Click( x: Int, y: Int ) extends Event
+  case object Quit extends Event
 
   class Player( val name: String, val cs: ClientService[ String ] ) extends EHPlayer {
     //temporary:
     override def setup = {
       val roomRef = system.actorOf( Props( new Room( "temp" ) ) )
       subscribers = subscribers :+ roomRef
-      roomRef ! Subscribe()
+      roomRef ! Subscribe
       None
     }
   }
@@ -47,7 +48,7 @@ trait PlayerModule extends MobileModule {
       extends EHMobile
       with GenericPlayer[ String ] {
 
-    override def receive = { case Start() ⇒ start }
+    override def receive = { case Start ⇒ start }
 
     def playing: Receive = { case JsonCmd( json ) ⇒ handle( getCommand( json ) ) }
 
@@ -64,15 +65,15 @@ trait PlayerModule extends MobileModule {
         sender ! NotConnected( msg )
         self ! PoisonPill // failed to start... you know what to do :(
       } getOrElse {
-        sender ! Connected()
+        sender ! Connected
         this.handle = standing ~ default
-        context become { playing orElse super.receive }
+        context become { playing orElse testing orElse super.receive }
       }
 
     override def default: Handle = {
       case Click( x: Int, y: Int ) ⇒
       case Invalid( msg: String )  ⇒
-      case KeyDown( 81 )           ⇒ quit
+      case KeyUp( 81 )             ⇒ quit
       case _                       ⇒
     }
 
@@ -80,9 +81,11 @@ trait PlayerModule extends MobileModule {
       case KeyDown( c ) if List( 65, 37 ) contains c ⇒ moveLeft
       case KeyDown( c ) if List( 68, 39 ) contains c ⇒ moveRight
     }
-    
+
     def quit {
-      println("quit")
+      this emit Quit
+      this.subscribers.map { _ ! Unsubscribe }
+      self ! PoisonPill
     }
 
   }

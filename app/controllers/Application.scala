@@ -62,9 +62,9 @@ trait Application extends Controller {
   def websocket( username: String ) = WebSocket.async[ String ] { implicit request ⇒
     lazy val ( enumerator, channel ) = Concurrent.broadcast[ String ]
     val player = system.actorOf( Props( new Player( username, Play2ClientService( channel ) ) ) )
-    ( player ? Start() ) map {
+    ( player ? Start ) map {
 
-      case Connected() ⇒
+      case Connected ⇒
         val in = Iteratee.foreach[ String ] {
           json ⇒ player ! JsonCmd( json )
         }

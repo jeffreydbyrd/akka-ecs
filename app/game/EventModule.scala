@@ -28,8 +28,8 @@ trait EventModule {
   }
 
   // Actor messages:
-  case class Subscribe()
-  case class UnSubscribe()
+  case object Subscribe
+  case object Unsubscribe
   case class Add( as: List[ Adjuster ] )
   case class Remove( as: List[ Adjuster ] )
 
@@ -42,12 +42,12 @@ trait EventModule {
     type T = ActorRef
 
     override def receive = {
-      case e: Event      ⇒ this.handle( e )
-      case Subscribe()   ⇒ subscribers = subscribers :+ sender
-      case UnSubscribe() ⇒ subscribers = subscribers.filterNot( _ == sender )
-      case Add( as )     ⇒ adjusters = ( adjusters ::: as ).distinct
-      case Remove( as )  ⇒ adjusters = this.removeAll( as )
-      case _             ⇒
+      case e: Event     ⇒ this.handle( e )
+      case Subscribe    ⇒ subscribers = subscribers :+ sender
+      case Unsubscribe  ⇒ subscribers = subscribers.filterNot( _ == sender )
+      case Add( as )    ⇒ adjusters = ( adjusters ::: as ).distinct
+      case Remove( as ) ⇒ adjusters = this.removeAll( as )
+      case _            ⇒
     }
 
     /**
