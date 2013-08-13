@@ -1,15 +1,12 @@
 package game
 
+import java.io.Closeable
+
 trait ConnectionModule {
 
-  /** Defines a service that sends data to the client */
-  trait ClientService[ D ] {
-    
-    /** Sends a chunk of data to the client */
+  /** Defines a closeable service that sends data to the client */
+  trait ClientService[ D ] extends Closeable {
     def send( data: D ): Unit
-    
-    /** Closes the connection to the client */
-    def close: Unit
   }
 
 }
