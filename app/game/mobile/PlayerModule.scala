@@ -49,14 +49,14 @@ trait PlayerModule extends MobileModule {
       with GenericPlayer[ String ] {
 
     override def receive = { case Start ⇒ start }
-
     def playing: Receive = { case JsonCmd( json ) ⇒ handle( getCommand( json ) ) }
 
     /** Temporary: testing to see if 'cs' can send updates to the client */
     def testing: Receive = {
+      // if I'm the one that moved:
       case m @ Moved( ar, dir ) if ar == self ⇒
-        cs send s"xpos = $xpos"
-        super.receive( m )
+        cs send s"xpos = ${xpos + dir}" //send position
+        super.receive( m ) // pass along the message
     }
 
     // this is basically a constructor for the actor
@@ -77,7 +77,7 @@ trait PlayerModule extends MobileModule {
       case _                       ⇒
     }
 
-    def standing: Handle = {
+    override def standing: Handle = {
       case KeyDown( c ) if List( 65, 37 ) contains c ⇒ moveLeft
       case KeyDown( c ) if List( 68, 39 ) contains c ⇒ moveRight
     }
@@ -91,27 +91,20 @@ trait PlayerModule extends MobileModule {
 
   }
 
-  /**
-   * A Player has a Channel that it pushes data to. A Channel connects to
-   * an Enumerator, but this trait doesn't care which. A Channel can connect
-   * to multiple Enumerators and "broadcast" data to them.
-   */
   trait GenericPlayer[ D ] extends Mobile {
     val cs: ClientService[ D ]
 
     /**
      * Sets up this Player object by retrieving state from the database.
-     * If something goes wrong, we return Some[String] to deliver an error message,
+     * If something goes wrong, we return Some( errMsg ),
      * otherwise we return None to indicate that everything's fine.
      */
-    protected def setup: Option[ String ] = {
-      None
-    }
+    protected def setup: Option[ String ] = None // temporary placeholder
   }
 
   /**
    * Creates a Command object based on the contents of 'json'. The schema of the content is
-   * simply : { type: ..., data: ...}.
+   * simply : { type: ..., data: ... }.
    * There are only a few types of commands a client can send: keydown, keyup, click.
    * Depending on the type, 'data' will be wrapped in the appropriate Event object.
    * If there is an error while parsing, Invalid is returned.
@@ -123,7 +116,8 @@ trait PlayerModule extends MobileModule {
       case ( Some( "click" ), Some( JSONObject( pos: Map[ String, Any ] ) ) ) ⇒
         ( pos.get( "x" ), pos.get( "y" ) ) match {
           case ( Some( x: Double ), Some( y: Double ) ) ⇒ Click( x.toInt, y.toInt )
-          case _                                        ⇒ Invalid( "A click command expects 'x' and 'y' integer values" )
+          case _ ⇒
+            Invalid( "A click command expects 'x' and 'y' integer values" )
         }
       case _ ⇒ Invalid( "Unrecognized command." )
     }

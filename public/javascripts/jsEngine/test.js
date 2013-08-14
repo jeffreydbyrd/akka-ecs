@@ -1,7 +1,5 @@
 $(document).ready( function() {
 
-    var xpos = 0;
-
     var wsUrl = "ws://127.0.0.1:9000/test?username=jb";
 
     var ws = new WebSocket(wsUrl);

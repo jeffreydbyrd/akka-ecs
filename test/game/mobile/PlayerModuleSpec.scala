@@ -16,7 +16,7 @@ class PlayerModuleSpec
     with RoomModule
     with Specification {
 
-  implicit val system: ActorSystem = ActorSystem( "EventModuleSpec" )
+  implicit val system: ActorSystem = ActorSystem( "PlayerModuleSpec" )
 
   val NOOP: ClientService[ String ] = new ClientService[ String ] {
     override def send( d: String ) = {}
