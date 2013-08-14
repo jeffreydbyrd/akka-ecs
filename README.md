@@ -1,4 +1,4 @@
-# Running the App
+# Setting up
 
 This is a Scala app written on top of the [Play! Framework](http://www.playframework.com/). In order to run it you will need to install [scala](http://www.scala-lang.org/)
 
@@ -44,6 +44,10 @@ This generates all the files eclipse needs to build the app. Re-run this command
 Your Eclipse version probably does not recognize Scala code. Visit the [scala-ide download page](http://scala-ide.org/download/sdk.html) and download the latest version of the Scala IDE. Open that up and pick a workspace. Right-click in the package explorer and choose `import` > `existing project into workspace` and find our app. You should be able to import it just like a java project.
 
 Lastly, there is an optional Play! plugin for Eclipse that makes it a pleasure to edit the routes file and the html templates. Go to `help` > `install new software`. Open up the drop-down menu at the top and select Scala IDE. Select `Scala IDE Plugins` > `Play2 support in Scala IDE` and click next. Continue through the installation as normal. After restarting Eclipse, you should have nice syntax highlighting in your routes and template files.
+
+# [CoffeeScript?](http://coffeescript.org/)
+
+I really like CoffeeScript and I'm wondering how practical it could be in writing the client-side engine. It's much more comprehensive and expressive than raw JS, but harder to debug since the browser reads it as JS. Also, it uses white space to delimit blocks, which can be a pain for tired eyes.
 
 # Visit the Wiki
 
