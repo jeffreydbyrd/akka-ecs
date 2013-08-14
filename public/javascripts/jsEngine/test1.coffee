@@ -18,7 +18,7 @@ $(document).ready(  ->
 
   $(window).unload( (evt) ->
     evt.type = 'keyup'
-    evt.keyCode = '81' # Q for quit
+    evt.keyCode = 81 # Q for quit
     onkey(evt);
   )
      
