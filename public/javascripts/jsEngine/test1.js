@@ -23,7 +23,7 @@
     $('html').keyup(onkey);
     return $(window).unload(function(evt) {
       evt.type = 'keyup';
-      evt.keyCode = '81';
+      evt.keyCode = 81;
       return onkey(evt);
     });
   });
