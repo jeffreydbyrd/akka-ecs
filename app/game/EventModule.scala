@@ -11,11 +11,11 @@ import akka.actor.actorRef2Scala
  */
 trait EventModule {
 
-  def system: ActorSystem
+  implicit def system: ActorSystem
 
   abstract class Event
 
-  type Adjuster = Event ⇒ Event
+  type Adjuster = PartialFunction[ Event, Event ]
   type Handle = PartialFunction[ Event, Unit ]
 
   implicit def toRichHandle( f: Handle ) = new RichHandle {
@@ -50,12 +50,9 @@ trait EventModule {
       case _            ⇒
     }
 
-    /**
-     * Pipes an Event through the 'adjusters' list and then sends the
-     * end result to each of the 'subscribers'
-     */
+    /** Adjust an Event and broadcast the result to the 'subscribers' list */
     protected def emit( e: Event ): Unit = {
-      val finalEvent = adjusters.foldLeft( e ) { ( evt, adj ) ⇒ adj( evt ) }
+      val finalEvent = adjust( e )
       subscribers.foreach { _ ! finalEvent }
     }
 
@@ -83,6 +80,12 @@ trait EventModule {
      */
     var handle: Handle = default
     def default: Handle
+
+    /** Pipes an Event through the 'adjusters' list and returns the end result */
+    protected def adjust( e: Event ) =
+      adjusters.foldLeft( e ) { ( evt, adj ) ⇒
+        if ( adj isDefinedAt evt ) adj( evt ) else evt
+      }
 
     /**
      * Pipes an Event through the 'adjusters' list and then sends the
