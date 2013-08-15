@@ -27,15 +27,16 @@ trait MobileModule extends EventModule {
   /** An EventHandling Mobile object */
   trait EHMobile extends EventHandler with Mobile {
     private var moveScheduler: Cancellable = _
-    val speed = 1
+    val xspeed = 1
+    val yspeed = 0
 
     /** a Mobile that is standing still */
     def standing: Handle
 
     /** Represents the state of a moving Mobile */
     def moving: Handle = {
-      case Moved( ar, dist ) if ar == self ⇒
-        this.xpos = this.xpos + dist
+      case Moved( ar, xdir ) if ar == self ⇒
+        this.xpos = this.xpos + xdir
         println( this.xpos );
       case KeyUp( c ) if List( 65, 68, 37, 39 ) contains c ⇒
         moveScheduler.cancel
@@ -48,8 +49,8 @@ trait MobileModule extends EventModule {
       this.moveScheduler = system.scheduler.schedule( 0 millis, 80 millis )( this emit MoveAttempt( dir ) )
     }
 
-    def moveLeft = move( -speed )
-    def moveRight = move( speed )
+    def moveLeft = move( -xspeed )
+    def moveRight = move( xspeed )
 
   }
 }

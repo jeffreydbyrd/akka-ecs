@@ -96,6 +96,7 @@ trait PlayerModule extends MobileModule {
   class Player( val name: String, val cs: ClientService[ String ] ) extends EHPlayer {
     //temporary:
     override def setup = {
+      println("player setup..");
       val roomRef = system.actorOf( Props( new Room( "temp" ) ) )
       subscribers = subscribers :+ roomRef
       roomRef ! Subscribe

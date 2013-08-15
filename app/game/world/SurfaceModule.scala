@@ -1,10 +1,33 @@
 package game.world
 
+/**
+ * A surface is an object with length, slope, and position. A surface
+ * can be either a Wall or a Floor.
+ *
+ * A Wall always has a vertical (undefined) slope, while a Surface
+ * always has a Defined slope.
+ *
+ *
+ */
 trait SurfaceModule {
 
-  trait Slope
-  case class Defined( x: Int, y: Int ) extends Slope
-  case object Undefined extends Slope
+  class UndefinedSlopeException extends Exception
+
+  trait Slope {
+    def x: Int
+    def y: Int
+  }
+
+  abstract class Defined( val x: Int, val y: Int ) extends Slope
+
+  case class Slant( _x: Int, _y: Int ) extends Defined( _x, _y )
+
+  case object Flat extends Defined( 1, 0 )
+
+  case object Undefined extends Slope {
+    val x = 0
+    def y = throw new UndefinedSlopeException
+  }
 
   trait Surface {
     val xpos: Int

@@ -1,19 +1,19 @@
 package game.mobile
 
 import scala.util.Success
-
 import org.specs2.mutable.Specification
-
 import akka.actor.ActorSystem
 import akka.pattern.ask
 import akka.testkit.TestActorRef
 import game.ConnectionModule
 import game.world.RoomModule
+import game.world.SurfaceModule
 
 class PlayerModuleSpec
     extends PlayerModule
     with ConnectionModule
     with RoomModule
+    with SurfaceModule
     with Specification {
 
   implicit val system: ActorSystem = ActorSystem( "PlayerModuleSpec" )

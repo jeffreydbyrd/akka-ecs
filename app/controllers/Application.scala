@@ -1,7 +1,6 @@
 package controllers
 
 import scala.concurrent.ExecutionContext.Implicits.global
-
 import akka.actor.ActorSystem
 import akka.actor.Props
 import akka.actor.actorRef2Scala
@@ -20,12 +19,14 @@ import play.api.libs.json.JsString
 import play.api.mvc.Action
 import play.api.mvc.Controller
 import play.api.mvc.WebSocket
+import game.world.SurfaceModule
 
 object Application
     extends Application
     with PlayerModule
     with ConnectionModule
-    with RoomModule {
+    with RoomModule
+    with SurfaceModule {
   override val system: ActorSystem = akka.actor.ActorSystem( "Doppelsystem" )
 }
 
@@ -35,7 +36,7 @@ object Application
  * @author biff
  */
 trait Application extends Controller {
-  this: PlayerModule with ConnectionModule with RoomModule ⇒
+  this: PlayerModule with ConnectionModule ⇒
 
   /** A simple service that uses a Play Channel object to get data to the client */
   case class Play2ClientService( val c: Channel[ String ] ) extends ClientService[ String ] {
