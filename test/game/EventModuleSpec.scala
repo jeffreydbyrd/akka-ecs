@@ -19,7 +19,7 @@ class EventModuleSpec
 
   case class Test( v: Int ) extends Event
 
-  class TestEventHandler extends GenericEventHandler {
+  trait TestEventHandler extends GenericEventHandler {
     adjusters = testAdjusters
     def default: Handle = { case _ ⇒ }
     protected def emit( e: Event ): Unit = {}
