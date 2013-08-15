@@ -40,7 +40,6 @@ class EventModuleSpec
   }
 
   "EventHandler#adjust(Event)" should {
-
     "pipe an Event through a List[ Adjusters ] and skip those for which it's not defined at" in {
       new TestEventHandler { def test( e: Event ) = adjust( e ) }
         .test( Test( 5 ) ) === Test( 30 )
