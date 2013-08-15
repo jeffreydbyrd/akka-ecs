@@ -34,31 +34,6 @@ trait EventModule {
   case class Remove( as: List[ Adjuster ] )
 
   /**
-   * An asynchronous EventHandler that uses akka Actors and Message passing
-   * to handle Events
-   * @author biff
-   */
-  trait EventHandler extends GenericEventHandler with Actor {
-    type T = ActorRef
-
-    override def receive = {
-      case e: Event     ⇒ this.handle( e )
-      case Subscribe    ⇒ subscribers = subscribers :+ sender
-      case Unsubscribe  ⇒ subscribers = subscribers.filterNot( _ == sender )
-      case Add( as )    ⇒ adjusters = ( adjusters ::: as ).distinct
-      case Remove( as ) ⇒ adjusters = this.removeAll( as )
-      case _            ⇒
-    }
-
-    /** Adjust an Event and broadcast the result to the 'subscribers' list */
-    protected def emit( e: Event ): Unit = {
-      val finalEvent = adjust( e )
-      subscribers.foreach { _ ! finalEvent }
-    }
-
-  }
-
-  /**
    * An object that handles Events by either changing internal state, forwarding them,
    * emitting them, or any combination of the three.
    * @author biff
@@ -109,4 +84,28 @@ trait EventModule {
 
   }
 
+  /**
+   * An asynchronous EventHandler that uses akka Actors and Message passing
+   * to handle Events
+   * @author biff
+   */
+  trait EventHandler extends GenericEventHandler with Actor {
+    type T = ActorRef
+
+    override def receive = {
+      case e: Event     ⇒ this.handle( e )
+      case Subscribe    ⇒ subscribers = subscribers :+ sender
+      case Unsubscribe  ⇒ subscribers = subscribers.filterNot( _ == sender )
+      case Add( as )    ⇒ adjusters = ( adjusters ::: as ).distinct
+      case Remove( as ) ⇒ adjusters = this.removeAll( as )
+      case _            ⇒
+    }
+
+    /** Adjust an Event and broadcast the result to the 'subscribers' list */
+    protected def emit( e: Event ): Unit = {
+      val finalEvent = adjust( e )
+      subscribers.foreach { _ ! finalEvent }
+    }
+
+  }
 }

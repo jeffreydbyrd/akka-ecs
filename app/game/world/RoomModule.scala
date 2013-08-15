@@ -10,8 +10,6 @@ trait RoomModule extends EventModule {
   case object Arrived extends Event
   case class Moved( ar: ActorRef, dist: Int ) extends Event
 
-  class Room( override val id: String ) extends EHRoom
-
   trait EHRoom extends EventHandler {
     val id: String
 
@@ -20,4 +18,6 @@ trait RoomModule extends EventModule {
       case _                   ⇒
     }
   }
+
+  class Room( override val id: String ) extends EHRoom
 }

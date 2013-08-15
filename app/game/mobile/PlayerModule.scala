@@ -30,14 +30,15 @@ trait PlayerModule extends MobileModule {
   case class Click( x: Int, y: Int ) extends Event
   case object Quit extends Event
 
-  class Player( val name: String, val cs: ClientService[ String ] ) extends EHPlayer {
-    //temporary:
-    override def setup = {
-      val roomRef = system.actorOf( Props( new Room( "temp" ) ) )
-      subscribers = subscribers :+ roomRef
-      roomRef ! Subscribe
-      None
-    }
+  trait GenericPlayer[ D ] extends Mobile {
+    val cs: ClientService[ D ]
+
+    /**
+     * Sets up this Player object by retrieving state from the database.
+     * If something goes wrong, we return Some( errMsg ),
+     * otherwise we return None to indicate that everything's fine.
+     */
+    protected def setup: Option[ String ] = None // temporary placeholder
   }
 
   /**
@@ -91,15 +92,15 @@ trait PlayerModule extends MobileModule {
 
   }
 
-  trait GenericPlayer[ D ] extends Mobile {
-    val cs: ClientService[ D ]
-
-    /**
-     * Sets up this Player object by retrieving state from the database.
-     * If something goes wrong, we return Some( errMsg ),
-     * otherwise we return None to indicate that everything's fine.
-     */
-    protected def setup: Option[ String ] = None // temporary placeholder
+  
+  class Player( val name: String, val cs: ClientService[ String ] ) extends EHPlayer {
+    //temporary:
+    override def setup = {
+      val roomRef = system.actorOf( Props( new Room( "temp" ) ) )
+      subscribers = subscribers :+ roomRef
+      roomRef ! Subscribe
+      None
+    }
   }
 
   /**

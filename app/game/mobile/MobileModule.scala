@@ -18,6 +18,12 @@ trait MobileModule extends EventModule {
   case class KeyUp( code: Int ) extends Event
   case class MoveAttempt( dir: Int ) extends Event
 
+  trait Mobile {
+    val name: String
+    var xpos: Int = 0
+    var ypos: Int = 0
+  }
+
   /** An EventHandling Mobile object */
   trait EHMobile extends EventHandler with Mobile {
     private var moveScheduler: Cancellable = _
@@ -45,11 +51,5 @@ trait MobileModule extends EventModule {
     def moveLeft = move( -speed )
     def moveRight = move( speed )
 
-  }
-
-  trait Mobile {
-    val name: String
-    var xpos: Int = 0
-    var ypos: Int = 0
   }
 }
