@@ -13,14 +13,24 @@ trait SurfaceModule {
     val slope: Slope
   }
 
-  trait Floor
+  trait Floor extends Surface {
+    val slope: Defined
+  }
 
-  trait Wall {
+  case class Wall( val xpos: Int,
+                   val ypos: Int,
+                   val length: Int ) extends Surface {
     val slope = Undefined
   }
 
-  trait SingleSided extends Floor
+  case class SingleSided( val xpos: Int,
+                          val ypos: Int,
+                          val length: Int,
+                          val slope: Defined ) extends Floor
 
-  trait DoubleSided extends Floor
+  case class DoubleSided( val xpos: Int,
+                          val ypos: Int,
+                          val length: Int,
+                          val slope: Defined ) extends Floor
 
 }
