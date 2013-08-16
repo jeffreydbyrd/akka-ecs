@@ -8,10 +8,8 @@ import game.EventModule
  *
  * A Wall always has a vertical (undefined) slope, while a Surface
  * always has a Defined slope.
- *
- *
  */
-trait SurfaceModule extends EventModule {
+trait SurfaceModule {
 
   class UndefinedSlopeException extends Exception
 
@@ -31,7 +29,7 @@ trait SurfaceModule extends EventModule {
     def y = throw new UndefinedSlopeException
   }
 
-  trait Surface extends StatelessEventHandler {
+  trait Surface {
     val xpos: Int
     val ypos: Int
     val length: Int
@@ -46,28 +44,16 @@ trait SurfaceModule extends EventModule {
                    val ypos: Int,
                    val length: Int ) extends Surface {
     val slope = Undefined
-
-    override val default: Handle = {
-      case _ ⇒
-    }
   }
 
   case class SingleSided( val xpos: Int,
                           val ypos: Int,
                           val length: Int,
-                          val slope: Defined ) extends Floor {
-    override val default: Handle = {
-      case _ ⇒
-    }
-  }
+                          val slope: Defined ) extends Floor
 
   case class DoubleSided( val xpos: Int,
                           val ypos: Int,
                           val length: Int,
-                          val slope: Defined ) extends Floor {
-    override val default: Handle = {
-      case _ ⇒
-    }
-  }
+                          val slope: Defined ) extends Floor
 
 }

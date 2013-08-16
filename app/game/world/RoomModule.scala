@@ -18,7 +18,7 @@ trait RoomModule extends EventModule {
 
   trait GenericRoom {
     val id: String
-    var surfaces = List( ceiling, floor, leftWall, rightWall )
+//    List( ceiling, floor, leftWall, rightWall ) foreach {s => adjusters = adjusters :+ s.}
   }
 
   trait EHRoom extends GenericRoom with EventHandlerActor {

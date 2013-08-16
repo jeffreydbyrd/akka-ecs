@@ -84,15 +84,6 @@ trait EventModule {
 
   }
 
-  trait StatelessEventHandler extends GenericEventHandler {
-    type S = StatelessEventHandler
-
-    override protected def emit( e: Event ) {
-      val finalEvent = adjust( e )
-      subscribers foreach { _ handle finalEvent }
-    }
-  }
-
   /**
    * An asynchronous EventHandler that uses akka Actors and Message passing
    * to handle Events
