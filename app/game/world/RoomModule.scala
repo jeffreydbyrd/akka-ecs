@@ -23,12 +23,12 @@ trait RoomModule extends EventModule {
 
   trait EHRoom extends GenericRoom with EventHandlerActor {
     def default: Handle = {
-      case MoveAttempt( xpos, ypos, xdir ) ⇒
+      case MoveAttempt( xpos, ypos, xdir ) ⇒ this emit Moved( sender, xdir )
       case _                               ⇒
     }
 
     def canMove( xpos: Int, ypos: Int, xdir: Int ) = {
-      
+
       false
     }
   }
