@@ -16,7 +16,7 @@ trait MobileModule extends EventModule {
   // Define events:
   case class Invalid( msg: String ) extends Event
   case class KeyUp( code: Int ) extends Event
-  case class MoveAttempt( dir: Int ) extends Event
+  case class MoveAttempt( xpos:Int, ypos:Int, dir: Int ) extends Event
 
   trait Mobile {
     val name: String
@@ -25,7 +25,7 @@ trait MobileModule extends EventModule {
   }
 
   /** An EventHandling Mobile object */
-  trait EHMobile extends EventHandler with Mobile {
+  trait EHMobile extends EventHandlerActor with Mobile {
     private var moveScheduler: Cancellable = _
     val xspeed = 1
     val yspeed = 0
@@ -46,7 +46,7 @@ trait MobileModule extends EventModule {
     /** Starts moving this mobile */
     def move( dir: Int ) {
       this.handle = moving ~ default
-      this.moveScheduler = system.scheduler.schedule( 0 millis, 80 millis )( this emit MoveAttempt( dir ) )
+      this.moveScheduler = system.scheduler.schedule( 0 millis, 80 millis )( this emit MoveAttempt( xpos, ypos, dir ) )
     }
 
     def moveLeft = move( -xspeed )

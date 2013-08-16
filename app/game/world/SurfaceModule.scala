@@ -1,5 +1,7 @@
 package game.world
 
+import game.EventModule
+
 /**
  * A surface is an object with length, slope, and position. A surface
  * can be either a Wall or a Floor.
@@ -9,7 +11,7 @@ package game.world
  *
  *
  */
-trait SurfaceModule {
+trait SurfaceModule extends EventModule {
 
   class UndefinedSlopeException extends Exception
 
@@ -29,7 +31,7 @@ trait SurfaceModule {
     def y = throw new UndefinedSlopeException
   }
 
-  trait Surface {
+  trait Surface extends StatelessEventHandler {
     val xpos: Int
     val ypos: Int
     val length: Int
@@ -44,16 +46,28 @@ trait SurfaceModule {
                    val ypos: Int,
                    val length: Int ) extends Surface {
     val slope = Undefined
+
+    override val default: Handle = {
+      case _ ⇒
+    }
   }
 
   case class SingleSided( val xpos: Int,
                           val ypos: Int,
                           val length: Int,
-                          val slope: Defined ) extends Floor
+                          val slope: Defined ) extends Floor {
+    override val default: Handle = {
+      case _ ⇒
+    }
+  }
 
   case class DoubleSided( val xpos: Int,
                           val ypos: Int,
                           val length: Int,
-                          val slope: Defined ) extends Floor
+                          val slope: Defined ) extends Floor {
+    override val default: Handle = {
+      case _ ⇒
+    }
+  }
 
 }

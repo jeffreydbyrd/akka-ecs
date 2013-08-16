@@ -39,13 +39,13 @@ trait EventModule {
    * @author biff
    */
   trait GenericEventHandler {
-    type T
+    type S
 
     /** A list of EventHandlers that subscribe to the Events emitted by this EventHandler */
-    var subscribers: List[ T ] = Nil
+    protected var subscribers: List[ S ] = Nil
 
     /** A list of EventAdjusters that adjust an event before it is emitted */
-    var adjusters: List[ Adjuster ] = Nil
+    protected var adjusters: List[ Adjuster ] = Nil
 
     /**
      * This represents the entry point for all Events into this EventHandler.
@@ -53,8 +53,8 @@ trait EventModule {
      * state, or any combination of the three. This var can also be swapped out
      * for other Handle functions
      */
-    var handle: Handle = default
-    def default: Handle
+    protected var handle: Handle = default
+    protected def default: Handle
 
     /** Pipes an Event through the 'adjusters' list and returns the end result */
     protected def adjust( e: Event ) =
@@ -84,13 +84,22 @@ trait EventModule {
 
   }
 
+  trait StatelessEventHandler extends GenericEventHandler {
+    type S = StatelessEventHandler
+
+    override protected def emit( e: Event ) {
+      val finalEvent = adjust( e )
+      subscribers foreach { _ handle finalEvent }
+    }
+  }
+
   /**
    * An asynchronous EventHandler that uses akka Actors and Message passing
    * to handle Events
    * @author biff
    */
-  trait EventHandler extends GenericEventHandler with Actor {
-    type T = ActorRef
+  trait EventHandlerActor extends GenericEventHandler with Actor {
+    type S = ActorRef
 
     override def receive = {
       case e: Event     ⇒ this.handle( e )

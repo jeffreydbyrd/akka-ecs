@@ -18,14 +18,18 @@ trait RoomModule extends EventModule {
 
   trait GenericRoom {
     val id: String
+    var surfaces = List( ceiling, floor, leftWall, rightWall )
   }
 
-  trait EHRoom extends GenericRoom with EventHandler {
+  trait EHRoom extends GenericRoom with EventHandlerActor {
     def default: Handle = {
-      case MoveAttempt( xdir ) ⇒
-      	//TODO: Do some surface logic here...
-        this emit Moved( sender, xdir )
-      case _ ⇒
+      case MoveAttempt( xpos, ypos, xdir ) ⇒
+      case _                               ⇒
+    }
+
+    def canMove( xpos: Int, ypos: Int, xdir: Int ) = {
+      
+      false
     }
   }
 
