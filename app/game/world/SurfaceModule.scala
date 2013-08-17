@@ -44,8 +44,7 @@ trait SurfaceModule {
   trait Floor extends Surface {
     val slope: Defined
     val stopDown: Adjust = {
-      case e @ Moved( ar, xpos, ypos, xdir, ydir ) ⇒
-        e
+      case e @ Moved( ar, xpos, ypos, xdir, ydir ) ⇒ e
     }
 
     adjusts = adjusts :+ stopDown
