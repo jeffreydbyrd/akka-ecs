@@ -21,7 +21,7 @@ trait MobileModule extends EventModule {
   trait Mobile {
     val name: String
     var xpos: Int = 1
-    var ypos: Int = 0
+    var ypos: Int = 1
   }
 
   /** An EventHandling Mobile object */
@@ -38,7 +38,6 @@ trait MobileModule extends EventModule {
       case Moved( ar, xpos, ypos, xdir, ydir) if ar == self ⇒
         this.xpos = this.xpos + xdir
         this.ypos = this.ypos + ydir
-        println( this.xpos );
       case KeyUp( c ) if List( 65, 68, 37, 39 ) contains c ⇒
         moveScheduler.cancel
         this.handle = standing ~ this.default

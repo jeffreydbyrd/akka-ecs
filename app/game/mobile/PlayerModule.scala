@@ -57,6 +57,7 @@ trait PlayerModule extends MobileModule {
       // if I'm the one that moved:
       case m @ Moved( ar, xpos, ypos, xdir, ydir ) if ar == self ⇒
         cs send s"xpos = ${xpos + xdir}" //send position
+        println( this.xpos + xdir );
         super.receive( m ) // pass along the message
     }
 
@@ -92,11 +93,10 @@ trait PlayerModule extends MobileModule {
 
   }
 
-  
   class Player( val name: String, val cs: ClientService[ String ] ) extends EHPlayer {
     //temporary:
     override def setup = {
-      println("player setup..");
+      println( "player setup.." );
       val roomRef = system.actorOf( Props( new Room( "temp" ) ) )
       subscribers = subscribers :+ roomRef
       roomRef ! Subscribe

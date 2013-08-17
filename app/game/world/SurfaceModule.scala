@@ -52,6 +52,7 @@ trait SurfaceModule {
 
     def standingOn( x: Int, y: Int ) = {
       slope.m
+      false
     }
 
     adjusts = adjusts :+ stopDown
@@ -61,12 +62,16 @@ trait SurfaceModule {
                    val ypos: Int,
                    val length: Int ) extends Surface {
     val slope = Undefined
+    val ytop = ypos + ( length / 2 )
+    val ybottom = ypos - ( length / 2 )
+    def inBounds( ypos: Int ) = ypos <= ytop && ypos >= ybottom
+
     val stopLeft: Adjust = {
-      case e @ Moved( ar, xpos, ypos, xdir, ydir ) if xpos == this.xpos + 1 && xdir < 0 ⇒
+      case Moved( ar, xpos, ypos, xdir, ydir ) if xpos == this.xpos + 1 && xdir < 0 && inBounds( ypos ) ⇒
         Moved( ar, xpos, ypos, 0, ydir )
     }
     val stopRight: Adjust = {
-      case e @ Moved( ar, xpos, ypos, xdir, ydir ) if xpos == this.xpos - 1 && xdir > 0 ⇒
+      case Moved( ar, xpos, ypos, xdir, ydir ) if xpos == this.xpos - 1 && xdir > 0 && inBounds( ypos ) ⇒
         Moved( ar, xpos, ypos, 0, ydir )
     }
     adjusts = adjusts ::: List( stopLeft, stopRight )
