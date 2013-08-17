@@ -16,11 +16,11 @@ trait MobileModule extends EventModule {
   // Define events:
   case class Invalid( msg: String ) extends Event
   case class KeyUp( code: Int ) extends Event
-  case class MoveAttempt( xpos:Int, ypos:Int, dir: Int ) extends Event
+  case class MoveAttempt( xpos: Int, ypos: Int, xdir: Int, ydir: Int ) extends Event
 
   trait Mobile {
     val name: String
-    var xpos: Int = 0
+    var xpos: Int = 3
     var ypos: Int = 0
   }
 
@@ -35,8 +35,9 @@ trait MobileModule extends EventModule {
 
     /** Represents the state of a moving Mobile */
     def moving: Handle = {
-      case Moved( ar, xdir ) if ar == self ⇒
+      case Moved( ar, xpos, ypos, xdir, ydir) if ar == self ⇒
         this.xpos = this.xpos + xdir
+        this.ypos = this.ypos + ydir
         println( this.xpos );
       case KeyUp( c ) if List( 65, 68, 37, 39 ) contains c ⇒
         moveScheduler.cancel
@@ -44,9 +45,9 @@ trait MobileModule extends EventModule {
     }
 
     /** Starts moving this mobile */
-    def move( dir: Int ) {
+    def move( xdir: Int ) {
       this.handle = moving ~ default
-      this.moveScheduler = system.scheduler.schedule( 0 millis, 80 millis )( this emit MoveAttempt( xpos, ypos, dir ) )
+      this.moveScheduler = system.scheduler.schedule( 0 millis, 80 millis )( this emit MoveAttempt( xpos, ypos, xdir, 0 ) )
     }
 
     def moveLeft = move( -xspeed )

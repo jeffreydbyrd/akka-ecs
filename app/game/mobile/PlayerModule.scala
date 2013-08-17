@@ -55,8 +55,8 @@ trait PlayerModule extends MobileModule {
     /** Temporary: testing to see if 'cs' can send updates to the client */
     def testing: Receive = {
       // if I'm the one that moved:
-      case m @ Moved( ar, dir ) if ar == self ⇒
-        cs send s"xpos = ${xpos + dir}" //send position
+      case m @ Moved( ar, xpos, ypos, xdir, ydir ) if ar == self ⇒
+        cs send s"xpos = ${xpos + xdir}" //send position
         super.receive( m ) // pass along the message
     }
 

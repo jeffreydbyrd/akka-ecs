@@ -15,7 +15,7 @@ trait EventModule {
 
   abstract class Event
 
-  type Adjuster = PartialFunction[ Event, Event ]
+  type Adjust = PartialFunction[ Event, Event ]
   type Handle = PartialFunction[ Event, Unit ]
 
   implicit def toRichHandle( f: Handle ) = new RichHandle {
@@ -30,22 +30,43 @@ trait EventModule {
   // Actor messages:
   case object Subscribe
   case object Unsubscribe
-  case class Add( as: List[ Adjuster ] )
-  case class Remove( as: List[ Adjuster ] )
+  case class Add( as: List[ Adjust ] )
+  case class Remove( as: List[ Adjust ] )
+
+  trait AdjustHandler {
+    /** A list of EventAdjusters that adjust an event before it is emitted */
+    protected var adjusts: List[ Adjust ] = Nil
+
+    /**
+     * Removes all instances of adjuster 'a' from this.adjusters. Items
+     * are matched based on their internal 'id' attributes.
+     */
+    protected def remove( a: Adjust ): List[ Adjust ] =
+      this.adjusts.filterNot( _ == a )
+
+    /**
+     * Removes all adjusters specified in 'as' from this.adjusters.
+     * Items are removed based on their internal 'id' attribute
+     */
+    protected def removeAll( as: List[ Adjust ] ): List[ Adjust ] =
+      as.foldLeft( this.adjusts ) { ( ( adjs, a ) ⇒ adjs.filterNot( _ == a ) ) }
+
+  }
+
+  trait AdjustSupplier extends AdjustHandler {
+    def getAdjusts: List[ Adjust ] = adjusts
+  }
 
   /**
    * An object that handles Events by either changing internal state, forwarding them,
    * emitting them, or any combination of the three.
    * @author biff
    */
-  trait GenericEventHandler {
+  trait GenericEventHandler extends AdjustSupplier {
     type S
 
     /** A list of EventHandlers that subscribe to the Events emitted by this EventHandler */
     protected var subscribers: List[ S ] = Nil
-
-    /** A list of EventAdjusters that adjust an event before it is emitted */
-    protected var adjusters: List[ Adjuster ] = Nil
 
     /**
      * This represents the entry point for all Events into this EventHandler.
@@ -58,7 +79,7 @@ trait EventModule {
 
     /** Pipes an Event through the 'adjusters' list and returns the end result */
     protected def adjust( e: Event ) =
-      adjusters.foldLeft( e ) { ( evt, adj ) ⇒
+      adjusts.foldLeft( e ) { ( evt, adj ) ⇒
         if ( adj isDefinedAt evt ) adj( evt ) else evt
       }
 
@@ -67,21 +88,6 @@ trait EventModule {
      * end result to each of the 'subscribers'
      */
     protected def emit( e: Event ): Unit
-
-    /**
-     * Removes all instances of adjuster 'a' from this.adjusters. Items
-     * are matched based on their internal 'id' attributes.
-     */
-    protected def remove( a: Adjuster ): List[ Adjuster ] =
-      this.adjusters.filterNot( _ == a )
-
-    /**
-     * Removes all adjusters specified in 'as' from this.adjusters.
-     * Items are removed based on their internal 'id' attribute
-     */
-    protected def removeAll( as: List[ Adjuster ] ): List[ Adjuster ] =
-      as.foldLeft( GenericEventHandler.this.adjusters ) { ( ( adjs, a ) ⇒ adjs.filterNot( _ == a ) ) }
-
   }
 
   /**
@@ -96,8 +102,8 @@ trait EventModule {
       case e: Event     ⇒ this.handle( e )
       case Subscribe    ⇒ subscribers = subscribers :+ sender
       case Unsubscribe  ⇒ subscribers = subscribers.filterNot( _ == sender )
-      case Add( as )    ⇒ adjusters = ( adjusters ::: as ).distinct
-      case Remove( as ) ⇒ adjusters = this.removeAll( as )
+      case Add( as )    ⇒ adjusts = ( adjusts ::: as ).distinct
+      case Remove( as ) ⇒ adjusts = this.removeAll( as )
       case _            ⇒
     }
 

@@ -8,7 +8,7 @@ trait RoomModule extends EventModule {
   this: PlayerModule with SurfaceModule ⇒
 
   case object Arrived extends Event
-  case class Moved( ar: ActorRef, xdir: Int ) extends Event
+  case class Moved( ar: ActorRef, xpos: Int, ypos: Int, xdir: Int, ydir: Int ) extends Event
 
   // All rooms in the game are equipped with the same 4 surrounding surfaces:
   val ceiling: DoubleSided = DoubleSided( 50, 100, 100, Flat )
@@ -18,18 +18,14 @@ trait RoomModule extends EventModule {
 
   trait GenericRoom {
     val id: String
-//    List( ceiling, floor, leftWall, rightWall ) foreach {s => adjusters = adjusters :+ s.}
   }
 
   trait EHRoom extends GenericRoom with EventHandlerActor {
+    adjusts = adjusts ::: List( ceiling, floor, leftWall, rightWall ).flatMap( _.getAdjusts )
+
     def default: Handle = {
-      case MoveAttempt( xpos, ypos, xdir ) ⇒ this emit Moved( sender, xdir )
-      case _                               ⇒
-    }
-
-    def canMove( xpos: Int, ypos: Int, xdir: Int ) = {
-
-      false
+      case MoveAttempt( xpos, ypos, xdir, ydir ) ⇒ this emit Moved( sender, xpos: Int, ypos: Int, xdir, ydir )
+      case _                                     ⇒
     }
   }
 
