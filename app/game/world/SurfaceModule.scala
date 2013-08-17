@@ -19,7 +19,10 @@ trait SurfaceModule {
     def y: Int
   }
 
-  abstract class Defined( val x: Int, val y: Int ) extends Slope
+  abstract class Defined( val x: Int, val y: Int ) extends Slope {
+    lazy val m = y.toDouble / x.toDouble
+    lazy val b = y - ( m * x )
+  }
 
   case class Slant( _x: Int, _y: Int ) extends Defined( _x, _y )
 
@@ -32,7 +35,7 @@ trait SurfaceModule {
 
   /**
    * A Surface is essentially just a line with a length, position (x,y), and a slope.
-   * Surfaces are owned by Room objects, and can have Adjusters to modify certain Events.
+   * Surfaces are owned by Room objects, and can supply Adjusts to modify certain Events.
    */
   trait Surface extends AdjustSupplier {
     val xpos: Int
@@ -45,6 +48,10 @@ trait SurfaceModule {
     val slope: Defined
     val stopDown: Adjust = {
       case e @ Moved( ar, xpos, ypos, xdir, ydir ) ⇒ e
+    }
+
+    def standingOn( x: Int, y: Int ) = {
+      slope.m
     }
 
     adjusts = adjusts :+ stopDown
