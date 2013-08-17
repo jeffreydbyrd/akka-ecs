@@ -20,7 +20,7 @@ trait MobileModule extends EventModule {
 
   trait Mobile {
     val name: String
-    var xpos: Int = 3
+    var xpos: Int = 1
     var ypos: Int = 0
   }
 

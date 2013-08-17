@@ -43,11 +43,12 @@ trait SurfaceModule {
 
   trait Floor extends Surface {
     val slope: Defined
-    val stopDownward: Adjust = {
-      case e @ Moved( ar, xpos, ypos, xdir, ydir ) ⇒ e
+    val stopDown: Adjust = {
+      case e @ Moved( ar, xpos, ypos, xdir, ydir ) ⇒
+        e
     }
 
-    adjusts = adjusts :+ stopDownward
+    adjusts = adjusts :+ stopDown
   }
 
   case class Wall( val xpos: Int,
@@ -55,10 +56,12 @@ trait SurfaceModule {
                    val length: Int ) extends Surface {
     val slope = Undefined
     val stopLeft: Adjust = {
-      case e @ Moved( ar, xpos, ypos, xdir, ydir ) if ( xpos == this.xpos + 1 && xdir < 0 ) ⇒ Moved( ar, xpos, ypos, 0, ydir )
+      case e @ Moved( ar, xpos, ypos, xdir, ydir ) if xpos == this.xpos + 1 && xdir < 0 ⇒
+        Moved( ar, xpos, ypos, 0, ydir )
     }
     val stopRight: Adjust = {
-      case e @ Moved( ar, xpos, ypos, xdir, ydir ) if ( xpos == this.xpos - 1 && xdir > 0 ) ⇒ Moved( ar, xpos, ypos, 0, ydir )
+      case e @ Moved( ar, xpos, ypos, xdir, ydir ) if xpos == this.xpos - 1 && xdir > 0 ⇒
+        Moved( ar, xpos, ypos, 0, ydir )
     }
     adjusts = adjusts ::: List( stopLeft, stopRight )
   }
