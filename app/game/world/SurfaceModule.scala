@@ -1,6 +1,8 @@
 package game.world
 
 import game.EventModule
+import akka.actor.ActorRef
+import game.mobile.MobileModule
 
 /**
  * A surface is an object with length, slope, and position. A surface
@@ -10,18 +12,19 @@ import game.EventModule
  * always has a Defined slope.
  */
 trait SurfaceModule {
-  this: RoomModule with EventModule ⇒
+  this: RoomModule with EventModule with MobileModule ⇒
+
+  case class Landed( ar: ActorRef ) extends Event
 
   class UndefinedSlopeException extends Exception
 
   trait Slope {
-    def x: Int
-    def y: Int
+    def dx: Int
+    def dy: Int
   }
 
-  abstract class Defined( val x: Int, val y: Int ) extends Slope {
-    lazy val m = y.toDouble / x.toDouble
-    lazy val b = y - ( m * x )
+  abstract class Defined( val dx: Int, val dy: Int ) extends Slope {
+    lazy val m = dy.toDouble / dx.toDouble
   }
 
   case class Slant( _x: Int, _y: Int ) extends Defined( _x, _y )
@@ -29,8 +32,8 @@ trait SurfaceModule {
   case object Flat extends Defined( 1, 0 )
 
   case object Undefined extends Slope {
-    val x = 0
-    def y = throw new UndefinedSlopeException
+    val dx = 0
+    def dy = throw new UndefinedSlopeException
   }
 
   /**
@@ -46,13 +49,11 @@ trait SurfaceModule {
 
   trait Floor extends Surface {
     val slope: Defined
-    val stopDown: Adjust = {
-      case e @ Moved( ar, xpos, ypos, xdir, ydir ) ⇒ e
-    }
+    lazy val b = slope.dy - ( slope.m * slope.dx )
 
-    def standingOn( x: Int, y: Int ) = {
-      slope.m
-      false
+    val stopDown: Adjust = {
+      case e @ Moved( ar, p, m ) if p.y == ( slope.m * p.x ) + b ⇒
+        e //Moved( ar, p, Movement( m.x, 0 ) )
     }
 
     adjusts = adjusts :+ stopDown
@@ -67,12 +68,12 @@ trait SurfaceModule {
     def inBounds( ypos: Int ) = ypos <= ytop && ypos >= ybottom
 
     val stopLeft: Adjust = {
-      case Moved( ar, xpos, ypos, xdir, ydir ) if xpos == this.xpos + 1 && xdir < 0 && inBounds( ypos ) ⇒
-        Moved( ar, xpos, ypos, 0, ydir )
+      case Moved( ar, p, m ) if p.left == this.xpos && m.x < 0 && inBounds( p.y ) ⇒
+        Moved( ar, p, Movement( 0, m.y ) )
     }
     val stopRight: Adjust = {
-      case Moved( ar, xpos, ypos, xdir, ydir ) if xpos == this.xpos - 1 && xdir > 0 && inBounds( ypos ) ⇒
-        Moved( ar, xpos, ypos, 0, ydir )
+      case Moved( ar, p, m ) if p.right == this.xpos && m.x > 0 && inBounds( p.y ) ⇒
+        Moved( ar, p, Movement( 0, m.y ) )
     }
     adjusts = adjusts ::: List( stopLeft, stopRight )
   }

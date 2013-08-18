@@ -13,20 +13,29 @@ import game.world.RoomModule
 trait MobileModule extends EventModule {
   this: RoomModule ⇒
 
+  case class Position( x: Int, y: Int ) {
+    lazy val top = y + 2
+    lazy val bottom = y - 2
+    lazy val right = x + 1
+    lazy val left = x - 1
+  }
+
+  case class Movement( x: Int, y: Int )
+
   // Define events:
   case class Invalid( msg: String ) extends Event
   case class KeyUp( code: Int ) extends Event
-  case class MoveAttempt( xpos: Int, ypos: Int, xdir: Int, ydir: Int ) extends Event
+  case class MoveAttempt( p: Position, m: Movement ) extends Event
 
   trait Mobile {
     val name: String
-    var xpos: Int = 1
-    var ypos: Int = 1
+    var position: Position
   }
 
   /** An EventHandling Mobile object */
-  trait EHMobile extends EventHandlerActor with Mobile {
+  trait EHMobile extends EventHandler with Mobile {
     private var moveScheduler: Cancellable = _
+    private var fallScheduler: Cancellable = _
     val xspeed = 1
     val yspeed = 0
 
@@ -35,9 +44,9 @@ trait MobileModule extends EventModule {
 
     /** Represents the state of a moving Mobile */
     def moving: Handle = {
-      case Moved( ar, xpos, ypos, xdir, ydir) if ar == self ⇒
-        this.xpos = this.xpos + xdir
-        this.ypos = this.ypos + ydir
+      case Moved( ar, p, m ) if ar == self ⇒
+        println( position )
+        this.position = Position( p.x + m.x, p.y + m.y )
       case KeyUp( c ) if List( 65, 68, 37, 39 ) contains c ⇒
         moveScheduler.cancel
         this.handle = standing ~ this.default
@@ -46,11 +55,14 @@ trait MobileModule extends EventModule {
     /** Starts moving this mobile */
     def move( xdir: Int ) {
       this.handle = moving ~ default
-      this.moveScheduler = system.scheduler.schedule( 0 millis, 80 millis )( this emit MoveAttempt( xpos, ypos, xdir, 0 ) )
+      this.moveScheduler = system.scheduler.schedule( 0 millis, 40 millis )( this emit MoveAttempt( position, Movement( xdir, 0 ) ) )
     }
 
     def moveLeft = move( -xspeed )
     def moveRight = move( xspeed )
+    def jump {
+      //      fallScheduler = system.scheduler.schedule( 0 millis, 40 millis )( this emit MoveAttempt( position, 0, 0 ) )
+    }
 
   }
 }

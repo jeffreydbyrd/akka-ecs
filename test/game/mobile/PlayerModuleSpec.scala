@@ -26,6 +26,7 @@ class PlayerModuleSpec
   trait Dummy extends GenericPlayer[ String ] {
     val cs: ClientService[ String ] = NOOP
     val name = "dummy"
+    var position = Position( 5, 5 )
   }
 
   "When a Player actor is initialized, it" should {

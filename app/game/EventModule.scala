@@ -14,6 +14,7 @@ trait EventModule {
   implicit def system: ActorSystem
 
   abstract class Event
+  case object Nullified extends Event
 
   type Adjust = PartialFunction[ Event, Event ]
   type Handle = PartialFunction[ Event, Unit ]
@@ -53,6 +54,7 @@ trait EventModule {
 
   }
 
+  /** An immutable supplier of Adjust functions */
   trait AdjustSupplier extends AdjustHandler {
     def getAdjusts: List[ Adjust ] = adjusts
   }
@@ -62,7 +64,7 @@ trait EventModule {
    * emitting them, or any combination of the three.
    * @author biff
    */
-  trait GenericEventHandler extends AdjustSupplier {
+  trait GenericEventHandler extends AdjustHandler {
     type S
 
     /** A list of EventHandlers that subscribe to the Events emitted by this EventHandler */
@@ -77,7 +79,7 @@ trait EventModule {
     protected var handle: Handle = default
     protected def default: Handle
 
-    /** Pipes an Event through the 'adjusters' list and returns the end result */
+    /** Pipes an Event through the `adjusters` list and returns the end result */
     protected def adjust( e: Event ) =
       adjusts.foldLeft( e ) { ( evt, adj ) ⇒
         if ( adj isDefinedAt evt ) adj( evt ) else evt
@@ -95,7 +97,7 @@ trait EventModule {
    * to handle Events
    * @author biff
    */
-  trait EventHandlerActor extends GenericEventHandler with Actor {
+  trait EventHandler extends GenericEventHandler with Actor {
     type S = ActorRef
 
     override def receive = {

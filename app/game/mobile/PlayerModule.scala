@@ -54,11 +54,9 @@ trait PlayerModule extends MobileModule {
 
     /** Temporary: testing to see if 'cs' can send updates to the client */
     def testing: Receive = {
-      // if I'm the one that moved:
-      case m @ Moved( ar, xpos, ypos, xdir, ydir ) if ar == self ⇒
-        cs send s"xpos = ${xpos + xdir}" //send position
-        println( this.xpos + xdir );
-        super.receive( m ) // pass along the message
+      case e @ Moved( ar, p, m ) if ar == self ⇒
+        cs send s"(${p.x}, ${p.y})"
+        super.receive( e ) // pass along the message
     }
 
     // this is basically a constructor for the actor
@@ -76,6 +74,8 @@ trait PlayerModule extends MobileModule {
       case Click( x: Int, y: Int ) ⇒
       case Invalid( msg: String )  ⇒
       case KeyUp( 81 )             ⇒ self ! PoisonPill
+      //      case KeyUp( x ) if List( 38, 87 ) contains x ⇒
+      //        jump
       case _                       ⇒
     }
 
@@ -95,6 +95,7 @@ trait PlayerModule extends MobileModule {
 
   class Player( val name: String, val cs: ClientService[ String ] ) extends EHPlayer {
     //temporary:
+    var position = Position( 50, 50 )
     override def setup = {
       println( "player setup.." );
       val roomRef = system.actorOf( Props( new Room( "temp" ) ) )
