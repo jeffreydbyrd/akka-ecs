@@ -36,14 +36,14 @@ trait MobileModule extends EventModule {
   trait EHMobile extends EventHandler with Mobile {
     private var moveScheduler: Cancellable = _
     private var fallScheduler: Cancellable = _
-    val xspeed = 1
-    val yspeed = 0
+    private val xspeed = 1
+    private val yspeed = 1
 
     /** a Mobile that is standing still */
     def standing: Handle
 
     /** Represents the state of a moving Mobile */
-    def moving: Handle = {
+    private def moving: Handle = {
       case Moved( ar, p, m ) if ar == self ⇒
         println( position )
         this.position = Position( p.x + m.x, p.y + m.y )
@@ -53,16 +53,14 @@ trait MobileModule extends EventModule {
     }
 
     /** Starts moving this mobile */
-    def move( xdir: Int ) {
+    private def move( xdir: Int ) {
       this.handle = moving ~ default
-      this.moveScheduler = system.scheduler.schedule( 0 millis, 40 millis )( this emit MoveAttempt( position, Movement( xdir, 0 ) ) )
+      this.moveScheduler = system.scheduler.schedule( 0 millis, 40 millis )( this emit MoveAttempt( position, Movement( xdir, this.yspeed ) ) )
     }
 
-    def moveLeft = move( -xspeed )
-    def moveRight = move( xspeed )
-    def jump {
-      //      fallScheduler = system.scheduler.schedule( 0 millis, 40 millis )( this emit MoveAttempt( position, 0, 0 ) )
-    }
+    protected def moveLeft = move( -xspeed )
+    protected def moveRight = move( xspeed )
+//    protected def jump = move( 0, yspeed )
 
   }
 }
