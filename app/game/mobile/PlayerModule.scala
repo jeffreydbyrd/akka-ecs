@@ -71,17 +71,16 @@ trait PlayerModule extends MobileModule {
       }
 
     override def default: Handle = {
-      case Click( x: Int, y: Int ) ⇒
-      case Invalid( msg: String )  ⇒
-      case KeyUp( 81 )             ⇒ self ! PoisonPill
-      //      case KeyUp( x ) if List( 38, 87 ) contains x ⇒
-      //        jump
-      case _                       ⇒
+      case Click( x: Int, y: Int )                ⇒
+      case Invalid( msg: String )                 ⇒
+      case KeyUp( 81 )                            ⇒ self ! PoisonPill
+      case KeyDown( 32 | 38 | 87 ) if yspeed == 0 ⇒ jump
+      case _                                      ⇒
     }
 
     override def standing: Handle = {
-      case KeyDown( c ) if List( 65, 37 ) contains c ⇒ moveLeft
-      case KeyDown( c ) if List( 68, 39 ) contains c ⇒ moveRight
+      case KeyDown( 65 | 37 ) ⇒ moveLeft
+      case KeyDown( 68 | 39 ) ⇒ moveRight
     }
 
     override def postStop {

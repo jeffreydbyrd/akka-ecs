@@ -52,7 +52,7 @@ trait SurfaceModule {
     lazy val b = slope.dy - ( slope.m * slope.dx )
 
     val stopDown: Adjust = {
-      case Moved( ar, p, m ) if p.bottom == ( slope.m * p.x ) + b ⇒
+      case Moved( ar, p, m ) if m.y < 0 && p.bottom == ( slope.m * p.x ) + b ⇒
         Moved( ar, p, Movement( m.x, 0 ) )
     }
 

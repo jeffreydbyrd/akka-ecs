@@ -30,14 +30,14 @@ trait MobileModule extends EventModule {
   trait Mobile {
     val name: String
     var position: Position
+    var xspeed = 1
+    var yspeed = 0
   }
 
   /** An EventHandling Mobile object */
   trait EHMobile extends EventHandler with Mobile {
     private var moveScheduler: Cancellable = _
     private var fallScheduler: Cancellable = _
-    private val xspeed = 1
-    private val yspeed = 1
 
     /** a Mobile that is standing still */
     def standing: Handle
@@ -47,20 +47,32 @@ trait MobileModule extends EventModule {
       case Moved( ar, p, m ) if ar == self ⇒
         println( position )
         this.position = Position( p.x + m.x, p.y + m.y )
-      case KeyUp( c ) if List( 65, 68, 37, 39 ) contains c ⇒
-        moveScheduler.cancel
-        this.handle = standing ~ this.default
+        this.yspeed = m.y
+      case KeyUp( 65 | 68 | 37 | 39 ) if yspeed == 0 ⇒ stop
     }
 
     /** Starts moving this mobile */
-    private def move( xdir: Int ) {
+    private def move {
       this.handle = moving ~ default
-      this.moveScheduler = system.scheduler.schedule( 0 millis, 40 millis )( this emit MoveAttempt( position, Movement( xdir, this.yspeed ) ) )
+      this.moveScheduler = system.scheduler.schedule( 0 millis, 40 millis )( this emit MoveAttempt( position, Movement( xspeed, yspeed ) ) )
     }
 
-    protected def moveLeft = move( -xspeed )
-    protected def moveRight = move( xspeed )
-//    protected def jump = move( 0, yspeed )
+    protected def stop {
+      moveScheduler.cancel
+      this.handle = standing ~ this.default
+    }
+    protected def moveLeft = {
+      xspeed = -1
+      move
+    }
+    protected def moveRight {
+      xspeed = 1
+      move
+    }
+    protected def jump {
+      this.yspeed = 10
+      move
+    }
 
   }
 }

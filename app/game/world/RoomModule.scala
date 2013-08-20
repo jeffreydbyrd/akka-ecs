@@ -16,12 +16,15 @@ trait RoomModule extends EventModule {
   val leftWall = Wall( 0, 100, 200 )
   val rightWall = Wall( 200, 100, 200 )
 
+  val gravity: Adjust = { case Moved( ar, p, m ) if m.y != 0 ⇒ Moved( ar, p, Movement( m.x, m.y - 1 ) ) }
+
   trait GenericRoom {
     val id: String
   }
 
   trait EHRoom extends GenericRoom with EventHandler {
     adjusts = adjusts ::: List( ceiling, floor, leftWall, rightWall ).flatMap( _.getAdjusts )
+    adjusts = adjusts :+ gravity
 
     def default: Handle = {
       case MoveAttempt( p, m ) ⇒ this emit Moved( sender, p, m )
