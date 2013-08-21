@@ -16,10 +16,12 @@ trait RoomModule extends EventModule {
   val leftWall = Wall( 0, 100, 200 )
   val rightWall = Wall( 200, 100, 200 )
 
-  val gravity: Adjust = { case Moved( ar, p, m ) if m.y != 0 ⇒ Moved( ar, p, Movement( m.x, m.y - 1 ) ) }
-
   trait GenericRoom {
     val id: String
+
+    val gravity: Adjust = {
+      case Moved( ar, p, m: Falling ) if m.y != 0 ⇒ Moved( ar, p, Falling( m.y - 1 ) )
+    }
   }
 
   trait EHRoom extends GenericRoom with EventHandler {

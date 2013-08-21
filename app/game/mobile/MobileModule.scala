@@ -20,7 +20,14 @@ trait MobileModule extends EventModule {
     lazy val left = x - 1
   }
 
-  case class Movement( x: Int, y: Int )
+  trait Movement {
+    val x: Int
+    val y: Int
+  }
+  case class Walking( val x: Int, val y: Int ) extends Movement
+  case class Falling( val y: Int ) extends Movement {
+    val x = 0
+  }
 
   // Define events:
   case class Invalid( msg: String ) extends Event
@@ -37,7 +44,7 @@ trait MobileModule extends EventModule {
   /** An EventHandling Mobile object */
   trait EHMobile extends EventHandler with Mobile {
     private var moveScheduler: Cancellable = _
-    private var fallScheduler: Cancellable = _
+    private var fallScheduler: Cancellable = system.scheduler.schedule( 0 millis, 80 millis )( this emit MoveAttempt( position, Falling( yspeed ) ) )
 
     /** a Mobile that is standing still */
     def standing: Handle
@@ -47,32 +54,20 @@ trait MobileModule extends EventModule {
       case Moved( ar, p, m ) if ar == self ⇒
         println( position )
         this.position = Position( p.x + m.x, p.y + m.y )
-        this.yspeed = m.y
-      case KeyUp( 65 | 68 | 37 | 39 ) if yspeed == 0 ⇒ stop
+      case KeyUp( 65 | 68 | 37 | 39 ) ⇒
+        moveScheduler.cancel
+        this.handle = standing ~ this.default
     }
 
     /** Starts moving this mobile */
-    private def move {
+    private def move( xdir: Int ) {
       this.handle = moving ~ default
-      this.moveScheduler = system.scheduler.schedule( 0 millis, 40 millis )( this emit MoveAttempt( position, Movement( xspeed, yspeed ) ) )
+      this.moveScheduler = system.scheduler.schedule( 0 millis, 80 millis )( this emit MoveAttempt( position, Walking( xdir, 0 ) ) )
     }
 
-    protected def stop {
-      moveScheduler.cancel
-      this.handle = standing ~ this.default
-    }
-    protected def moveLeft = {
-      xspeed = -1
-      move
-    }
-    protected def moveRight {
-      xspeed = 1
-      move
-    }
-    protected def jump {
-      this.yspeed = 10
-      move
-    }
+    protected def moveLeft = move( -xspeed )
+    protected def moveRight = move( xspeed )
+    protected def jump = this.yspeed = 10
 
   }
 }
