@@ -20,19 +20,19 @@ trait MobileModule extends EventModule {
     lazy val left = x - 1
   }
 
-  trait Movement {
+  trait Moving {
     val x: Int
     val y: Int
   }
-  case class Walking( val x: Int, val y: Int ) extends Movement
-  case class Falling( val y: Int ) extends Movement {
+  case class Walking( val x: Int, val y: Int ) extends Moving
+  case class Falling( val y: Int ) extends Moving {
     val x = 0
   }
 
   // Define events:
   case class Invalid( msg: String ) extends Event
   case class KeyUp( code: Int ) extends Event
-  case class MoveAttempt( p: Position, m: Movement ) extends Event
+  case class MoveAttempt( p: Position, m: Moving ) extends Event
 
   trait Mobile {
     val name: String
@@ -44,16 +44,16 @@ trait MobileModule extends EventModule {
   /** An EventHandling Mobile object */
   trait EHMobile extends EventHandler with Mobile {
     private var moveScheduler: Cancellable = _
-    private var fallScheduler: Cancellable = system.scheduler.schedule( 0 millis, 80 millis )( this emit MoveAttempt( position, Falling( yspeed ) ) )
+    private var fallScheduler: Cancellable = system.scheduler.schedule( 80 millis, 80 millis )( this emit MoveAttempt( position, Falling( yspeed ) ) )
 
     /** a Mobile that is standing still */
     def standing: Handle
 
     /** Represents the state of a moving Mobile */
     private def moving: Handle = {
-      case Moved( ar, p, m ) if ar == self ⇒
-        println( position )
-        this.position = Position( p.x + m.x, p.y + m.y )
+      case Moved( ar, p, w:Walking ) if ar == self ⇒
+        this.position = Position( p.x + w.x, p.y )
+        println( s"$position , yspeed: $yspeed" )
       case KeyUp( 65 | 68 | 37 | 39 ) ⇒
         moveScheduler.cancel
         this.handle = standing ~ this.default
