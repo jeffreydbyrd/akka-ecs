@@ -26,6 +26,8 @@ trait PlayerModule extends MobileModule {
   case class JsonCmd( msg: String )
 
   // Events:
+  case class Invalid( msg: String ) extends Event
+  case class KeyUp( code: Int ) extends Event
   case class KeyDown( code: Int ) extends Event
   case class Click( x: Int, y: Int ) extends Event
   case object Quit extends Event
@@ -52,13 +54,6 @@ trait PlayerModule extends MobileModule {
     override def receive = { case Start ⇒ start }
     def playing: Receive = { case JsonCmd( json ) ⇒ handle( getCommand( json ) ) }
 
-    /** Temporary: testing to see if 'cs' can send updates to the client */
-    def testing: Receive = {
-      case e @ Moved( ar, p, m ) if ar == self ⇒
-        cs send s"(${p.x}, ${p.y})"
-        super.receive( e ) // pass along the message
-    }
-
     // this is basically a constructor for the actor
     def start =
       setup map { msg ⇒ // if there's a message then something went wrong
@@ -67,15 +62,21 @@ trait PlayerModule extends MobileModule {
       } getOrElse {
         sender ! Connected
         this.handle = standing ~ default
-        context become { playing orElse testing orElse super.receive }
+        context become { playing orElse super.receive }
       }
 
+    def printPosition {
+      cs send s"(${position.x}, ${position.y})"
+      println( s"$position , yspeed: $yspeed" )
+    }
+
     override def default: Handle = {
-      case Click( x: Int, y: Int )                ⇒
-      case Invalid( msg: String )                 ⇒
-      case KeyUp( 81 )                            ⇒ self ! PoisonPill
-      case KeyDown( 32 | 38 | 87 ) if yspeed == 0 ⇒ jump
-      case _                                      ⇒
+      case Click( x: Int, y: Int ) ⇒
+      case Invalid( msg: String )  ⇒
+      case KeyUp( 81 )             ⇒ self ! PoisonPill
+      case KeyDown( 32 | 38 | 87 ) ⇒ jump
+      case Moved( `self`, p, m )   ⇒ if ( p != position ) move( p ) else move( m.x, m.y )
+      case _                       ⇒
     }
 
     override def standing: Handle = {
@@ -83,9 +84,23 @@ trait PlayerModule extends MobileModule {
       case KeyDown( 68 | 39 ) ⇒ moveRight
     }
 
+    override def moving: Handle = {
+      case KeyUp( 65 | 68 | 37 | 39 ) ⇒ stopMoving
+    }
+
+    override def move( p: Position ) {
+      super.move( p )
+      printPosition
+    }
+
+    override def move( x: Int, y: Int ) {
+      super.move( x, y )
+      printPosition
+    }
+
     override def postStop {
       this emit Quit
-      this.subscribers.map { _ ! Unsubscribe }
+      this.subscribers foreach { _ ! Unsubscribe }
       cs send "quit"
       cs.close
     }

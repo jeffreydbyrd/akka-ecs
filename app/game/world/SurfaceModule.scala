@@ -52,8 +52,9 @@ trait SurfaceModule {
     lazy val b = slope.dy - ( slope.m * slope.dx )
 
     val stopDown: Adjust = {
-      case Moved( ar, p, Falling( yspeed ) ) if landing( p, yspeed ) && inBounds( p ) ⇒
-        Moved( ar, p, Falling( 0 ) )
+      case Moved( ar, p, Movement( 0, y ) ) if landing( p, y ) && inBounds( p ) ⇒
+      	val yintersect = slope.m * p.x + b
+        Moved( ar, Position( p.x, yintersect.toInt + 2 ), Movement( 0, 0 ) )
     }
 
     def landing( p: Position, speed: Int ) = {
@@ -80,13 +81,13 @@ trait SurfaceModule {
       ( p.top > ybottom && p.top < ytop ) || ( p.bottom < ytop && p.bottom > ybottom )
 
     val stopLeft: Adjust = {
-      case Moved( ar, p, w: Walking ) if p.left == this.xpos && w.x < 0 && inBounds( p ) ⇒
-        Moved( ar, p, Walking( 0, w.y ) )
+      case Moved( ar, p, m ) if p.left == this.xpos && m.x < 0 && inBounds( p ) ⇒
+        Moved( ar, p, Movement( 0, m.y ) )
     }
 
     val stopRight: Adjust = {
-      case Moved( ar, p, w: Walking ) if p.right == this.xpos && w.x > 0 && inBounds( p ) ⇒
-        Moved( ar, p, Walking( 0, w.y ) )
+      case Moved( ar, p, m ) if p.right == this.xpos && m.x > 0 && inBounds( p ) ⇒
+        Moved( ar, p, Movement( 0, m.y ) )
     }
 
     adjusts = adjusts ::: List( stopLeft, stopRight )
