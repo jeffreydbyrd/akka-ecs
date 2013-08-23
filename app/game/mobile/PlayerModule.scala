@@ -97,6 +97,7 @@ trait PlayerModule extends MobileModule {
       this emit Quit
       this.subscribers foreach { _ ! Unsubscribe }
       cs send "quit"
+      this.moveScheduler.cancel
       cs.close
     }
 

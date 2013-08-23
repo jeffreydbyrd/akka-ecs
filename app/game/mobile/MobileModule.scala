@@ -34,7 +34,7 @@ trait MobileModule extends EventModule {
   /** An EventHandling Mobile object */
   trait EHMobile extends EventHandler with Mobile {
 
-    system.scheduler.schedule( 0 millis, 1000 millis )( self ! MoveBitch )
+    val moveScheduler = system.scheduler.schedule( 0 millis, 1000 millis )( self ! MoveBitch )
     override def receive = ( { case MoveBitch ⇒ this emit MoveAttempt( position, movement ) }: Receive ) orElse super.receive
 
     protected def standing: Handle
@@ -55,8 +55,8 @@ trait MobileModule extends EventModule {
       this.movement = Movement( 0, movement.y )
     }
 
-    protected def moveLeft = startMoving( -movement.x )
-    protected def moveRight = startMoving( movement.x )
+    protected def moveLeft = startMoving( -1 )
+    protected def moveRight = startMoving( 1 )
     protected def jump = movement = Movement( movement.x, 5 )
 
   }

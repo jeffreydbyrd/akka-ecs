@@ -52,16 +52,16 @@ trait SurfaceModule {
     lazy val b = slope.dy - ( slope.m * slope.dx )
 
     val stopDown: Adjust = {
-      case Moved( ar, p, Movement( 0, y ) ) if landing( p, y ) && inBounds( p ) ⇒
+      case Moved( ar, p, Movement( xspeed, yspeed ) ) if landing( p, yspeed ) && inBounds( p ) ⇒
       	val yintersect = slope.m * p.x + b
-        Moved( ar, Position( p.x, yintersect.toInt + 2 ), Movement( 0, 0 ) )
+        Moved( ar, Position( p.x, yintersect.toInt + 2 ), Movement( xspeed, 0 ) )
     }
 
-    def landing( p: Position, speed: Int ) = {
+    def landing( p: Position, yspeed: Int ) = {
       val yintersect = slope.m * p.x + b
-      speed < 0 &&
+      yspeed < 0 &&
         p.bottom >= yintersect &&
-        ( p.bottom + speed ) < yintersect
+        ( p.bottom + yspeed ) < yintersect
     }
 
     def inBounds( p: Position ) = {
