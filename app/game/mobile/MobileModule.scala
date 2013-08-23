@@ -14,8 +14,8 @@ trait MobileModule extends EventModule {
 
   case class Movement( val x: Int, val y: Int )
   case class Position( x: Int, y: Int ) {
-    lazy val top = ( x, y + 2 )
-    lazy val bottom = ( x, y - 2 )
+    lazy val head = ( x, y + 2 )
+    lazy val feet = ( x, y - 2 )
     lazy val right = ( x + 1, y )
     lazy val left = ( x - 1, y )
   }
