@@ -18,19 +18,13 @@ trait RoomModule extends EventModule {
 
   trait GenericRoom {
     val id: String
-
-    val gravity: Adjust = {
-      case Moved( ar, p, Movement( 0, y ) ) ⇒
-        Moved( ar, p, Movement( 0, y - 1 ) )
-    }
   }
 
   trait EHRoom extends GenericRoom with EventHandler {
-    adjusts = adjusts :+ gravity
     adjusts = adjusts ::: List( ceiling, floor, leftWall, rightWall ).flatMap( _.getAdjusts )
 
     def default: Handle = {
-      case MoveAttempt( p, m ) ⇒ this emit Moved( sender, p, m )
+      case MoveAttempt( p, m ) ⇒ this emit Moved( sender, p, Movement( m.x, m.y - 1 ) )
       case _                   ⇒
     }
   }

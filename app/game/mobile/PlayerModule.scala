@@ -67,7 +67,7 @@ trait PlayerModule extends MobileModule {
 
     def printPosition {
       cs send s"(${position.x}, ${position.y})"
-      println( s"$position , yspeed: $yspeed" )
+      println( s"$position , $movement" )
     }
 
     override def default: Handle = {
@@ -75,7 +75,7 @@ trait PlayerModule extends MobileModule {
       case Invalid( msg: String )  ⇒
       case KeyUp( 81 )             ⇒ self ! PoisonPill
       case KeyDown( 32 | 38 | 87 ) ⇒ jump
-      case Moved( `self`, p, m )   ⇒ if ( p != position ) move( p ) else move( m.x, m.y )
+      case Moved( `self`, p, m )   ⇒ move( p, m )
       case _                       ⇒
     }
 
@@ -88,13 +88,8 @@ trait PlayerModule extends MobileModule {
       case KeyUp( 65 | 68 | 37 | 39 ) ⇒ stopMoving
     }
 
-    override def move( p: Position ) {
-      super.move( p )
-      printPosition
-    }
-
-    override def move( x: Int, y: Int ) {
-      super.move( x, y )
+    override def move( p: Position, m: Movement ) {
+      super.move( p, m )
       printPosition
     }
 
@@ -109,7 +104,7 @@ trait PlayerModule extends MobileModule {
 
   class Player( val name: String, val cs: ClientService[ String ] ) extends EHPlayer {
     //temporary:
-    var position = Position( 50, 50 )
+    var position = Position( 10, 10 )
     override def setup = {
       println( "player setup.." );
       val roomRef = system.actorOf( Props( new Room( "temp" ) ) )
