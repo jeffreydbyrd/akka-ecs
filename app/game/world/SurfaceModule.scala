@@ -14,8 +14,6 @@ import game.mobile.MobileModule
 trait SurfaceModule {
   this: RoomModule with EventModule with MobileModule ⇒
 
-  case class Landed( ar: ActorRef ) extends Event
-
   class UndefinedSlopeException extends Exception
 
   trait Slope {
@@ -27,7 +25,7 @@ trait SurfaceModule {
     lazy val m = dy.toDouble / dx.toDouble
   }
 
-  case class Slant( _x: Int, _y: Int ) extends Defined( _x, _y )
+  case class Slant( private val _x: Int, private val _y: Int ) extends Defined( _x, _y )
 
   case object Flat extends Defined( 1, 0 )
 
