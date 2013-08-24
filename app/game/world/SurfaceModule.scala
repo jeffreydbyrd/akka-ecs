@@ -54,10 +54,10 @@ trait SurfaceModule {
     val stopDown: Adjust = {
       case Moved( ar, p, Movement( xspeed, yspeed ) ) if landing( p.feet, yspeed ) && inBounds( p ) ⇒
         val yintersect = slope.m * p.x + b
-        Moved( ar, Position( p.x, yintersect.toInt + 2 ), Movement( xspeed, 0 ) )
+        Moved( ar, Position( p.x, yintersect + 2 ), Movement( xspeed, 0 ) )
     }
 
-    def landing( feet: ( Int, Int ), yspeed: Int ) = {
+    def landing( feet: ( Double, Double ), yspeed: Double ) = {
       val ( xfeet, yfeet ) = feet
       val yintersect = slope.m * xfeet + b
       yspeed < 0 &&

@@ -12,8 +12,8 @@ import game.world.RoomModule
 trait MobileModule extends EventModule {
   this: RoomModule ⇒
 
-  case class Movement( val x: Int, val y: Int )
-  case class Position( x: Int, y: Int ) {
+  case class Movement( val x: Double, val y: Double )
+  case class Position( x: Double, y: Double ) {
     lazy val head = ( x, y + 2 )
     lazy val feet = ( x, y - 2 )
     lazy val right = ( x + 1, y )
