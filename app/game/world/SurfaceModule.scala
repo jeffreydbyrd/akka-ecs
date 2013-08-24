@@ -1,7 +1,6 @@
 package game.world
 
 import game.EventModule
-import akka.actor.ActorRef
 import game.mobile.MobileModule
 
 /**
@@ -19,11 +18,10 @@ trait SurfaceModule {
   trait Slope {
     def dx: Int
     def dy: Int
-  }
-
-  abstract class Defined( val dx: Int, val dy: Int ) extends Slope {
     lazy val m = dy.toDouble / dx.toDouble
   }
+
+  abstract class Defined( val dx: Int, val dy: Int ) extends Slope
 
   case class Slant( private val _x: Int, private val _y: Int ) extends Defined( _x, _y )
 
@@ -50,12 +48,12 @@ trait SurfaceModule {
     lazy val b = ypos - ( slope.m * xpos )
 
     val stopDown: Adjust = {
-      case Moved( ar, p, Movement( xspeed, yspeed ) ) if landing( p.feet, yspeed ) && inBounds( p ) ⇒
+      case Moved( ar, p, Movement( xspeed, yspeed ) ) if isLanding( p.feet, yspeed ) && inBounds( p ) ⇒
         val yintersect = slope.m * p.x + b
         Moved( ar, Position( p.x, yintersect + 2 ), Movement( xspeed, 0 ) )
     }
 
-    def landing( feet: ( Double, Double ), yspeed: Double ) = {
+    def isLanding( feet: ( Double, Double ), yspeed: Double ) = {
       val ( xfeet, yfeet ) = feet
       val yintersect = slope.m * xfeet + b
       yspeed < 0 &&

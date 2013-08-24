@@ -19,15 +19,6 @@ trait EventModule {
   type Adjust = PartialFunction[ Event, Event ]
   type Handle = PartialFunction[ Event, Unit ]
 
-  implicit def toRichHandle( f: Handle ) = new RichHandle {
-    override def apply( e: Event ) = f( e )
-    override def isDefinedAt( e: Event ) = f.isDefinedAt( e )
-  }
-
-  trait RichHandle extends Handle {
-    def ~( that: Handle ): Handle = this orElse that
-  }
-
   // Actor messages:
   case object Subscribe
   case object Unsubscribe

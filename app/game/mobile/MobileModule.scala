@@ -46,12 +46,12 @@ trait MobileModule extends EventModule {
     }
 
     private def startMoving( xdir: Int ) {
-      this.handle = moving ~ default
+      this.handle = moving orElse default
       movement = Movement( xdir, movement.y )
     }
 
     protected def stopMoving {
-      this.handle = standing ~ this.default
+      this.handle = standing orElse this.default
       this.movement = Movement( 0, movement.y )
     }
 

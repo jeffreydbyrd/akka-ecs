@@ -61,7 +61,7 @@ trait PlayerModule extends MobileModule {
         self ! PoisonPill // failed to start... you know what to do :(
       } getOrElse {
         sender ! Connected
-        this.handle = standing ~ default
+        this.handle = standing orElse default
         context become { playing orElse super.receive }
       }
 
