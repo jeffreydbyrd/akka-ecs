@@ -80,12 +80,12 @@ trait PlayerModule extends MobileModule {
     }
 
     override def standing: Handle = {
-      case KeyDown( 65 | 37 ) ⇒ moveLeft
-      case KeyDown( 68 | 39 ) ⇒ moveRight
+      case KeyDown( 65 | 37 ) ⇒ moveLeft()
+      case KeyDown( 68 | 39 ) ⇒ moveRight()
     }
 
     override def moving: Handle = {
-      case KeyUp( 65 | 68 | 37 | 39 ) ⇒ stopMoving
+      case KeyUp( 65 | 68 | 37 | 39 ) ⇒ stopMoving()
     }
 
     override def move( p: Position, m: Movement ) {

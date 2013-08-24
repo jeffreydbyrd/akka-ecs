@@ -50,13 +50,13 @@ trait MobileModule extends EventModule {
       movement = Movement( xdir, movement.y )
     }
 
-    protected def stopMoving {
+    protected def stopMoving() = {
       this.handle = standing orElse this.default
       this.movement = Movement( 0, movement.y )
     }
 
-    protected def moveLeft = startMoving( -1 )
-    protected def moveRight = startMoving( 1 )
+    protected def moveLeft() = startMoving( -1 )
+    protected def moveRight() = startMoving( 1 )
     protected def jump = movement = Movement( movement.x, 5 )
 
   }
