@@ -20,7 +20,7 @@ trait MobileModule extends EventModule {
     lazy val left = ( x - 1, y )
   }
 
-  private case object MoveBitch
+  case object MoveBitch
 
   // Define events:
   case class MoveAttempt( p: Position, m: Movement ) extends Event
