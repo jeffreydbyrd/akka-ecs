@@ -12,7 +12,7 @@ trait RoomModule extends EventModule {
 
   // All rooms in the game are equipped with the same 4 surrounding surfaces:
   val ceiling = DoubleSided( 100, 200, 200, Flat )
-  val floor = DoubleSided( 100, 20, 200, Flat )
+  val floor = DoubleSided( 100, 0, 200, Flat )
   val leftWall = Wall( 0, 100, 200 )
   val rightWall = Wall( 200, 100, 200 )
 
