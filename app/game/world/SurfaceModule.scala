@@ -2,6 +2,7 @@ package game.world
 
 import game.EventModule
 import game.mobile.MobileModule
+import scala.math._
 
 /**
  * A surface is an object with length, slope, and position. A surface
@@ -50,19 +51,23 @@ trait SurfaceModule {
     def isLanding( feet: ( Double, Double ), yspeed: Double ) = {
       val ( xfeet, yfeet ) = feet
       val yintersect = slope.m * xfeet + b
-      yspeed < 0 &&
+      yspeed <= 0 &&
         yfeet >= yintersect &&
-        ( yfeet + yspeed ) < yintersect
+        ( yfeet + yspeed ) <= yintersect
     }
 
     def inBounds( p: Position ) = {
-      true
+      val c = sqrt( pow( slope.dx, 2 ) + pow( slope.dy, 2 ) )
+      val xlen = slope.dx * ( this.length / c )
+      val xleft = xpos - ( xlen / 2 )
+      val xright = xpos + ( xlen / 2 )
+      p.right._1 >= xleft && p.left._1 <= xright
     }
 
     val stopDown: Adjust = {
       case Moved( ar, p, Movement( xspeed, yspeed ) ) if isLanding( p.feet, yspeed ) && inBounds( p ) ⇒
         val yintersect = slope.m * p.x + b
-        Moved( ar, Position( p.x, yintersect + 2 ), Movement( xspeed, 0 ) )
+        Moved( ar, Position( p.x, yintersect + ( p.y - p.feet._2 ) ), Movement( xspeed, 0 ) )
     }
 
     adjusts = adjusts :+ stopDown
@@ -74,11 +79,8 @@ trait SurfaceModule {
     val slope = Undefined
     val ytop = ypos + ( length / 2 )
     val ybottom = ypos - ( length / 2 )
-    def inBounds( p: Position ) = {
-      val ( xhead, yhead ) = p.head
-      val ( xfeet, yfeet ) = p.feet
-      ( yhead > ybottom && yhead < ytop ) || ( yfeet < ytop && yfeet > ybottom )
-    }
+
+    def inBounds( p: Position ) = p.head._2 >= ybottom && p.feet._2 <= ytop
 
     val stopLeft: Adjust = {
       case Moved( ar, p, m ) if p.left._1 == this.xpos && m.x < 0 && inBounds( p ) ⇒

@@ -18,16 +18,21 @@ trait RoomModule extends EventModule {
 
   trait GenericRoom {
     val id: String
+    val gravity = -1
   }
 
   trait EHRoom extends GenericRoom with EventHandler {
     adjusts = adjusts ::: List( ceiling, floor, leftWall, rightWall ).flatMap( _.getAdjusts )
 
     def default: Handle = {
-      case MoveAttempt( p, m ) ⇒ this emit Moved( sender, p, Movement( m.x, m.y - 1 ) )
+      case MoveAttempt( p, m ) ⇒ this emit Moved( sender, p, Movement( m.x, m.y + gravity ) )
       case _                   ⇒
     }
   }
 
-  class Room( override val id: String ) extends EHRoom
+  class Room( override val id: String ) extends EHRoom {
+    //    val platform = DoubleSided( 25, 9, 20, Slant( 4, 3 ) )
+    val platform = DoubleSided( 25, 9, 20, Flat )
+    adjusts = adjusts ::: platform.getAdjusts
+  }
 }
