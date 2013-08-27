@@ -48,12 +48,16 @@ trait SurfaceModule {
     val slope: Defined
     lazy val b = ypos - ( slope.m * xpos )
 
-    def isLanding( feet: ( Double, Double ), yspeed: Double ) = {
-      val ( xfeet, yfeet ) = feet
-      val yintersect = slope.m * xfeet + b
-      yspeed <= 0 &&
-        yfeet >= yintersect &&
-        ( yfeet + yspeed ) <= yintersect
+    def isLanding( position: ( Double, Double ), mv: Movement ) = {
+      val ( x0, y0 ) = position
+      val _m = ( ( mv.y + y0 ) - y0 ) / ( ( mv.x + x0 ) - x0 )
+      val _b = y0 - ( _m * x0 )
+      val xinter = ( b - _b ) / ( _m - slope.m )
+
+      val yintersect = slope.m * ( x0 + mv.x ) + b
+      mv.y <= 0 &&
+        y0 >= yintersect &&
+        ( y0 + mv.y ) <= yintersect
     }
 
     def inBounds( p: Position ) = {
@@ -64,13 +68,22 @@ trait SurfaceModule {
       p.right._1 >= xleft && p.left._1 <= xright
     }
 
+    /** Stops a Mobile with downward momentum colliding with this Surface */
     val stopDown: Adjust = {
-      case Moved( ar, p, Movement( xspeed, yspeed ) ) if isLanding( p.feet, yspeed ) && inBounds( p ) ⇒
+      case Moved( ar, p, m ) if isLanding( p.feet, m ) && inBounds( p ) ⇒
         val yintersect = slope.m * p.x + b
-        Moved( ar, Position( p.x, yintersect + ( p.y - p.feet._2 ) ), Movement( xspeed, 0 ) )
+        Moved( ar, Position( p.x, yintersect + ( p.y - p.feet._2 ) ), Movement( m.x, 0 ) )
     }
 
-    adjusts = adjusts :+ stopDown
+    /** Moves a Mobile up along the Surface's slant if the Mobile is moving into the Surface */
+    val moveup: Adjust = {
+      case e @ Moved( ar, p, mv ) if mv.x * slope.m >= 0 && isLanding( p.feet, mv ) && inBounds( p ) ⇒
+        val yintersect = slope.m * p.x + b
+
+        e
+    }
+
+    adjusts = List( stopDown, moveup )
   }
 
   case class Wall( val xpos: Int,
