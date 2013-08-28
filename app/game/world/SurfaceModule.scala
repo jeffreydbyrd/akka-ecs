@@ -53,6 +53,11 @@ trait SurfaceModule {
       val _m = ( ( mv.y + y0 ) - y0 ) / ( ( mv.x + x0 ) - x0 )
       val _b = y0 - ( _m * x0 )
       val xinter = ( b - _b ) / ( _m - slope.m )
+      
+      /*
+       * TODO: finish the above logic:
+       * figure out x,y-intercept and if I am crossing that point
+       */
 
       val yintersect = slope.m * ( x0 + mv.x ) + b
       mv.y <= 0 &&
