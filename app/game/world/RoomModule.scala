@@ -11,10 +11,10 @@ trait RoomModule extends EventModule {
   case class Moved( ar: ActorRef, p: Position, m: Movement ) extends Event
 
   // All rooms in the game are equipped with the same 4 surrounding surfaces:
-  val ceiling = DoubleSided( 100, 200, 200, Flat )
-  val floor = DoubleSided( 100, 0, 200, Flat )
-  val leftWall = Wall( 0, 100, 200 )
-  val rightWall = Wall( 200, 100, 200 )
+  val ceiling = DoubleSided( Point( 0, 0 ), Point( 200, 0 ) )
+  val floor = DoubleSided( Point( 0, 200 ), Point( 200, 200 ) )
+  val leftWall = Wall( 0, 200, 0 )
+  val rightWall = Wall( 200, 200, 0 )
 
   trait GenericRoom {
     val id: String
@@ -31,7 +31,7 @@ trait RoomModule extends EventModule {
   }
 
   class Room( override val id: String ) extends EHRoom {
-    val platform = DoubleSided( 25, 9, 20, Slant( 4, 3 ) )
+    val platform = DoubleSided( Point( 20, 6 ), Point( 40, 20 ) )
     adjusts = adjusts ::: platform.getAdjusts
   }
 }

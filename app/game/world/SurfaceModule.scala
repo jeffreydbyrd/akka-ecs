@@ -1,8 +1,9 @@
 package game.world
 
+import scala.math._
+
 import game.EventModule
 import game.mobile.MobileModule
-import scala.math._
 
 /**
  * A surface is an object with length, slope, and position. A surface
@@ -14,75 +15,87 @@ import scala.math._
 trait SurfaceModule {
   this: RoomModule with EventModule with MobileModule ⇒
 
+  // just for fun:
+  case class IntBetween( i: Int ) { def between( ns: ( Int, Int ) ) = ( ns._1 <= i && i <= ns._2 ) || ( ns._1 >= i && i >= ns._2 ) }
+  implicit def intBetween( i: Int ) = IntBetween( i )
+  case class DoubleBetween( d: Double ) { def between( ns: ( Double, Double ) ) = ( ns._1 <= d && d <= ns._2 ) || ( ns._1 >= d && d >= ns._2 ) }
+  implicit def doublBetween( d: Double ) = DoubleBetween( d )
+
   class UndefinedSlopeException extends Exception
 
   trait Slope {
-    def dx: Int
-    def dy: Int
-    lazy val m = dy.toDouble / dx.toDouble
+    def dx: Double
+    def dy: Double
+    lazy val m = dy / dx
   }
 
-  abstract class Defined( val dx: Int, val dy: Int ) extends Slope
+  abstract class Defined( val dx: Double, val dy: Double ) extends Slope
 
-  case class Slant( private val _x: Int, private val _y: Int ) extends Defined( _x, _y )
+  case class Slant( private val _x: Double, private val _y: Double ) extends Defined( _x, _y )
 
   case object Flat extends Defined( 1, 0 )
 
   case object Undefined extends Slope {
-    val dx = 0
+    val dx: Double = 0
     def dy = throw new UndefinedSlopeException
   }
+
+  /**
+   * A convenience object for quickly creating Slopes
+   */
+  object Slope {
+    def apply( dx: Double, dy: Double ) = ( dx, dy ) match {
+      case ( 0, _ ) ⇒ Undefined
+      case ( _, 0 ) ⇒ Flat
+      case _        ⇒ Slant( dx, dy )
+    }
+  }
+
+  case class Point( x: Double, y: Double )
 
   /**
    * A Surface is essentially just a line with a length, position (x,y), and a slope.
    * Surfaces are owned by Room objects, and can supply Adjusts to modify certain Events.
    */
   trait Surface extends AdjustSupplier {
-    val xpos: Int
-    val ypos: Int
-    val length: Int
+    val start: Point
+    val end: Point
+    val length: Double
     val slope: Slope
   }
 
   trait Floor extends Surface {
-    val slope: Defined
-    lazy val b = ypos - ( slope.m * xpos )
+    lazy val length = hypot( start.x - end.x, start.y - end.y )
+    lazy val slope = Slope( start.x - end.x, start.y - end.y )
+    lazy val b = start.y - ( slope.m * start.x )
 
     def isLanding( position: ( Double, Double ), mv: Movement ) = {
-      val ( x0, y0 ) = position
-      val _m = ( ( mv.y + y0 ) - y0 ) / ( ( mv.x + x0 ) - x0 )
-      val _b = y0 - ( _m * x0 )
-      val xinter = ( b - _b ) / ( _m - slope.m )
-      
-      /*
-       * TODO: finish the above logic:
-       * figure out x,y-intercept and if I am crossing that point
-       */
+      val ( x0, y0 ) = position // x,y of start position
+      val x1 = x0 + mv.x
+      val y1 = y0 + mv.y // x,y of end position
+      val _m = ( y1 - y0 ) / ( x1 - x0 ) // slope of mobile's trajectory
+      val _b = y0 - ( _m * x0 ) // mobile's y-axis intercept
+      val xinter = ( b - _b ) / ( _m - slope.m ) // mobile-surface x-intercept
+      val yinter = _m * xinter + b // mobile-surface y-intercept
 
-      val yintersect = slope.m * ( x0 + mv.x ) + b
-      mv.y <= 0 &&
-        y0 >= yintersect &&
-        ( y0 + mv.y ) <= yintersect
-    }
+      val startToEnd = hypot( x1 - x0, y1 - y0 ) // distance from start to end position
+      val startToIntercept = hypot( x0 - xinter, y0 - yinter ) // distance from start to intercept
 
-    def inBounds( p: Position ) = {
-      val c = sqrt( pow( slope.dx, 2 ) + pow( slope.dy, 2 ) )
-      val xlen = slope.dx * ( this.length / c )
-      val xleft = xpos - ( xlen / 2 )
-      val xright = xpos + ( xlen / 2 )
-      p.right._1 >= xleft && p.left._1 <= xright
+      ( startToEnd >= startToIntercept ) &&
+        ( xinter between start.x -> end.x ) &&
+        ( yinter between start.y -> end.y )
     }
 
     /** Stops a Mobile with downward momentum colliding with this Surface */
     val stopDown: Adjust = {
-      case Moved( ar, p, m ) if isLanding( p.feet, m ) && inBounds( p ) ⇒
+      case Moved( ar, p, m ) if isLanding( p.feet, m ) ⇒
         val yintersect = slope.m * p.x + b
         Moved( ar, Position( p.x, yintersect + ( p.y - p.feet._2 ) ), Movement( m.x, 0 ) )
     }
 
     /** Moves a Mobile up along the Surface's slant if the Mobile is moving into the Surface */
     val moveup: Adjust = {
-      case e @ Moved( ar, p, mv ) if mv.x * slope.m >= 0 && isLanding( p.feet, mv ) && inBounds( p ) ⇒
+      case e @ Moved( ar, p, mv ) if mv.x * slope.m >= 0 && isLanding( p.feet, mv ) ⇒
         val yintersect = slope.m * p.x + b
 
         e
@@ -91,12 +104,13 @@ trait SurfaceModule {
     adjusts = List( stopDown, moveup )
   }
 
-  case class Wall( val xpos: Int,
-                   val ypos: Int,
-                   val length: Int ) extends Surface {
+  case class Wall( xpos: Int,
+                   ytop: Int,
+                   ybottom: Int ) extends Surface {
     val slope = Undefined
-    val ytop = ypos + ( length / 2 )
-    val ybottom = ypos - ( length / 2 )
+    lazy val start = Point( xpos, ytop )
+    lazy val end = Point( xpos, ybottom )
+    lazy val length = ytop - ybottom.toDouble
 
     def inBounds( p: Position ) = p.head._2 >= ybottom && p.feet._2 <= ytop
 
@@ -113,14 +127,7 @@ trait SurfaceModule {
     adjusts = adjusts ::: List( stopLeft, stopRight )
   }
 
-  case class SingleSided( val xpos: Int,
-                          val ypos: Int,
-                          val length: Int,
-                          val slope: Defined ) extends Floor
+  case class SingleSided( val start: Point, val end: Point ) extends Floor
 
-  case class DoubleSided( val xpos: Int,
-                          val ypos: Int,
-                          val length: Int,
-                          val slope: Defined ) extends Floor
-
+  case class DoubleSided( val start: Point, val end: Point ) extends Floor
 }
