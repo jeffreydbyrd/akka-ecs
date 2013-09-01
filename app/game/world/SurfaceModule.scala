@@ -40,9 +40,10 @@ trait SurfaceModule extends LineModule with EventModule {
         val xinter = ( b - v.b ) / ( v.slope.m - slope.m )
         val yinter = v.slope.m * xinter + b
         val newMovement =
-          if ( mv.x * slope.m >= 0 && ( p.x == xinter && p.feet._2 == yinter ) )
-            Movement( mv.x, slope.dy )
-          else Movement( xinter - p.x, yinter - p.feet._2 )
+          if ( mv.x * slope.m >= 0 && ( p.x == xinter && p.feet._2 == yinter ) ) {
+            val k = hypot( slope.dx, slope.dy ) / mv.x
+            Movement( slope.dx / k, slope.dy / k )
+          } else Movement( xinter - p.x, yinter - p.feet._2 )
         Moved( ar, p, newMovement )
     }
 
