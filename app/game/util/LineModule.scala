@@ -1,4 +1,4 @@
-package game.world
+package game.util
 
 import scala.math._
 
