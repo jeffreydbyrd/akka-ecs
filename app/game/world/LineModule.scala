@@ -6,7 +6,8 @@ trait LineModule {
   /* 
    * Just for fun:
    * Implicit conversions that basically give Ints/Doubles a 'between' function.
-   * Use simply as "5 between 0 -> 10"
+   * example: 5 between 0 -> 10 == true
+   * example: 5 between 1 -> 3 == false
    */
   case class IntBetween( i: Int ) { def between( ns: ( Int, Int ) ) = ( ns._1 <= i && i <= ns._2 ) || ( ns._1 >= i && i >= ns._2 ) }
   implicit def intBetween( i: Int ) = IntBetween( i )
@@ -52,5 +53,7 @@ trait LineModule {
     lazy val slope = Slope( start.x - end.x, start.y - end.y )
     lazy val b = start.y - ( slope.m * start.x )
   }
+
+  case class Vector( val start: Point, val end: Point ) extends Line
 
 }

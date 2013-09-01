@@ -22,29 +22,31 @@ trait SurfaceModule extends LineModule with EventModule {
   trait Surface extends Line with AdjustSupplier
 
   trait Floor extends Surface {
-    /** Stops a Mobile whose Movement will intersect with this Surface */
-    val stop: Adjust = {
-      case evt @ Moved( ar, p, mv ) ⇒
-        val ( x0, y0 ) = p.feet
-        val x1 = x0 + mv.x
-        val y1 = y0 + mv.y // x,y of end position
-        val _m = ( y1 - y0 ) / ( x1 - x0 ) // slope of mobile's trajectory
-        val _b = y0 - ( _m * x0 ) // mobile's y-axis intercept
-        val xinter = ( b - _b ) / ( _m - slope.m ) // mobile-surface x-intercept
-        val yinter = _m * xinter + b // mobile-surface y-intercept
-
-        val startToEnd = hypot( x1 - x0, y1 - y0 ) // distance from start to end position
-        val startToIntercept = hypot( x0 - xinter, y0 - yinter ) // distance from start to intercept
-
-        if ( ( startToEnd >= startToIntercept ) &&
-          ( xinter between start.x -> end.x ) &&
-          ( yinter between start.y -> end.y ) )
-          Moved( ar, Position( xinter, yinter ), Movement( mv.x, 0 ) )
-        else
-          evt
+    def isLanding( p: Position, mv: Movement ) = {
+      val v = Vector( Point( p.feet._1, p.feet._2 ), Point( start.x + mv.x, start.y + mv.y ) )
+      val xinter = ( b - v.b ) / ( v.slope.m - slope.m )
+      val yinter = v.slope.m * xinter + b
+      val startToIntercept = hypot( v.start.x - xinter, v.start.y - yinter ) // distance from start to intercept
+      ( ( v.length >= startToIntercept ) &&
+        ( xinter between start.x -> end.x ) &&
+        ( yinter between start.y -> end.y ) )
     }
 
-    adjusts = List( stop )
+    /** Stops a Mobile whose Movement will intersect with this Surface */
+    val onCollision: Adjust = {
+      // this sucks: we calculate the Mobile's vector twice here:
+      case Moved( ar, p, mv ) if isLanding( p, mv ) ⇒
+        val v = Vector( Point( p.feet._1, p.feet._2 ), Point( start.x + mv.x, start.y + mv.y ) )
+        val xinter = ( b - v.b ) / ( v.slope.m - slope.m )
+        val yinter = v.slope.m * xinter + b
+        val newMovement =
+          if ( mv.x * slope.m >= 0 && ( p.x == xinter && p.feet._2 == yinter ) )
+            Movement( mv.x, slope.dy )
+          else Movement( xinter - p.x, yinter - p.feet._2 )
+        Moved( ar, p, newMovement )
+    }
+
+    adjusts = List( onCollision )
   }
 
   case class Wall( xpos: Int,
