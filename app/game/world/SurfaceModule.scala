@@ -23,10 +23,15 @@ trait SurfaceModule extends LineModule with EventModule {
 
   trait Floor extends Surface {
     def isLanding( p: Position, mv: Movement ) = {
-      val v = Vector( Point( p.feet._1, p.feet._2 ), Point( start.x + mv.x, start.y + mv.y ) )
-      val xinter = ( b - v.b ) / ( v.slope.m - slope.m )
-      val yinter = v.slope.m * xinter + b
+      val v = Vector( Point( p.feet._1, p.feet._2 ), Point( p.feet._1 + mv.x, p.feet._2 + mv.y ) )
+      val xinter = if (v.slope.isDefined) ( b - v.b ) / ( v.slope.m - slope.m ) else p.x
+      val yinter = slope.m * xinter + b 
       val startToIntercept = hypot( v.start.x - xinter, v.start.y - yinter ) // distance from start to intercept
+      println("==========================")
+      println( s"xinter=$xinter yinter=$yinter startToIntercept=$startToIntercept" )
+      println(s"startx=${start.x} starty=${start.y}, endx=${end.x}  endy=${end.y}")
+      println(s"xfeet=${p.feet._1} yfeet=${p.feet._2} vlength=${v.length}")
+      println("==========================")
       ( ( v.length >= startToIntercept ) &&
         ( xinter between start.x -> end.x ) &&
         ( yinter between start.y -> end.y ) )
@@ -37,8 +42,8 @@ trait SurfaceModule extends LineModule with EventModule {
       // this sucks: we calculate the Mobile's vector twice here:
       case Moved( ar, p, mv ) if isLanding( p, mv ) ⇒
         val v = Vector( Point( p.feet._1, p.feet._2 ), Point( start.x + mv.x, start.y + mv.y ) )
-        val xinter = ( b - v.b ) / ( v.slope.m - slope.m )
-        val yinter = v.slope.m * xinter + b
+      val xinter = if (v.slope.isDefined) ( b - v.b ) / ( v.slope.m - slope.m ) else p.x
+      val yinter = slope.m * xinter + b 
         val newMovement =
           if ( mv.x * slope.m >= 0 && ( p.x == xinter && p.feet._2 == yinter ) ) {
             val k = hypot( slope.dx, slope.dy ) / mv.x

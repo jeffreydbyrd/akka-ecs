@@ -20,17 +20,21 @@ trait LineModule {
     def dx: Double
     def dy: Double
     lazy val m = dy / dx
+    def isDefined:Boolean
   }
 
-  abstract class Defined( val dx: Double, val dy: Double ) extends Slope
+  abstract class Defined( val dx: Double, val dy: Double ) extends Slope {
+    override val isDefined = true
+  }
 
   case class Slant( private val _x: Double, private val _y: Double ) extends Defined( _x, _y )
 
-  case object Flat extends Defined( 1, 0 )
+  case object Flat extends Defined( 1, 0 ) 
 
   case object Undefined extends Slope {
     val dx: Double = 0
     def dy = throw new UndefinedSlopeException
+    override val isDefined = false
   }
 
   /**
