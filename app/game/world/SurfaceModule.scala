@@ -16,6 +16,7 @@ trait SurfaceModule {
   this: RoomModule with EventModule with MobileModule ⇒
 
   // just for fun:
+  // Implicit conversions that basically give Ints/Doubles a 'between' function
   case class IntBetween( i: Int ) { def between( ns: ( Int, Int ) ) = ( ns._1 <= i && i <= ns._2 ) || ( ns._1 >= i && i >= ns._2 ) }
   implicit def intBetween( i: Int ) = IntBetween( i )
   case class DoubleBetween( d: Double ) { def between( ns: ( Double, Double ) ) = ( ns._1 <= d && d <= ns._2 ) || ( ns._1 >= d && d >= ns._2 ) }
@@ -86,22 +87,29 @@ trait SurfaceModule {
         ( yinter between start.y -> end.y )
     }
 
-    /** Stops a Mobile with downward momentum colliding with this Surface */
-    val stopDown: Adjust = {
-      case Moved( ar, p, m ) if isLanding( p.feet, m ) ⇒
-        val yintersect = slope.m * p.x + b
-        Moved( ar, Position( p.x, yintersect + ( p.y - p.feet._2 ) ), Movement( m.x, 0 ) )
+    /** Stops a Mobile whose Movement will intersect with this Surface */
+    val stop: Adjust = {
+      case evt @ Moved( ar, p, mv ) if isLanding( p.feet, mv ) ⇒
+        val ( x0, y0 ) = p.feet
+        val x1 = x0 + mv.x
+        val y1 = y0 + mv.y // x,y of end position
+        val _m = ( y1 - y0 ) / ( x1 - x0 ) // slope of mobile's trajectory
+        val _b = y0 - ( _m * x0 ) // mobile's y-axis intercept
+        val xinter = ( b - _b ) / ( _m - slope.m ) // mobile-surface x-intercept
+        val yinter = _m * xinter + b // mobile-surface y-intercept
+
+        val startToEnd = hypot( x1 - x0, y1 - y0 ) // distance from start to end position
+        val startToIntercept = hypot( x0 - xinter, y0 - yinter ) // distance from start to intercept
+
+        if ( ( startToEnd >= startToIntercept ) &&
+          ( xinter between start.x -> end.x ) &&
+          ( yinter between start.y -> end.y ) )
+          ???
+        else
+          evt
     }
 
-    /** Moves a Mobile up along the Surface's slant if the Mobile is moving into the Surface */
-    val moveup: Adjust = {
-      case e @ Moved( ar, p, mv ) if mv.x * slope.m >= 0 && isLanding( p.feet, mv ) ⇒
-        val yintersect = slope.m * p.x + b
-
-        e
-    }
-
-    adjusts = List( stopDown, moveup )
+    adjusts = List( stop )
   }
 
   case class Wall( xpos: Int,
