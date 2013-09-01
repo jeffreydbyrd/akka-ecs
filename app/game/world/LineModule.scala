@@ -20,7 +20,7 @@ trait LineModule {
     def dx: Double
     def dy: Double
     lazy val m = dy / dx
-    def isDefined:Boolean
+    def isDefined: Boolean
   }
 
   abstract class Defined( val dx: Double, val dy: Double ) extends Slope {
@@ -29,7 +29,7 @@ trait LineModule {
 
   case class Slant( private val _x: Double, private val _y: Double ) extends Defined( _x, _y )
 
-  case object Flat extends Defined( 1, 0 ) 
+  case object Flat extends Defined( 1, 0 )
 
   case object Undefined extends Slope {
     val dx: Double = 0
@@ -56,6 +56,20 @@ trait LineModule {
     lazy val length = hypot( start.x - end.x, start.y - end.y )
     lazy val slope = Slope( start.x - end.x, start.y - end.y )
     lazy val b = start.y - ( slope.m * start.x )
+
+    protected case class Intersection( val that: Line ) {
+      val x =
+        if ( that.slope.isDefined )
+          ( b - that.b ) / ( that.slope.m - slope.m )
+        else
+          that.start.x
+      val y = slope.m * x + b
+      private val startToIntercept = hypot( that.start.x - x, that.start.y - y ) // distance from start to intercept
+      val isLanding =
+        ( that.length >= startToIntercept ) &&
+          ( x between start.x -> end.x ) &&
+          ( y between start.y -> end.y )
+    }
   }
 
   case class Vector( val start: Point, val end: Point ) extends Line

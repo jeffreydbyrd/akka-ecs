@@ -22,28 +22,29 @@ trait SurfaceModule extends LineModule with EventModule {
   trait Surface extends Line with AdjustSupplier
 
   trait Floor extends Surface {
-    def isLanding( p: Position, mv: Movement ) = {
-      val v = Vector( Point( p.feet._1, p.feet._2 ), Point( p.feet._1 + mv.x, p.feet._2 + mv.y ) )
-      val xinter = if ( v.slope.isDefined ) ( b - v.b ) / ( v.slope.m - slope.m ) else p.x
-      val yinter = slope.m * xinter + b
-      val startToIntercept = hypot( v.start.x - xinter, v.start.y - yinter ) // distance from start to intercept
-      ( ( v.length >= startToIntercept ) &&
-        ( xinter between start.x -> end.x ) &&
-        ( yinter between start.y -> end.y ) )
+    def redirect( mv: Movement ) = {
+      val k = hypot( slope.dx, slope.dy ) / mv.x
+      Movement( slope.dx / k, slope.dy / k )
     }
 
-    /** Stops a Mobile whose Movement will intersect with this Surface */
+    /**
+     *  Stops a Mobile whose Movement will intersect with this Surface.
+     *  There are 3 scenarios to check for:
+     *    1) no collision --> proceed as normal
+     *    2) standing on Surface and moving into slope --> redirect vector
+     *    3) in air, colliding with Surface --> cut vector short
+     */
     val onCollision: Adjust = {
-      // this sucks: we calculate the Mobile's vector twice here:
-      case Moved( ar, p, mv ) if isLanding( p, mv ) ⇒
+      case Moved( ar, p, mv ) ⇒
         val v = Vector( Point( p.feet._1, p.feet._2 ), Point( start.x + mv.x, start.y + mv.y ) )
-        val xinter = if ( v.slope.isDefined ) ( b - v.b ) / ( v.slope.m - slope.m ) else p.x
-        val yinter = slope.m * xinter + b
+        val inter = Intersection( v )
         val newMovement =
-          if ( mv.x * slope.m >= 0 && ( p.x == xinter && p.feet._2 == yinter ) ) {
-            val k = hypot( slope.dx, slope.dy ) / mv.x
-            Movement( slope.dx / k, slope.dy / k )
-          } else Movement( xinter - p.x, yinter - p.feet._2 )
+          if ( !inter.isLanding )
+            mv
+          else if ( v.slope.isDefined && mv.x * slope.m > 0 && ( p.x == inter.x && p.feet._2 == inter.y ) )
+            redirect( mv )
+          else
+            Movement( inter.x - p.x, inter.y - p.feet._2 )
         Moved( ar, p, newMovement )
     }
 
