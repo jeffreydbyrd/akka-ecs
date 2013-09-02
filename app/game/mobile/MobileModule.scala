@@ -5,11 +5,12 @@ import scala.concurrent.duration.DurationInt
 import game.EventModule
 import game.world.RoomModule
 import game.util.LineModule
+import game.util.FractionModule
 
 /**
  * Defines the behavior for all mobile entities (Players and NPCs)
  */
-trait MobileModule extends EventModule {
+trait MobileModule extends EventModule with FractionModule {
   this: RoomModule ⇒
 
   case class Movement( val x: Double, val y: Double )

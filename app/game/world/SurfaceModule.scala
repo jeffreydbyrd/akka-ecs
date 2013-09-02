@@ -4,6 +4,7 @@ import scala.math._
 import game.EventModule
 import game.mobile.MobileModule
 import game.util.LineModule
+import game.util.FractionModule
 
 /**
  * A surface is an object with length, slope, and position. A surface
@@ -12,7 +13,7 @@ import game.util.LineModule
  * A Wall always has a vertical (undefined) slope, while a Surface
  * always has a Defined slope.
  */
-trait SurfaceModule extends LineModule with EventModule {
+trait SurfaceModule extends LineModule with FractionModule with EventModule {
   this: RoomModule with MobileModule ⇒
 
   /**

@@ -2,7 +2,7 @@ package game.util
 
 trait FractionModule {
 
-  implicit def intToFract( i: Int ): Fraction = Fraction( i, 1 )
+  implicit def intToFraction( i: Int ): Fraction = Fraction( i, 1 )
 
   def gcd( a: Int, b: Int ): Int = if ( b == 0 ) a else gcd( b, a % b )
 
@@ -16,7 +16,21 @@ trait FractionModule {
     }
     def *( that: Fraction ): Fraction = Fraction( n * that.n, d * that.d )
     def :/( that: Fraction ) = this * Fraction( that.d, that.n )
+    def /( that: Fraction ) = this :/ that
     def +( that: Fraction ): Fraction = Fraction( this.n * that.d + that.n * this.d, this.d * that.d )
-    def -[ A <: Fraction ]( that: A ): Fraction = this + ( -1 * that )
+    def -( that: Fraction ): Fraction = this + ( -1 * that )
+    def <( that: Fraction ): Boolean = ( this.n * that.d ) < ( that.n * this.d )
+    def >( that: Fraction ): Boolean = ( this.n * that.d ) > ( that.n * this.d )
+    def <=( that: Fraction ): Boolean = ( this.n * that.d ) <= ( that.n * this.d )
+    def >=( that: Fraction ): Boolean = ( this.n * that.d ) >= ( that.n * this.d )
+    def ==( that: Fraction ): Boolean = ( this.n * that.d ) == ( that.n * this.d )
   }
+
+  def pow( f: Fraction, e: Int ): Fraction = {
+    def powrec( acc: Fraction, c: Int ): Fraction = if ( c == e ) acc else powrec( f * acc, c + 1 )
+    powrec( f, 1 )
+  }
+  
+  //  def hypot(f1:Fraction, f2:Fraction):Fraction = sqrt
+
 }

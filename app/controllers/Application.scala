@@ -20,6 +20,7 @@ import play.api.mvc.Action
 import play.api.mvc.Controller
 import play.api.mvc.WebSocket
 import game.world.SurfaceModule
+import game.util.FractionModule
 
 object Application
     extends Application

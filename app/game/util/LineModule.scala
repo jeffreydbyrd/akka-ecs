@@ -2,7 +2,7 @@ package game.util
 
 import scala.math._
 
-trait LineModule {
+trait LineModule extends FractionModule {
   /* 
    * Just for fun:
    * Implicit conversions that basically give Ints/Doubles a 'between' function.
@@ -13,6 +13,8 @@ trait LineModule {
   implicit def intBetween( i: Int ) = IntBetween( i )
   case class DoubleBetween( d: Double ) { def between( ns: ( Double, Double ) ) = ( ns._1 <= d && d <= ns._2 ) || ( ns._1 >= d && d >= ns._2 ) }
   implicit def doublBetween( d: Double ) = DoubleBetween( d )
+  case class FracBetween( i: Fraction ) { def between( ns: ( Fraction, Fraction ) ) = ( ns._1 <= i && i <= ns._2 ) || ( ns._1 >= i && i >= ns._2 ) }
+  implicit def fracBetween( f: Fraction ) = FracBetween( f )
 
   class UndefinedSlopeException extends Exception
 
@@ -32,8 +34,8 @@ trait LineModule {
   case object Flat extends Defined( 1, 0 )
 
   case object Undefined extends Slope {
-    val dx: Double = 0
-    def dy = throw new UndefinedSlopeException
+    override val dx: Double = 0
+    override def dy = throw new UndefinedSlopeException
     override val isDefined = false
   }
 
