@@ -1,6 +1,7 @@
-package game.util
+package game.util.math
 
 trait FractionModule {
+  this: RadicalModule ⇒
 
   implicit def intToFraction( i: Int ): Fraction = Fraction( i, 1 )
 
@@ -30,7 +31,4 @@ trait FractionModule {
     def powrec( acc: Fraction, c: Int ): Fraction = if ( c == e ) acc else powrec( f * acc, c + 1 )
     powrec( f, 1 )
   }
-  
-  //  def hypot(f1:Fraction, f2:Fraction):Fraction = sqrt
-
 }

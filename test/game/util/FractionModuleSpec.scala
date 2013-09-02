@@ -1,9 +1,12 @@
 package game.util
 
 import org.specs2.mutable.Specification
+import game.util.math.RadicalModule
+import game.util.math.FractionModule
 
 class FractionModuleSpec
     extends FractionModule
+    with RadicalModule
     with Specification {
 
   "gcd should return the greatest common denominator" in {

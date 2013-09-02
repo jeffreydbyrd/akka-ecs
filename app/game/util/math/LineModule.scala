@@ -1,8 +1,10 @@
-package game.util
+package game.util.math
 
 import scala.math._
 
-trait LineModule extends FractionModule {
+trait LineModule
+    extends FractionModule
+    with RadicalModule {
   /* 
    * Just for fun:
    * Implicit conversions that basically give Ints/Doubles a 'between' function.
