@@ -2,9 +2,7 @@ package game.util.math
 
 import scala.math._
 
-trait LineModule
-    extends FractionModule
-    with RadicalModule {
+trait LineModule {
   /* 
    * Just for fun:
    * Implicit conversions that basically give Ints/Doubles a 'between' function.
@@ -15,8 +13,8 @@ trait LineModule
   implicit def intBetween( i: Int ) = IntBetween( i )
   case class DoubleBetween( d: Double ) { def between( ns: ( Double, Double ) ) = ( ns._1 <= d && d <= ns._2 ) || ( ns._1 >= d && d >= ns._2 ) }
   implicit def doublBetween( d: Double ) = DoubleBetween( d )
-  case class FracBetween( i: Fraction ) { def between( ns: ( Fraction, Fraction ) ) = ( ns._1 <= i && i <= ns._2 ) || ( ns._1 >= i && i >= ns._2 ) }
-  implicit def fracBetween( f: Fraction ) = FracBetween( f )
+//  case class FracBetween( i: Fraction ) { def between( ns: ( Fraction, Fraction ) ) = ( ns._1 <= i && i <= ns._2 ) || ( ns._1 >= i && i >= ns._2 ) }
+//  implicit def fracBetween( f: Fraction ) = FracBetween( f )
 
   class UndefinedSlopeException extends Exception
 
@@ -57,7 +55,9 @@ trait LineModule
   trait Line {
     val start: Point
     val end: Point
-    lazy val length = hypot( start.x - end.x, start.y - end.y )
+    lazy val dx = end.x - start.x
+    lazy val dy = end.y - start.y
+    lazy val length = scala.math.hypot( start.x - end.x, start.y - end.y )
     lazy val slope = Slope( start.x - end.x, start.y - end.y )
     lazy val b = start.y - ( slope.m * start.x )
 
@@ -68,7 +68,7 @@ trait LineModule
         else
           that.start.x
       val y = slope.m * x + b
-      private val startToIntercept = hypot( that.start.x - x, that.start.y - y ) // distance from start to intercept
+      private val startToIntercept = scala.math.hypot( that.start.x - x, that.start.y - y ) // distance from start to intercept
       val isLanding =
         ( that.length >= startToIntercept ) &&
           ( x between start.x -> end.x ) &&
