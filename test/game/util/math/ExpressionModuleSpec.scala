@@ -63,11 +63,26 @@ class ExpressionModuleSpec
     "+ 7 == Composed(Sqrt(7), 7)" in {
       test + 7 == Composed( Sqrt( 7 ), 7 )
     }
-    
+
     "- 7 == Composed(Sqrt(7), -7)" in {
-    	test - 7 == Composed( Sqrt( 7 ), -7 )
+      test - 7 == Composed( Sqrt( 7 ), -7 )
     }
-    
+
+  }
+
+  "Composition test:" in {
+    val sq = Sqrt( 16 )
+    val fr = 25
+    ( fr + sq ) == Composed( 25, Sqrt( 16 ) )
+  }
+
+  "Comprehensive test:" in {
+    val dx = 4
+    val dy = 3
+    val len = Sqrt( ( 4 * 4 ) + ( 3 * 3 ) )
+    val k = ( len / 3 )
+    ( dx / k ) == Sqrt( 16 :/ ( 25 :/ 9 ) )
+
   }
 
 }

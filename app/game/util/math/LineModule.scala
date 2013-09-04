@@ -68,9 +68,9 @@ trait LineModule {
         else
           that.start.x
       val y = slope.m * x + b
-      private val startToIntercept = scala.math.hypot( that.start.x - x, that.start.y - y ) // distance from start to intercept
+      private val intersecting = if (slope.m > 0) that.end.x < x else that.end.x > x
       val isLanding =
-        ( that.length >= startToIntercept ) &&
+        ( intersecting ) &&
           ( x between start.x -> end.x ) &&
           ( y between start.y -> end.y )
     }
