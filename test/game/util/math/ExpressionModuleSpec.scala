@@ -3,7 +3,7 @@ package game.util.math
 import org.specs2.mutable.Specification
 
 class ExpressionModuleSpec
-	extends ExpressionModule
+    extends ExpressionModule
     with Specification {
 
   "gcd should return the greatest common denominator" in {
@@ -19,12 +19,12 @@ class ExpressionModuleSpec
     ( 3 :/ 15 :/ 12 ) === Fraction( 3, 15 * 12 )
   }
 
-  "Fraction.toDouble" should {
+  "Fraction.eval" should {
     "convert a Fraction(a, b) to a Double" in {
-      ( 3 :/ 15 ).toDouble === 0.2
+      ( 3 :/ 15 ).eval === 0.2
     }
     "convert ( (a / b) / c ) to a Double" in {
-      ( 15 :/ 3 :/ 2 ).toDouble === 2.5
+      ( 15 :/ 3 :/ 2 ).eval === 2.5
     }
   }
 
@@ -43,6 +43,31 @@ class ExpressionModuleSpec
     "turn (8 :/ 28) into (2 / 7)" in {
       ( 8 :/ 28 ).reduce === 2 :/ 7
     }
+  }
+
+  "Sqrt(7)" should {
+    val test = Sqrt( 7 )
+
+    "* Sqrt(7) == Sqrt(49)" in {
+      test * Sqrt( 7 ) == Sqrt( 49 )
+    }
+
+    "/ Sqrt(7) == Sqrt(1)" in {
+      test / Sqrt( 7 ) == Sqrt( 1 )
+    }
+
+    "* 7 == Sqrt(343)" in {
+      test * 7 == Sqrt( 343 )
+    }
+
+    "+ 7 == Composed(Sqrt(7), 7)" in {
+      test + 7 == Composed( Sqrt( 7 ), 7 )
+    }
+    
+    "- 7 == Composed(Sqrt(7), -7)" in {
+    	test - 7 == Composed( Sqrt( 7 ), -7 )
+    }
+    
   }
 
 }
