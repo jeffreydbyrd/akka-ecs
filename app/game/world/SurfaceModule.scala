@@ -1,7 +1,9 @@
 package game.world
 
+import scala.math._
+import game.EventModule
 import game.mobile.MobileModule
-import game.util.math.LineModule
+import game.util.LineModule
 
 /**
  * A surface is an object with length, slope, and position. A surface
@@ -10,8 +12,7 @@ import game.util.math.LineModule
  * A Wall always has a vertical (undefined) slope, while a Surface
  * always has a Defined slope.
  */
-trait SurfaceModule
-    extends LineModule {
+trait SurfaceModule extends LineModule with EventModule {
   this: RoomModule with MobileModule ⇒
 
   /**
@@ -22,8 +23,8 @@ trait SurfaceModule
 
   trait Floor extends Surface {
     def redirect( mv: Movement ) = {
-      val k = this.length / mv.x
-      Movement( dx / k, dy / k )
+      val k = hypot( slope.dx, slope.dy ) / mv.x
+      Movement( slope.dx / k, slope.dy / k )
     }
 
     /**

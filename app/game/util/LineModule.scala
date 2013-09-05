@@ -1,4 +1,4 @@
-package game.util.math
+package game.util
 
 import scala.math._
 
@@ -13,8 +13,6 @@ trait LineModule {
   implicit def intBetween( i: Int ) = IntBetween( i )
   case class DoubleBetween( d: Double ) { def between( ns: ( Double, Double ) ) = ( ns._1 <= d && d <= ns._2 ) || ( ns._1 >= d && d >= ns._2 ) }
   implicit def doublBetween( d: Double ) = DoubleBetween( d )
-//  case class FracBetween( i: Fraction ) { def between( ns: ( Fraction, Fraction ) ) = ( ns._1 <= i && i <= ns._2 ) || ( ns._1 >= i && i >= ns._2 ) }
-//  implicit def fracBetween( f: Fraction ) = FracBetween( f )
 
   class UndefinedSlopeException extends Exception
 
@@ -34,8 +32,8 @@ trait LineModule {
   case object Flat extends Defined( 1, 0 )
 
   case object Undefined extends Slope {
-    override val dx: Double = 0
-    override def dy = throw new UndefinedSlopeException
+    val dx: Double = 0
+    def dy = throw new UndefinedSlopeException
     override val isDefined = false
   }
 
@@ -55,9 +53,7 @@ trait LineModule {
   trait Line {
     val start: Point
     val end: Point
-    lazy val dx = end.x - start.x
-    lazy val dy = end.y - start.y
-    lazy val length = scala.math.hypot( start.x - end.x, start.y - end.y )
+    lazy val length = hypot( start.x - end.x, start.y - end.y )
     lazy val slope = Slope( start.x - end.x, start.y - end.y )
     lazy val b = start.y - ( slope.m * start.x )
 
@@ -68,9 +64,9 @@ trait LineModule {
         else
           that.start.x
       val y = slope.m * x + b
-      private val intersecting = if (slope.m > 0) that.end.x < x else that.end.x > x
+      private val startToIntercept = hypot( that.start.x - x, that.start.y - y ) // distance from start to intercept
       val isLanding =
-        ( intersecting ) &&
+        ( that.length >= startToIntercept ) &&
           ( x between start.x -> end.x ) &&
           ( y between start.y -> end.y )
     }
