@@ -42,8 +42,8 @@ trait LineModule {
    */
   object Slope {
     def apply( dx: Double, dy: Double ) = ( dx, dy ) match {
-      case ( 0, _ ) ⇒ Undefined
-      case ( _, 0 ) ⇒ Flat
+      case ( 0, _ ) => Undefined
+      case ( _, 0 ) => Flat
       case _        ⇒ Slant( dx, dy )
     }
   }

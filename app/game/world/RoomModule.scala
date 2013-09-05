@@ -31,7 +31,7 @@ trait RoomModule extends EventModule {
   }
 
   class Room( override val id: String ) extends EHRoom {
-    val platform = DoubleSided( Point( 20, 6 ), Point( 40, 20 ) )
+    val platform = DoubleSided( Point( 20, 6 ), Point( 30, 16 ) )
     adjusts = adjusts ::: platform.getAdjusts
   }
 }
