@@ -4,7 +4,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.DurationInt
 import game.EventModule
 import game.world.RoomModule
-import game.util.LineModule
+import game.util.math.LineModule
 
 /**
  * Defines the behavior for all mobile entities (Players and NPCs)

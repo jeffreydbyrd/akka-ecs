@@ -3,7 +3,7 @@ package game.world
 import scala.math._
 import game.EventModule
 import game.mobile.MobileModule
-import game.util.LineModule
+import game.util.math.LineModule
 
 /**
  * A surface is an object with length, slope, and position. A surface

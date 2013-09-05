@@ -1,4 +1,4 @@
-package game.util
+package game.util.math
 
 import org.specs2.mutable.Specification
 
