@@ -42,8 +42,8 @@ trait LineModule {
    */
   object Slope {
     def apply( dx: Double, dy: Double ) = ( dx, dy ) match {
-      case ( 0, _ ) => Undefined
-      case ( _, 0 ) => Flat
+      case ( 0, _ ) ⇒ Undefined
+      case ( _, 0 ) ⇒ Flat
       case _        ⇒ Slant( dx, dy )
     }
   }
@@ -65,6 +65,7 @@ trait LineModule {
           that.start.x
       val y = slope.m * x + b
       private val startToIntercept = hypot( that.start.x - x, that.start.y - y ) // distance from start to intercept
+      println(s"xinter=$x,  yinter=$y,  startToInter=$startToIntercept,  vlen=${that.length}")
       val isLanding =
         ( that.length >= startToIntercept ) &&
           ( x between start.x -> end.x ) &&

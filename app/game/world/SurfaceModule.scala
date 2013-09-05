@@ -36,7 +36,7 @@ trait SurfaceModule extends LineModule with EventModule {
      */
     val onCollision: Adjust = {
       case Moved( ar, p, mv ) ⇒
-        val v = Vector( Point( p.feet._1, p.feet._2 ), Point( start.x + mv.x, start.y + mv.y ) )
+        val v = Vector( Point( p.feet._1, p.feet._2 ), Point( p.feet._1 + mv.x, p.feet._2 + mv.y ) )
         val inter = Intersection( v )
         val newMovement =
           if ( !inter.isLanding )
@@ -45,6 +45,7 @@ trait SurfaceModule extends LineModule with EventModule {
             redirect( mv )
           else
             Movement( inter.x - p.x, inter.y - p.feet._2 )
+        println(s"  mv=$mv\n  newMV=$newMovement\n  v=$v  inter.isLanding=${inter.isLanding}")
         Moved( ar, p, newMovement )
     }
 
@@ -69,7 +70,7 @@ trait SurfaceModule extends LineModule with EventModule {
         Moved( ar, p, Movement( 0, m.y ) )
     }
 
-    adjusts = adjusts ::: List( stopLeft, stopRight )
+    //    adjusts = adjusts ::: List( stopLeft, stopRight )
   }
 
   case class SingleSided( val start: Point, val end: Point ) extends Floor
