@@ -19,7 +19,7 @@ trait FractionModule {
 
     def reduce: Fraction = {
       val k = gcd( n, d )
-      ( ( n / k ) :/ ( d / k ) )
+      Fraction( ( n / k ), ( d / k ) )
     }
 
     def *( that: Fraction ): Fraction = Fraction( n * that.n, d * that.d )

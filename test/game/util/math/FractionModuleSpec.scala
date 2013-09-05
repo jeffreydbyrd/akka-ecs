@@ -36,6 +36,17 @@ class FractionModuleSpec
     ( 3 :/ 4 ) + ( 4 :/ 3 ) === 25 :/ 12
   }
 
+  "Comparison operators" should {
+    "compare the represented value, not the numerator/denominator" in {
+      ( 3 :/ 4 ) == ( 6 :/ 8 ) must beTrue
+      ( 3 :/ 4 ) >= ( 6 :/ 8 ) must beTrue
+      ( 7 :/ 4 ) > ( 6 :/ 8 ) must beTrue
+      ( 1 :/ 2 ) <= ( 6 :/ 8 ) must beTrue
+      ( 1 :/ 2 ) < ( 6 :/ 8 ) must beTrue
+      ( 1 :/ 2 ) != ( 6 :/ 8 ) must beTrue
+    }
+  }
+
   "Fraction.reduce" should {
     "turn (12 :/ 12) into 1 / 1" in {
       ( 12 :/ 12 ).reduce === 1 :/ 1
