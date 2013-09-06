@@ -35,17 +35,21 @@ trait SurfaceModule extends LineModule with EventModule {
      *    3) in air, colliding with Surface --> cut vector short
      */
     val onCollision: Adjust = {
-      case Moved( ar, p, mv ) ⇒
-        val v = Vector( Point( p.feet._1, p.feet._2 ), Point( p.feet._1 + mv.x, p.feet._2 + mv.y ) )
-        val inter = Intersection( v )
+      // Mobile is already standing on Floor:
+      case Moved( ar, p, mv ) if p.feet._2 == slope.m * p.feet._1 + b ⇒
+        val v = Vector( start = Point( p.feet._1, p.feet._2 ), end = Point( p.feet._1 + mv.x, p.feet._2 + mv.y ) )
         val newMovement =
-          if ( !inter.isLanding )
-            mv
-          else if ( v.slope.isDefined && mv.x * slope.m > 0 && ( p.x == inter.x && p.feet._2 == inter.y ) )
-            redirect( mv )
-          else
-            Movement( inter.x - p.x, inter.y - p.feet._2 )
-        println(s"  mv=$mv\n  newMV=$newMovement\n  v=$v  inter.isLanding=${inter.isLanding}")
+          if ( abs( v.slope.m ) < abs( this.slope.m ) ) redirect( mv )
+          else mv
+        Moved( ar, p, newMovement )
+
+      // Mobile is not standing on Floor:
+      case Moved( ar, p, mv ) ⇒
+        val v = Vector( start = Point( p.feet._1, p.feet._2 ), end = Point( p.feet._1 + mv.x, p.feet._2 + mv.y ) )
+        val inter = this.Intersection( v )
+        val newMovement =
+          if ( inter.isLanding ) Movement( inter.x - p.x, inter.y - p.feet._2 )
+          else mv
         Moved( ar, p, newMovement )
     }
 
