@@ -9,15 +9,15 @@ import game.util.math.LineModule
 /**
  * Defines the behavior for all mobile entities (Players and NPCs)
  */
-trait MobileModule extends EventModule {
+trait MobileModule extends EventModule with LineModule {
   this: RoomModule ⇒
 
   case class Movement( val x: Double, val y: Double )
-  case class Position( x: Double, y: Double ) {
-    lazy val head = ( x, y + 2 )
-    lazy val feet = ( x, y - 2 )
-    lazy val right = ( x + 1, y )
-    lazy val left = ( x - 1, y )
+  case class Position( val x: Double, val y: Double ) extends PointLike {
+    lazy val head = Point( x, y + 2 )
+    lazy val feet = Point( x, y - 2 )
+    lazy val right = Point( x + 1, y )
+    lazy val left = Point( x - 1, y )
   }
 
   case object MoveBitch

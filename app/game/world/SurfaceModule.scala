@@ -19,36 +19,32 @@ trait SurfaceModule extends LineModule with EventModule {
    * A Surface is essentially just a line, owned by Room objects, that supplies Adjust
    * functions to modify Mobile Movements
    */
-  trait Surface extends Line with AdjustSupplier
+  trait Surface extends Line with AdjustSupplier {
+    def inBounds( p: PointLike ): Boolean =
+      ( p.x between start.x -> end.x ) && ( p.y between start.y -> end.y )
+  }
 
   trait Floor extends Surface {
-    def redirect( mv: Movement ) = {
-      val k = hypot( slope.dx, slope.dy ) / mv.x
-      Movement( slope.dx / k, slope.dy / k )
-    }
+    def aboveFloor( p: PointLike ): Boolean = p.y > slope.m * p.x + b
+    def belowFloor( p: PointLike ): Boolean = p.y < slope.m * p.x + b
+    def onFloor( p: PointLike ): Boolean = p.y == slope.m * p.x + b && inBounds( p )
 
-    /**
-     *  Stops a Mobile whose Movement will intersect with this Surface.
-     *  There are 3 scenarios to check for:
-     *    1) no collision --> proceed as normal
-     *    2) standing on Surface and moving into slope --> redirect vector
-     *    3) in air, colliding with Surface --> cut vector short
-     */
     val onCollision: Adjust = {
-      // Mobile is already standing on Floor:
-      case Moved( ar, p, mv ) if p.feet._2 == slope.m * p.feet._1 + b ⇒
-        val v = Vector( start = Point( p.feet._1, p.feet._2 ), end = Point( p.feet._1 + mv.x, p.feet._2 + mv.y ) )
-        val newMovement =
-          if ( abs( v.slope.m ) < abs( this.slope.m ) ) redirect( mv )
-          else mv
-        Moved( ar, p, newMovement )
+      // Mobile is standing on Floor and attempts to move below it:
+      case Moved( ar, p, mv ) if {
+        onFloor( p.feet ) && belowFloor( Point( p.feet.x + mv.x, p.feet.y + mv.y ) )
+      } ⇒
+        val k = hypot( slope.dx, slope.dy ) / mv.x
+        Moved( ar, p, Movement( slope.dx / k, slope.dy / k ) )
 
-      // Mobile is not standing on Floor:
-      case Moved( ar, p, mv ) ⇒
-        val v = Vector( start = Point( p.feet._1, p.feet._2 ), end = Point( p.feet._1 + mv.x, p.feet._2 + mv.y ) )
-        val inter = this.Intersection( v )
+      // Mobile is above the Floor and wants to move below it:
+      case Moved( ar, p, mv ) if {
+        aboveFloor( p.feet ) && belowFloor( Point( p.feet.x + mv.x, p.feet.y + mv.y ) )
+      } ⇒
+        val vector = Vector( start = Point( p.feet.x, p.feet.y ), end = Point( p.feet.x + mv.x, p.feet.y + mv.y ) )
+        val inter = Intersection( vector, this )
         val newMovement =
-          if ( inter.isLanding ) Movement( inter.x - p.x, inter.y - p.feet._2 )
+          if ( inBounds( inter ) ) Movement( inter.x - p.x, inter.y - p.feet.y )
           else mv
         Moved( ar, p, newMovement )
     }
@@ -62,15 +58,8 @@ trait SurfaceModule extends LineModule with EventModule {
     lazy val start = Point( xpos, ytop )
     lazy val end = Point( xpos, ybottom )
 
-    def inBounds( p: Position ) = p.head._2 >= ybottom && p.feet._2 <= ytop
-
-    val stopLeft: Adjust = {
-      case Moved( ar, p, m ) if p.left._1 == this.xpos && m.x < 0 && inBounds( p ) ⇒
-        Moved( ar, p, Movement( 0, m.y ) )
-    }
-
-    val stopRight: Adjust = {
-      case Moved( ar, p, m ) if p.right._2 == this.xpos && m.x > 0 && inBounds( p ) ⇒
+    val stop: Adjust = {
+      case Moved( ar, p, m ) if inBounds( p.left ) || inBounds( p.right ) ⇒
         Moved( ar, p, Movement( 0, m.y ) )
     }
 

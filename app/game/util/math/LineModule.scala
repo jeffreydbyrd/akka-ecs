@@ -48,7 +48,12 @@ trait LineModule {
     }
   }
 
-  case class Point( x: Double, y: Double )
+  trait PointLike {
+    val x: Double
+    val y: Double
+  }
+
+  case class Point( val x: Double, val y: Double ) extends PointLike
 
   trait Line {
     val start: Point
@@ -57,28 +62,18 @@ trait LineModule {
     lazy val slope = Slope( start.x - end.x, start.y - end.y )
     lazy val b = start.y - ( slope.m * start.x )
 
-    protected case class Intersection( val that: Line ) {
-      val x =
-        if ( that.slope.isDefined )
-          ( b - that.b ) / ( that.slope.m - slope.m )
-        else
-          that.start.x
-      val y = slope.m * x + b
-      
-      val xDiffStart = that.start.x - x
-      val yDiffStart = that.start.y - y
-      val xDiffEnd = that.end.x - x
-      val yDiffEnd = that.end.y - y
-      
-      val intersecting = (xDiffStart * xDiffEnd <= 0) && (yDiffStart * yDiffEnd <= 0)
-      
-      val isLanding =
-        ( intersecting ) &&
-          ( x between start.x -> end.x ) &&
-          ( y between start.y -> end.y )
-    }
   }
 
   case class Vector( val start: Point, val end: Point ) extends Line
 
+  case class Intersection( l1: Line, l2: Line ) extends PointLike {
+    val isDefined = l1.slope.m == l2.slope.m  // parallel lines
+    
+    lazy val x =
+      if ( l1.slope.isDefined )
+        ( l2.b - l1.b ) / ( l1.slope.m - l2.slope.m )
+      else
+        l1.start.x
+    lazy val y = l2.slope.m * x + l2.b
+  }
 }
