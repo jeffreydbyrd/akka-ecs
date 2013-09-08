@@ -35,7 +35,8 @@ trait SurfaceModule extends LineModule with EventModule {
         onFloor( p.feet ) && belowFloor( Point( p.feet.x + mv.x, p.feet.y + mv.y ) )
       } ⇒
         val k = hypot( slope.dx, slope.dy ) / mv.x
-        Moved( ar, p, Movement( slope.dx / k, slope.dy / k ) )
+        val newMv = if ( k isInfinite ) Movement( 0, 0 ) else Movement( slope.dx / k, slope.dy / k )
+        Moved( ar, p, newMv )
 
       // Mobile is above the Floor and wants to move below it:
       case Moved( ar, p, mv ) if {
@@ -43,9 +44,7 @@ trait SurfaceModule extends LineModule with EventModule {
       } ⇒
         val vector = Vector( start = Point( p.feet.x, p.feet.y ), end = Point( p.feet.x + mv.x, p.feet.y + mv.y ) )
         val inter = Intersection( vector, this )
-        val newMovement =
-          if ( inBounds( inter ) ) Movement( inter.x - p.x, inter.y - p.feet.y )
-          else mv
+        val newMovement = if ( inBounds( inter ) ) Movement( inter.x - p.x, inter.y - p.feet.y ) else mv
         Moved( ar, p, newMovement )
     }
 

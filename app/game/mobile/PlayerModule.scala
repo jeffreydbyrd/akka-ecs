@@ -67,7 +67,7 @@ trait PlayerModule extends MobileModule {
 
     def printPosition {
       cs send s"(${position.x}, ${position.y})"
-      println( s"$position , $movement" )
+      println( s"$movement -> $position" )
     }
 
     override def default: Handle = {

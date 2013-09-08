@@ -42,7 +42,7 @@ trait MobileModule extends EventModule with LineModule {
 
     protected def move( p: Position, m: Movement ) {
       this.position = Position( p.x + m.x, p.y + m.y )
-      this.movement = m
+      this.movement = Movement( movement.x, m.y )
     }
 
     private def startMoving( xdir: Int ) {

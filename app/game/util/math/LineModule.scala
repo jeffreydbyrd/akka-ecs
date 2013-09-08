@@ -58,8 +58,7 @@ trait LineModule {
   trait Line {
     val start: Point
     val end: Point
-    lazy val length = hypot( start.x - end.x, start.y - end.y )
-    lazy val slope = Slope( start.x - end.x, start.y - end.y )
+    lazy val slope = Slope( end.x - start.x, end.y - start.y )
     lazy val b = start.y - ( slope.m * start.x )
 
   }
@@ -67,8 +66,6 @@ trait LineModule {
   case class Vector( val start: Point, val end: Point ) extends Line
 
   case class Intersection( l1: Line, l2: Line ) extends PointLike {
-    val isDefined = l1.slope.m == l2.slope.m  // parallel lines
-    
     lazy val x =
       if ( l1.slope.isDefined )
         ( l2.b - l1.b ) / ( l1.slope.m - l2.slope.m )
