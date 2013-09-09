@@ -12,8 +12,8 @@ import game.util.math.LineModule
 trait MobileModule extends EventModule with LineModule {
   this: RoomModule ⇒
 
-  case class Movement( val x: Double, val y: Double )
-  case class Position( val x: Double, val y: Double ) extends PointLike {
+  case class Movement( val x: BigDecimal, val y: BigDecimal )
+  case class Position( val x: BigDecimal, val y: BigDecimal ) extends PointLike {
     lazy val head = Point( x, y + 2 )
     lazy val feet = Point( x, y - 2 )
     lazy val right = Point( x + 1, y )
