@@ -4,6 +4,8 @@ import scala.math._
 import game.EventModule
 import game.mobile.MobileModule
 import game.util.math.LineModule
+import java.math.MathContext
+import java.math.RoundingMode
 
 /**
  * A surface is an object with length, slope, and position. A surface
@@ -20,22 +22,31 @@ trait SurfaceModule extends LineModule with EventModule {
    * functions to modify Mobile Movements
    */
   trait Surface extends Line with AdjustSupplier {
+    implicit val rm = BigDecimal.RoundingMode.HALF_UP
+
     def inBounds( p: PointLike ): Boolean =
-      ( p.x between start.x -> end.x ) && ( p.y between start.y -> end.y )
+      ( p.x.setScale( 5, rm ) between start.x.setScale( 5, rm ) -> end.x.setScale( 5, rm ) ) &&
+        ( p.y.setScale( 5, rm ) between start.y.setScale( 5, rm ) -> end.y.setScale( 5, rm ) )
   }
 
   trait Floor extends Surface {
     def aboveFloor( p: PointLike ): Boolean = p.y > slope.m * p.x + b
     def belowFloor( p: PointLike ): Boolean = p.y < slope.m * p.x + b
-    def onFloor( p: PointLike ): Boolean = p.y == slope.m * p.x + b && inBounds( p )
+    def onFloor( p: PointLike ): Boolean =
+      p.y.setScale( 5, rm ) == ( slope.m * p.x + b ).setScale( 5, rm ) &&
+        inBounds( p )
 
     val onCollision: Adjust = {
-      // Mobile is standing on Floor and attempts to move below it:
+      // Mobile is standing on Floor and wants to move below it:
       case Moved( ar, p, mv ) if {
         onFloor( p.feet ) && belowFloor( Point( p.feet.x + mv.x, p.feet.y + mv.y ) )
       } ⇒
-        val k = hypot( slope.dx, slope.dy ) / mv.x
-        val newMv = if ( k isInfinite ) Movement( 0, 0 ) else Movement( slope.dx / k, slope.dy / k )
+        val newMv =
+          if ( mv.x == 0 ) Movement( 0, 0 )
+          else {
+            val k = hypot( slope.dx.toDouble, slope.dy.toDouble ) / mv.x
+            Movement( slope.dx / k, slope.dy / k )
+          }
         Moved( ar, p, newMv )
 
       // Mobile is above the Floor and wants to move below it:

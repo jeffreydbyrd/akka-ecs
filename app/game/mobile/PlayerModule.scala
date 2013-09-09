@@ -17,7 +17,7 @@ import game.world.RoomModule
 trait PlayerModule extends MobileModule {
   this: RoomModule with ConnectionModule ⇒
 
-  implicit val timeout = akka.util.Timeout( 1 second )
+  implicit val timeout = akka.util.Timeout( 1.second )
 
   // Player-Client Communication
   case object Start

@@ -1,6 +1,9 @@
 package game.util.math
 
 import scala.math._
+import scala.math.BigDecimal.double2bigDecimal
+import scala.math.BigDecimal.int2bigDecimal
+import scala.math.BigDecimal.javaBigDecimal2bigDecimal
 
 trait LineModule {
   /* 
@@ -13,26 +16,28 @@ trait LineModule {
   implicit def intBetween( i: Int ) = IntBetween( i )
   case class DoubleBetween( d: Double ) { def between( ns: ( Double, Double ) ) = ( ns._1 <= d && d <= ns._2 ) || ( ns._1 >= d && d >= ns._2 ) }
   implicit def doublBetween( d: Double ) = DoubleBetween( d )
+  case class BigDecBetween( d: BigDecimal ) { def between( ns: ( BigDecimal, BigDecimal ) ) = ( ns._1 <= d && d <= ns._2 ) || ( ns._1 >= d && d >= ns._2 ) }
+  implicit def bigDecBetween( d: BigDecimal ) = BigDecBetween( d )
 
   class UndefinedSlopeException extends Exception
 
   trait Slope {
-    def dx: Double
-    def dy: Double
+    def dx: BigDecimal
+    def dy: BigDecimal
     lazy val m = dy / dx
     def isDefined: Boolean
   }
 
-  abstract class Defined( val dx: Double, val dy: Double ) extends Slope {
+  abstract class Defined( val dx: BigDecimal, val dy: BigDecimal ) extends Slope {
     override val isDefined = true
   }
 
-  case class Slant( private val _x: Double, private val _y: Double ) extends Defined( _x, _y )
+  case class Slant( private val _x: BigDecimal, private val _y: BigDecimal ) extends Defined( _x, _y )
 
   case object Flat extends Defined( 1, 0 )
 
   case object Undefined extends Slope {
-    val dx: Double = 0
+    val dx: BigDecimal = 0
     def dy = throw new UndefinedSlopeException
     override val isDefined = false
   }
@@ -41,19 +46,16 @@ trait LineModule {
    * A convenience object for quickly creating Slopes
    */
   object Slope {
-    def apply( dx: Double, dy: Double ) = ( dx, dy ) match {
-      case ( 0, _ ) ⇒ Undefined
-      case ( _, 0 ) ⇒ Flat
-      case _        ⇒ Slant( dx, dy )
-    }
+    def apply( dx: BigDecimal, dy: BigDecimal ) =
+      if ( dx == 0 ) Undefined else if ( dy == 0 ) Flat else Slant( dx, dy )
   }
 
   trait PointLike {
-    val x: Double
-    val y: Double
+    val x: BigDecimal
+    val y: BigDecimal
   }
 
-  case class Point( val x: Double, val y: Double ) extends PointLike
+  case class Point( val x: BigDecimal, val y: BigDecimal ) extends PointLike
 
   trait Line {
     val start: Point
@@ -71,6 +73,7 @@ trait LineModule {
         ( l2.b - l1.b ) / ( l1.slope.m - l2.slope.m )
       else
         l1.start.x
+        
     lazy val y = l2.slope.m * x + l2.b
   }
 }

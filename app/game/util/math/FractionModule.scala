@@ -3,7 +3,7 @@ package game.util.math
 trait FractionModule {
 
   implicit def int2Fract( i: Int ): Fraction = Fraction( i, 1 )
-  implicit def fract2Double( f: Fraction ): Double = f.toDouble
+  implicit def fract2BigD( f: Fraction ): BigDecimal = f.toBigD
 
   def gcd( a: Int, b: Int ): Int = if ( b == 0 ) a else gcd( b, a % b )
 
@@ -13,7 +13,7 @@ trait FractionModule {
    * where decimal exactness is needed (something Doubles and Longs can't do).
    */
   case class Fraction( private val n: Int, private val d: Int ) {
-    val toDouble: Double = n.toDouble / d.toDouble
+    val toBigD: BigDecimal = BigDecimal( n ) / BigDecimal( d )
     val isDefined: Boolean = d != 0
     override def toString = s"$n / $d"
 
