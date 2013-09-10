@@ -21,7 +21,7 @@ trait SurfaceModule extends LineModule with EventModule {
    * A Surface is essentially just a line, owned by Room objects, that supplies Adjust
    * functions to modify Mobile Movements
    */
-  trait Surface extends Line with AdjustSupplier {
+  trait Surface extends Line with AdjustHandler {
     implicit val rm = BigDecimal.RoundingMode.HALF_UP
 
     def inBounds( p: PointLike ): Boolean =
@@ -59,7 +59,7 @@ trait SurfaceModule extends LineModule with EventModule {
         Moved( ar, p, newMovement )
     }
 
-    adjusts = List( onCollision )
+    outgoing = List( onCollision )
   }
 
   case class Wall( xpos: Int,

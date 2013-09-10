@@ -22,32 +22,18 @@ trait EventModule {
   // Actor messages:
   case object Subscribe
   case object Unsubscribe
-  case class Add( as: List[ Adjust ] )
-  case class Remove( as: List[ Adjust ] )
+  case class AddOut( as: List[ Adjust ] )
+  case class RemoveOut( as: List[ Adjust ] )
+  case class AddIn( as: List[ Adjust ] )
+  case class RemoveIn( as: List[ Adjust ] )
 
   trait AdjustHandler {
-    /** A list of EventAdjusters that adjust an event before it is emitted */
-    protected var adjusts: List[ Adjust ] = Nil
+    var incoming: List[ Adjust ] = Nil
+    var outgoing: List[ Adjust ] = Nil
 
-    /**
-     * Removes all instances of adjuster 'a' from this.adjusters. Items
-     * are matched based on their internal 'id' attributes.
-     */
-    protected def remove( a: Adjust ): List[ Adjust ] =
-      this.adjusts.filterNot( _ == a )
+    protected def removeAll( current: List[ Adjust ], targets: List[ Adjust ] ): List[ Adjust ] =
+      current.filterNot( adj ⇒ targets.contains( adj ) )
 
-    /**
-     * Removes all adjusters specified in 'as' from this.adjusters.
-     * Items are removed based on their internal 'id' attribute
-     */
-    protected def removeAll( as: List[ Adjust ] ): List[ Adjust ] =
-      as.foldLeft( this.adjusts ) { ( ( adjs, a ) ⇒ adjs.filterNot( _ == a ) ) }
-
-  }
-
-  /** An immutable supplier of Adjust functions */
-  trait AdjustSupplier extends AdjustHandler {
-    def getAdjusts: List[ Adjust ] = adjusts
   }
 
   /**
@@ -71,9 +57,9 @@ trait EventModule {
     protected def default: Handle
 
     /** Pipes an Event through the `adjusters` list and returns the end result */
-    protected def adjust( e: Event ) =
-      adjusts.foldLeft( e ) { ( evt, adj ) ⇒
-        if ( adj isDefinedAt evt ) adj( evt ) else evt
+    protected def adjust( adjs: List[ Adjust ], e: Event ) =
+      adjs.foldLeft( e ) { ( evt, adj ) ⇒
+        adj.applyOrElse( evt, ( _: Event ) ⇒ evt )
       }
 
     /**
@@ -92,17 +78,19 @@ trait EventModule {
     type S = ActorRef
 
     override def receive = {
-      case e: Event     ⇒ this.handle( e )
-      case Subscribe    ⇒ subscribers = subscribers :+ sender
-      case Unsubscribe  ⇒ subscribers = subscribers.filterNot( _ == sender )
-      case Add( as )    ⇒ adjusts = ( adjusts ::: as ).distinct
-      case Remove( as ) ⇒ adjusts = this.removeAll( as )
-      case _            ⇒
+      case e: Event        ⇒ this.handle( adjust( incoming, e ) )
+      case Subscribe       ⇒ subscribers = subscribers :+ sender
+      case Unsubscribe     ⇒ subscribers = subscribers.filterNot( _ == sender )
+      case AddOut( as )    ⇒ outgoing = outgoing ::: as
+      case AddIn( as )     ⇒ incoming = incoming ::: as
+      case RemoveOut( as ) ⇒ outgoing = removeAll( outgoing, as )
+      case RemoveIn( as )  ⇒ incoming = removeAll( incoming, as )
+      case _               ⇒
     }
 
     /** Adjust an Event and broadcast the result to the 'subscribers' list */
     protected def emit( e: Event ): Unit = {
-      val finalEvent = adjust( e )
+      val finalEvent = adjust( outgoing, e )
       subscribers.foreach { _ ! finalEvent }
     }
 

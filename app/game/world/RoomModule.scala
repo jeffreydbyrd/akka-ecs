@@ -22,7 +22,7 @@ trait RoomModule extends EventModule {
   }
 
   trait EHRoom extends GenericRoom with EventHandler {
-    adjusts = adjusts ::: List( floor, leftWall, rightWall ).flatMap( _.getAdjusts )
+    outgoing = outgoing ::: List( floor, leftWall, rightWall ).flatMap( _.outgoing )
 
     def default: Handle = {
       case MoveAttempt( p, m ) ⇒ this emit Moved( sender, p, Movement( m.x, m.y + gravity ) )
