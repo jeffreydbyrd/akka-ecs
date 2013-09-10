@@ -65,18 +65,15 @@ trait PlayerModule extends MobileModule {
         context become { playing orElse super.receive }
       }
 
-    def printPosition {
-      cs send s"(${position.x}, ${position.y})"
-      println( s"$movement -> $position" )
-    }
-
     override def default: Handle = {
       case Click( x: Int, y: Int ) ⇒
       case Invalid( msg: String )  ⇒
       case KeyUp( 81 )             ⇒ self ! PoisonPill
-      case KeyDown( 32 | 38 | 87 ) ⇒ jump
-      case Moved( `self`, p, m )   ⇒ move( p, m )
-      case _                       ⇒
+      case KeyDown( 32 | 38 | 87 ) ⇒ jump()
+      case Moved( `self`, p, m ) ⇒
+        move( p, m )
+        cs send s""" { "x" : ${position.x}, "y" : ${position.y} } """
+      case _ ⇒
     }
 
     override def standing: Handle = {
@@ -86,11 +83,6 @@ trait PlayerModule extends MobileModule {
 
     override def moving: Handle = {
       case KeyUp( 65 | 68 | 37 | 39 ) ⇒ stopMoving()
-    }
-
-    override def move( p: Position, m: Movement ) {
-      super.move( p, m )
-      printPosition
     }
 
     override def postStop {
