@@ -35,13 +35,13 @@ class PlayerModuleSpec
     }
 
     "return Connected when I send Start" in {
-      { TestActorRef( new Dummy with EHPlayer ) ? Start }.value.get.get === Connected
+      { TestActorRef( new Dummy with PlayerEventHandler ) ? Start }.value.get.get === Connected
     }
 
     "return NotConnected( msg ) when setup returns Some( msg )" in {
       {
         TestActorRef(
-          new Dummy with EHPlayer {
+          new Dummy with PlayerEventHandler {
             override def setup = Some( "message" )
             def test = setup
           }

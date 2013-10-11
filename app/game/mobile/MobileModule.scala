@@ -32,7 +32,7 @@ trait MobileModule extends EventModule with LineModule {
   }
 
   /** An EventHandling Mobile object */
-  trait EHMobile extends EventHandler with Mobile {
+  trait MobileEventHandler extends ActorEventHandler with Mobile {
 
     val moveScheduler = system.scheduler.schedule( 0 millis, 80 millis )( self ! MoveBitch )
 

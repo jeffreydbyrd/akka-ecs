@@ -21,7 +21,7 @@ trait RoomModule extends EventModule {
     val gravity = -1
   }
 
-  trait EHRoom extends GenericRoom with EventHandler {
+  trait EHRoom extends GenericRoom with ActorEventHandler {
     outgoing = outgoing ::: List( floor, leftWall, rightWall ).flatMap( _.outgoing )
 
     def default: Handle = {

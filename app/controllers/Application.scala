@@ -20,11 +20,13 @@ import play.api.mvc.Action
 import play.api.mvc.Controller
 import play.api.mvc.WebSocket
 import game.world.SurfaceModule
+import game.util.logging.LoggingModule
 
 object Application
     extends Application
     with PlayerModule
     with ConnectionModule
+    with LoggingModule
     with RoomModule
     with SurfaceModule {
   override val system: ActorSystem = akka.actor.ActorSystem( "Doppelsystem" )
@@ -36,20 +38,10 @@ object Application
  * @author biff
  */
 trait Application extends Controller {
-  this: PlayerModule with ConnectionModule ⇒
+  this: PlayerModule with ConnectionModule with LoggingModule ⇒
 
-  /** A simple service that uses a Play Channel object to get data to the client */
-  case class Play2ClientService( val c: Channel[ String ] ) extends ClientService[ String ] {
-    override def send( d: String ) = c push d
-    override def close = c.eofAndEnd
-  }
-
-  /**
-   * Serves the main page
-   */
-  def index = Action {
-    Ok { views.html.index() }
-  }
+  /** Serves the main page */
+  def index = Action { Ok { views.html.index() } }
 
   /**
    * Asynchronously establishes a WebSocket connection using Play's Iteratee-Enumerator model.
@@ -63,7 +55,7 @@ trait Application extends Controller {
    */
   def websocket( username: String ) = WebSocket.async[ String ] { implicit request ⇒
     lazy val ( enumerator, channel ) = Concurrent.broadcast[ String ]
-    val player = system.actorOf( Props( new Player( username, Play2ClientService( channel ) ) ) )
+    val player = system.actorOf( Props( new Player( username, new PlayClientService( channel ) ) ) )
     ( player ? Start ) map {
 
       case Connected ⇒

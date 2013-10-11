@@ -10,10 +10,7 @@ import akka.actor.actorRef2Scala
 import game.ConnectionModule
 import game.world.RoomModule
 
-/**
- * Defines a module used for handling a Player
- * @author biff
- */
+/** Defines a module used for handling a Player */
 trait PlayerModule extends MobileModule {
   this: RoomModule with ConnectionModule ⇒
 
@@ -47,8 +44,8 @@ trait PlayerModule extends MobileModule {
    * An asynchronous EventHandlerActor that handles communication
    * with the client and also interacts with the game world.
    */
-  trait EHPlayer
-      extends EHMobile
+  trait PlayerEventHandler
+      extends MobileEventHandler
       with GenericPlayer[ String ] {
 
     override def receive = { case Start ⇒ start }
@@ -95,11 +92,11 @@ trait PlayerModule extends MobileModule {
 
   }
 
-  class Player( val name: String, val cs: ClientService[ String ] ) extends EHPlayer {
+  class Player( val name: String, val cs: ClientService[ String ] ) extends PlayerEventHandler {
     //temporary:
     var position = Position( 10, 30 )
     override def setup = {
-      println( "player setup.." );
+      println( "player setup.." )
       val roomRef = system.actorOf( Props( new Room( "temp" ) ) )
       subscribers = subscribers :+ roomRef
       roomRef ! Subscribe

@@ -41,7 +41,7 @@ trait EventModule {
    * emitting them, or any combination of the three.
    * @author biff
    */
-  trait GenericEventHandler extends AdjustHandler {
+  trait EventHandler extends AdjustHandler {
     type S
 
     /** A list of EventHandlers that subscribe to the Events emitted by this EventHandler */
@@ -74,7 +74,7 @@ trait EventModule {
    * to handle Events
    * @author biff
    */
-  trait EventHandler extends GenericEventHandler with Actor {
+  trait ActorEventHandler extends EventHandler with Actor {
     type S = ActorRef
 
     override def receive = {
