@@ -1,6 +1,7 @@
 package game.mobile
 
 import scala.concurrent.duration.DurationInt
+import scala.math.BigDecimal.int2bigDecimal
 import scala.util.parsing.json.JSON
 import scala.util.parsing.json.JSONObject
 
@@ -11,8 +12,10 @@ import game.ConnectionModule
 import game.world.RoomModule
 
 /** Defines a module used for handling a Player */
-trait PlayerModule extends MobileModule {
-  this: RoomModule with ConnectionModule ⇒
+trait PlayerModule extends MobileModule with ConnectionModule {
+  this: RoomModule ⇒
+
+  val roomRef = system.actorOf( Props( new Room( "temp" ) ) )
 
   implicit val timeout = akka.util.Timeout( 1.second )
 
@@ -37,7 +40,7 @@ trait PlayerModule extends MobileModule {
      * If something goes wrong, we return Some( errMsg ),
      * otherwise we return None to indicate that everything's fine.
      */
-    protected def setup: Option[ String ] = None // temporary placeholder
+    protected def setup: Option[ String ]
   }
 
   /**
@@ -47,6 +50,8 @@ trait PlayerModule extends MobileModule {
   trait PlayerEventHandler
       extends MobileEventHandler
       with GenericPlayer[ String ] {
+
+    val cs: ClientService[ String ]
 
     override def receive = { case Start ⇒ start }
     def playing: Receive = { case JsonCmd( json ) ⇒ handle( getCommand( json ) ) }
@@ -96,8 +101,7 @@ trait PlayerModule extends MobileModule {
     //temporary:
     var position = Position( 10, 30 )
     override def setup = {
-      println( "player setup.." )
-      val roomRef = system.actorOf( Props( new Room( "temp" ) ) )
+      logger.info( "%s joined the game".format( this.name ) )
       subscribers = subscribers :+ roomRef
       roomRef ! Subscribe
       None

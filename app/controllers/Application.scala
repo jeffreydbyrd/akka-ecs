@@ -37,37 +37,40 @@ object Application
  * WebSocket creation.
  * @author biff
  */
-trait Application extends Controller {
-  this: PlayerModule with ConnectionModule with LoggingModule ⇒
+trait Application extends Controller with LoggingModule {
+  this: PlayerModule ⇒
 
   /** Serves the main page */
   def index = Action { Ok { views.html.index() } }
 
   /**
    * Asynchronously establishes a WebSocket connection using Play's Iteratee-Enumerator model.
-   * We instantiate a Player actor and ask for a confirmation that it has started. When it responds with Connected(),
+   * We instantiate a Player actor and ask for a confirmation that it has started. When it responds with Connected,
    * we create an Iteratee that forwards incoming messages from the client to the Player. 'In' processes incoming data,
-   * while 'out' pushes outgoing data to the client. Populating 'out' is the Player actor's job, and populating 'in' is Play's
-   * job. Play wires 'in' and 'out' to the client for us.
+   * while 'enumerator' pushes outgoing data to the client. 
+   *
+   * Play! populates 'in' for us while the 'channel' populates 'enumerator'. 
+   * Player will send messages to the channel (using the ClientService).
    *
    * If the Player actor responds with NotConnected( msg ), we return 'in' as a 'Done' Iteratee, and 'out' as a single-element
    * Enumerator, delivering 'msg' to the client.
    */
   def websocket( username: String ) = WebSocket.async[ String ] { implicit request ⇒
-    lazy val ( enumerator, channel ) = Concurrent.broadcast[ String ]
-    val player = system.actorOf( Props( new Player( username, new PlayClientService( channel ) ) ) )
+    val ( enumerator, channel ) = Concurrent.broadcast[ String ]
+    val cs = new PlayClientService( channel )
+    val player = system.actorOf( Props( new Player( username, cs ) ) )
+
     ( player ? Start ) map {
 
       case Connected ⇒
-        val in = Iteratee.foreach[ String ] {
-          json ⇒ player ! JsonCmd( json )
-        }
+        val in = Iteratee.foreach[ String ] { json ⇒ player ! JsonCmd( json ) }
         ( in, enumerator )
 
       case NotConnected( msg ) ⇒
         val in = Done[ String, Unit ]( {}, Input.EOF )
         val ret = JsObject( Seq( "error" -> JsString( msg ) ) )
         val out = Enumerator[ String ]( ret.toString ) andThen Enumerator.enumInput( Input.EOF )
+        cs.close
         ( in, out )
     }
   }

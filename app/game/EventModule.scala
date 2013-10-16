@@ -4,12 +4,13 @@ import akka.actor.Actor
 import akka.actor.ActorRef
 import akka.actor.ActorSystem
 import akka.actor.actorRef2Scala
+import game.util.logging.LoggingModule
 
 /**
  * Defines all Event driven functionality
  * @author biff
  */
-trait EventModule {
+trait EventModule extends LoggingModule {
 
   implicit def system: ActorSystem
 
@@ -76,6 +77,7 @@ trait EventModule {
    */
   trait ActorEventHandler extends EventHandler with Actor {
     type S = ActorRef
+    val logger: LoggingService = new AkkaLoggingService( this, context )
 
     override def receive = {
       case e: Event        ⇒ this.handle( adjust( incoming, e ) )
