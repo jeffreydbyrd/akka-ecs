@@ -15,7 +15,7 @@ import game.world.RoomModule
 trait PlayerModule extends MobileModule with ConnectionModule {
   this: RoomModule ⇒
 
-  val roomRef = system.actorOf( Props( new Room( "temp" ) ) )
+  lazy val roomRef = system.actorOf( Props( new Room( "temp" ) ) )
 
   implicit val timeout = akka.util.Timeout( 1.second )
 
@@ -40,7 +40,7 @@ trait PlayerModule extends MobileModule with ConnectionModule {
      * If something goes wrong, we return Some( errMsg ),
      * otherwise we return None to indicate that everything's fine.
      */
-    protected def setup: Option[ String ]
+    protected def setup: Option[ String ] = None
   }
 
   /**
@@ -97,7 +97,7 @@ trait PlayerModule extends MobileModule with ConnectionModule {
 
   }
 
-  class Player( val name: String, val cs: ClientService[ String ] ) extends PlayerEventHandler {
+  class Player( val name: String, override val cs: ClientService[ String ] ) extends PlayerEventHandler {
     //temporary:
     var position = Position( 10, 30 )
     override def setup = {
