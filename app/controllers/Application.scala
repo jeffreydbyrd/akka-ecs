@@ -22,6 +22,9 @@ import play.api.mvc.WebSocket
 import game.world.SurfaceModule
 import game.util.logging.LoggingModule
 
+/**
+ * The entire Doppelgamer stack gets composed in this one object.
+ */
 object Application
     extends Application
     with PlayerModule

@@ -47,7 +47,9 @@ trait LineModule {
    */
   object Slope {
     def apply( dx: BigDecimal, dy: BigDecimal ) =
-      if ( dx == 0 ) Undefined else if ( dy == 0 ) Flat else Slant( dx, dy )
+      if ( dx == 0 ) Undefined
+      else if ( dy == 0 ) Flat
+      else Slant( dx, dy )
   }
 
   trait PointLike {
@@ -73,7 +75,7 @@ trait LineModule {
         ( l2.b - l1.b ) / ( l1.slope.m - l2.slope.m )
       else
         l1.start.x
-        
+
     lazy val y = l2.slope.m * x + l2.b
   }
 }

@@ -17,25 +17,47 @@ import java.math.RoundingMode
 trait SurfaceModule extends LineModule with EventModule {
   this: RoomModule with MobileModule ⇒
 
+  implicit val rm = BigDecimal.RoundingMode.HALF_UP
+
   /**
    * A Surface is essentially just a line, owned by Room objects, that supplies Adjust
    * functions to modify Mobile Movements
    */
   trait Surface extends Line with AdjustHandler {
-    implicit val rm = BigDecimal.RoundingMode.HALF_UP
-
+    /**
+     * Returns true if 'p' is within the X and Y bounds of this Surface. If you draw
+     * a box around this Surface, with the Start & End points resting in the corners,
+     * then 'p' must be within that box. If the Surface is flat, then 'p' must be
+     * resting directly on the Surface.
+     */
     def inBounds( p: PointLike ): Boolean =
-      ( p.x.setScale( 5, rm ) between start.x.setScale( 5, rm ) -> end.x.setScale( 5, rm ) ) &&
-        ( p.y.setScale( 5, rm ) between start.y.setScale( 5, rm ) -> end.y.setScale( 5, rm ) )
+      ( p.x between start.x -> end.x ) && ( p.y between start.y -> end.y )
   }
 
   trait Floor extends Surface {
+    /** Is p above this Floor? */
     def aboveFloor( p: PointLike ): Boolean = p.y > slope.m * p.x + b
+
+    /** Is p below this Floor? */
     def belowFloor( p: PointLike ): Boolean = p.y < slope.m * p.x + b
+
+    /** 
+     *  Is p directly on this Floor? We Round p.x and p.y to the nearest 5 decimal places here
+     *  because very slight rounding errors (due to the limitation of computer memory) will
+     *  cause the function to return false it probably should be true.
+     */
     def onFloor( p: PointLike ): Boolean =
       p.y.setScale( 5, rm ) == ( slope.m * p.x + b ).setScale( 5, rm ) &&
         inBounds( p )
 
+    /*
+     * This function is defined for 2 cases:
+     * 1) Mobile is standing on floor and wants to move below it:
+     * Redirect the movement so that it has the same Slope as the Floor
+     * 
+     * 2) Mobile is above the Floor and wants to move below it:
+     * Keep the direction and Slope, but cut the distance short
+     */
     val onCollision: Adjust = {
       // Mobile is standing on Floor and wants to move below it:
       case Moved( ar, p, mv ) if {
@@ -55,7 +77,9 @@ trait SurfaceModule extends LineModule with EventModule {
       } ⇒
         val vector = Vector( start = Point( p.feet.x, p.feet.y ), end = Point( p.feet.x + mv.x, p.feet.y + mv.y ) )
         val inter = Intersection( vector, this )
-        val newMovement = if ( inBounds( inter ) ) Movement( inter.x - p.x, inter.y - p.feet.y ) else mv
+        val newMovement =
+          if ( inBounds( inter ) ) Movement( inter.x - p.x, inter.y - p.feet.y )
+          else mv
         Moved( ar, p, newMovement )
     }
 
