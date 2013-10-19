@@ -76,7 +76,7 @@ trait SurfaceModule extends LineModule with EventModule {
         aboveFloor( p.feet ) && belowFloor( Point( p.feet.x + mv.x, p.feet.y + mv.y ) )
       } ⇒
         val vector = Vector( start = Point( p.feet.x, p.feet.y ), end = Point( p.feet.x + mv.x, p.feet.y + mv.y ) )
-        val inter = Intersection( vector, this )
+        val inter = new Intersection( vector, this )
         val newMovement =
           if ( inBounds( inter ) ) Movement( inter.x - p.x, inter.y - p.feet.y )
           else mv

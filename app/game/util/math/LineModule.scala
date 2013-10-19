@@ -5,7 +5,12 @@ import scala.math.BigDecimal.double2bigDecimal
 import scala.math.BigDecimal.int2bigDecimal
 import scala.math.BigDecimal.javaBigDecimal2bigDecimal
 
+/**
+ * A Module that defines data structures for Slopes, Points, Lines, and other related
+ * Line functions.
+ */
 trait LineModule {
+
   /* 
    * Just for fun:
    * Implicit conversions that basically give Ints/Doubles a 'between' function.
@@ -42,9 +47,7 @@ trait LineModule {
     override val isDefined = false
   }
 
-  /**
-   * A convenience object for quickly creating Slopes
-   */
+  /** A convenience object for quickly creating Slopes */
   object Slope {
     def apply( dx: BigDecimal, dy: BigDecimal ) =
       if ( dx == 0 ) Undefined
@@ -52,6 +55,7 @@ trait LineModule {
       else Slant( dx, dy )
   }
 
+  /** Anything with an (x,y) position */
   trait PointLike {
     val x: BigDecimal
     val y: BigDecimal
@@ -64,18 +68,21 @@ trait LineModule {
     val end: Point
     lazy val slope = Slope( end.x - start.x, end.y - start.y )
     lazy val b = start.y - ( slope.m * start.x )
-
   }
 
   case class Vector( val start: Point, val end: Point ) extends Line
 
-  case class Intersection( l1: Line, l2: Line ) extends PointLike {
-    lazy val x =
-      if ( l1.slope.isDefined )
-        ( l2.b - l1.b ) / ( l1.slope.m - l2.slope.m )
-      else
-        l1.start.x
+  class Intersection( l1: Line, l2: Line ) extends PointLike {
+    require( l1.slope != l2.slope, "l1 and l2 must not be parallel" )
 
-    lazy val y = l2.slope.m * x + l2.b
+    lazy val ( x, y ) =
+      if ( !l1.slope.isDefined )
+        ( l1.start.x, l2.slope.m * l1.start.x + l2.b )
+      else if ( !l2.slope.isDefined )
+        ( l1.slope.m * l2.start.x + l1.b, l2.start.x )
+      else {
+        val x = ( l2.b - l1.b ) / ( l1.slope.m - l2.slope.m )
+        ( x, l2.slope.m * x + l2.b )
+      }
   }
 }
