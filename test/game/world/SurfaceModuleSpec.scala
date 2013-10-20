@@ -42,7 +42,7 @@ class SurfaceModuleSpec
   "Floor.onCollision" should {
     "redirect the Movement of a Mobile standing on Floor and moving into it" in {
       val floor = new SingleSided( Point( 0, 0 ), Point( 10, 10 ) )
-      val event = Moved( Position( 5, 7 ), Movement( 1, -1 ) )
+      val event = Moved( Position( 5, 7, 4, 2 ), Movement( 1, -1 ) )
       val newMv = floor.onCollision( event ).asInstanceOf[ Moved ].m
       ( newMv.x between BigDecimal( 0 ) -> 1 ) must beTrue
       ( newMv.y between BigDecimal( 0 ) -> 1 ) must beTrue
@@ -50,7 +50,7 @@ class SurfaceModuleSpec
 
     "shorten the Movement of a Mobile falling into the Floor" in {
       val floor = new SingleSided( Point( 0, 0 ), Point( 10, 10 ) )
-      val event = Moved( Position( 0, 4 ), Movement( 2, -2 ) )
+      val event = Moved( Position( 0, 4, 4, 2 ), Movement( 2, -2 ) )
       val newMv = floor.onCollision( event ).asInstanceOf[ Moved ].m
       newMv.x === 1
       newMv.y === -1
@@ -58,7 +58,7 @@ class SurfaceModuleSpec
 
     "be undefined for Movement that does not intersect with the Floor" in {
       val floor = new SingleSided( Point( 0, 0 ), Point( 10, 10 ) )
-      val event = Moved( Position( 0, 10 ), Movement( 2, -2 ) )
+      val event = Moved( Position( 0, 10, 4, 2 ), Movement( 2, -2 ) )
       floor.onCollision.isDefinedAt( event ) must beFalse
     }
   }

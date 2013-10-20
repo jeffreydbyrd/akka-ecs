@@ -47,16 +47,14 @@ trait Application extends Controller with LoggingModule {
   def index = Action { Ok { views.html.index() } }
 
   /**
-   * Asynchronously establishes a WebSocket connection using Play's Iteratee-Enumerator model.
-   * We instantiate a Player actor and ask for a confirmation that it has started. When it responds with Connected,
-   * we create an Iteratee that forwards incoming messages from the client to the Player. 'In' processes incoming data,
-   * while 'enumerator' pushes outgoing data to the client. 
-   *
-   * Play! populates 'in' for us while the 'channel' populates 'enumerator'. 
-   * Player will send messages to the channel (using the ClientService).
-   *
-   * If the Player actor responds with NotConnected( msg ), we return 'in' as a 'Done' Iteratee, and 'out' as a single-element
-   * Enumerator, delivering 'msg' to the client.
+   * WebSocket.async[String] expects a function Request => (Iteratee[String], Enumerator[String]), where the
+   * Iteratee[String] handles incoming messages from the client, and the Enumerator[String] pushes messages
+   * to the client. Play will wire everything else together for us.
+   * 
+   * Here, our Iteratee 'in' forwards messages to the Player Actor. The Player Actor can use 'channel' to
+   * send messages to our Enumerator. To account for problems, we ask the Player Actor for confirmation 
+   * that it started. If it sends back NotConnected( msg ) then instead we return a single-message 
+   * Enumerator. 
    */
   def websocket( username: String ) = WebSocket.async[ String ] { implicit request ⇒
     val ( enumerator, channel ) = Concurrent.broadcast[ String ]

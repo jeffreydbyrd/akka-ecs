@@ -1,5 +1,12 @@
 package game.util.logging
 
+/**
+ * Defines basic logging behavior with a LoggingService that must be implemented. Since we aim to 
+ * keep the Play Framework decoupled from the game logic, we don't want to commit to one logging
+ * tool over another. Therefore, throughout the app, we will use our own logging service whose
+ * behavior is implemented using whichever tool the coder wants. Use the Play serice when writing
+ * Controllers and other Play-specific code, and use the Akka service when inside an EventHandler.
+ */
 trait LoggingModule {
   trait LoggingService {
     def info( s: String ): Unit

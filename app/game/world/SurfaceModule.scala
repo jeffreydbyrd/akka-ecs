@@ -8,20 +8,28 @@ import java.math.MathContext
 import java.math.RoundingMode
 
 /**
- * A surface is an object with length, slope, and position. A surface
- * can be either a Wall or a Floor.
- *
- * A Wall always has a vertical (undefined) slope, while a Surface
- * always has a Defined slope.
+ * A surface is a Line that can be either a Wall or a Floor. A Wall always has a vertical 
+ * (undefined) slope, while a Floor always has a Defined slope. A Surface is designed to
+ * impede a Mobile's Movement. We do this by extending AdjustHandler and providing  
+ * Adjusts that alter Moved Events. Whatever uses a Surface can use the Adjust functions 
+ * however it wants. For example, a Room can include them in its 'outgoing' Adjust list:
+ * 
+ * {{{
+ * val floor = DoubleSided( Point( 0, 0 ), Point( 200, 0 ) )
+ * outgoing = outgoing ::: floor.outgoing
+ * }}}
+ * 
+ * In fact, the RoomEventHandler does just that to make sure Mobiles don't fall into
+ * infinity.
  */
 trait SurfaceModule extends LineModule with EventModule {
-  this: RoomModule with MobileModule ⇒
+  this: MobileModule ⇒
 
   implicit val rm = BigDecimal.RoundingMode.HALF_UP
 
   /**
    * A Surface is essentially just a line, owned by Room objects, that supplies Adjust
-   * functions to modify Mobile Movements
+   * functions to modify Moved Events
    */
   trait Surface extends Line with AdjustHandler {
     /**
@@ -43,8 +51,8 @@ trait SurfaceModule extends LineModule with EventModule {
 
     /**
      *  Is p directly on this Floor? We Round p.x and p.y to the nearest 5 decimal places here
-     *  because very slight rounding errors (due to the limitation of computer memory) will
-     *  cause the function to return false it probably should be true.
+     *  because very slight rounding errors (due to computer memory limits) will
+     *  cause the function to return false when it probably should be true.
      */
     def onFloor( p: PointLike ): Boolean =
       p.y.setScale( 5, rm ) == ( slope.m * p.x + b ).setScale( 5, rm ) &&
@@ -64,8 +72,8 @@ trait SurfaceModule extends LineModule with EventModule {
         onFloor( p.feet ) && belowFloor( Point( p.feet.x + mv.x, p.feet.y + mv.y ) )
       } ⇒
         val newMv =
-          if ( mv.x == 0 ) Movement( 0, 0 )
-          else {
+          if ( mv.x == 0 ) Movement( 0, 0 ) // Mobile is simply standing still
+          else { // Mobile is moving forward
             val k = hypot( slope.dx.toDouble, slope.dy.toDouble ) / mv.x
             Movement( slope.dx / k, slope.dy / k )
           }

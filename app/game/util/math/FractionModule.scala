@@ -1,5 +1,9 @@
 package game.util.math
 
+/**
+ * Defines a Fraction data structure that achieves 100% decimal precision by storing
+ * integers as numerator and denominator and providing basic mathematical operations.
+ */
 trait FractionModule {
 
   implicit def int2Fract( i: Int ): Fraction = Fraction( i, 1 )
