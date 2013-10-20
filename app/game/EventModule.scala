@@ -28,13 +28,17 @@ trait EventModule extends LoggingModule {
   case class AddIn( as: List[ Adjust ] )
   case class RemoveIn( as: List[ Adjust ] )
 
+  /**
+   * Anything that can adjust events, such as a floor, a piece of armor, or a pair of glasses.
+   * These objects can adjust events by applying one or more `Adjust` functions. They may adjust
+   * both incoming and outgoing events.
+   */
   trait AdjustHandler {
     var incoming: List[ Adjust ] = Nil
     var outgoing: List[ Adjust ] = Nil
 
     protected def removeAll( current: List[ Adjust ], targets: List[ Adjust ] ): List[ Adjust ] =
       current.filterNot( adj ⇒ targets.contains( adj ) )
-
   }
 
   /**
@@ -43,11 +47,6 @@ trait EventModule extends LoggingModule {
    * @author biff
    */
   trait EventHandler extends AdjustHandler {
-    type S
-
-    /** A list of EventHandlers that subscribe to the Events emitted by this EventHandler */
-    protected var subscribers: List[ S ] = Nil
-
     /**
      * This represents the entry point for all Events into this EventHandler.
      * It handles an Event by either ignoring it, forwarding it, changing internal
@@ -62,12 +61,6 @@ trait EventModule extends LoggingModule {
       adjs.foldLeft( e ) { ( evt, adj ) ⇒
         adj.applyOrElse( evt, ( _: Event ) ⇒ evt )
       }
-
-    /**
-     * Pipes an Event through the 'adjusters' list and then sends the
-     * end result to each of the 'subscribers'
-     */
-    protected def emit( e: Event ): Unit
   }
 
   /**
@@ -76,8 +69,9 @@ trait EventModule extends LoggingModule {
    * @author biff
    */
   trait ActorEventHandler extends EventHandler with Actor {
-    type S = ActorRef
     val logger: LoggingService = new AkkaLoggingService( this, context )
+
+    var subscribers: List[ ActorRef ] = Nil
 
     override def receive = {
       case e: Event        ⇒ this.handle( adjust( incoming, e ) )
@@ -90,10 +84,16 @@ trait EventModule extends LoggingModule {
       case _               ⇒
     }
 
-    /** Adjust an Event and broadcast the result to the 'subscribers' list */
-    protected def emit( e: Event ): Unit = {
+    /**
+     * Pipes an Event through the 'adjusters' list and then sends the
+     * end result to each of the 'subscribers'
+     */
+    protected def emit( e: Event, forwarding: Boolean = false ): Unit = {
       val finalEvent = adjust( outgoing, e )
-      subscribers.foreach { _ ! finalEvent }
+      val f =
+        if ( forwarding ) ( s: ActorRef ) ⇒ s forward finalEvent
+        else ( s: ActorRef ) ⇒ s ! finalEvent
+      subscribers.foreach { f }
     }
 
   }
