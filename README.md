@@ -31,6 +31,20 @@ and run the app.
 $ play run
 ```
 
+# Running Tests
+
+We are using the [specs2](http://etorreborre.github.io/specs2/) testing framework for Scala. Play Framework integrates nicely with this. To run all tests:
+
+```bash
+$ play test
+```
+
+To run a single test:
+
+```bash
+$ play "test-only fully.qualified.className"
+```
+
 # Edit in Eclipse
 
 First cd to the project root directory and run
