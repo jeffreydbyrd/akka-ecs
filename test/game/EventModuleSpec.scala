@@ -22,7 +22,6 @@ class EventModuleSpec
   trait TestEventHandler extends EventHandler {
     outgoing = adjs
     def default: Handle = { case _ ⇒ }
-    protected def emit( e: Event ): Unit = {}
   }
 
   "GenericEventHandler#removeAll" should {

@@ -41,7 +41,7 @@ trait SurfaceModule extends LineModule with EventModule {
     /** Is p below this Floor? */
     def belowFloor( p: PointLike ): Boolean = p.y < slope.m * p.x + b
 
-    /** 
+    /**
      *  Is p directly on this Floor? We Round p.x and p.y to the nearest 5 decimal places here
      *  because very slight rounding errors (due to the limitation of computer memory) will
      *  cause the function to return false it probably should be true.
@@ -60,7 +60,7 @@ trait SurfaceModule extends LineModule with EventModule {
      */
     val onCollision: Adjust = {
       // Mobile is standing on Floor and wants to move below it:
-      case Moved( ar, p, mv ) if {
+      case Moved( p, mv ) if {
         onFloor( p.feet ) && belowFloor( Point( p.feet.x + mv.x, p.feet.y + mv.y ) )
       } ⇒
         val newMv =
@@ -69,10 +69,10 @@ trait SurfaceModule extends LineModule with EventModule {
             val k = hypot( slope.dx.toDouble, slope.dy.toDouble ) / mv.x
             Movement( slope.dx / k, slope.dy / k )
           }
-        Moved( ar, p, newMv )
+        Moved( p, newMv )
 
       // Mobile is above the Floor and wants to move below it:
-      case Moved( ar, p, mv ) if {
+      case Moved( p, mv ) if {
         aboveFloor( p.feet ) && belowFloor( Point( p.feet.x + mv.x, p.feet.y + mv.y ) )
       } ⇒
         val vector = Vector( start = Point( p.feet.x, p.feet.y ), end = Point( p.feet.x + mv.x, p.feet.y + mv.y ) )
@@ -80,7 +80,7 @@ trait SurfaceModule extends LineModule with EventModule {
         val newMovement =
           if ( inBounds( inter ) ) Movement( inter.x - p.x, inter.y - p.feet.y )
           else mv
-        Moved( ar, p, newMovement )
+        Moved( p, newMovement )
     }
 
     outgoing = List( onCollision )
@@ -93,8 +93,8 @@ trait SurfaceModule extends LineModule with EventModule {
     lazy val end = Point( xpos, ybottom )
 
     val stop: Adjust = {
-      case Moved( ar, p, m ) if inBounds( p.left ) || inBounds( p.right ) ⇒
-        Moved( ar, p, Movement( 0, m.y ) )
+      case Moved( p, m ) if inBounds( p.left ) || inBounds( p.right ) ⇒
+        Moved( p, Movement( 0, m.y ) )
     }
 
     //    adjusts = adjusts ::: List( stopLeft, stopRight )

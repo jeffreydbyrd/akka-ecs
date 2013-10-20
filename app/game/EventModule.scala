@@ -90,10 +90,9 @@ trait EventModule extends LoggingModule {
      */
     protected def emit( e: Event, forwarding: Boolean = false ): Unit = {
       val finalEvent = adjust( outgoing, e )
-      val f =
-        if ( forwarding ) ( s: ActorRef ) ⇒ s forward finalEvent
-        else ( s: ActorRef ) ⇒ s ! finalEvent
-      subscribers.foreach { f }
+      for ( s ← subscribers )
+        if ( forwarding ) s forward finalEvent
+        else s ! finalEvent
     }
 
   }

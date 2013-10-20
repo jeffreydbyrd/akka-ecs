@@ -22,9 +22,6 @@ trait MobileModule extends EventModule with LineModule {
 
   case object MoveBitch
 
-  // Define events:
-  case class MoveAttempt( p: Position, m: Movement ) extends Event
-
   trait Mobile {
     val name: String
     var position: Position
@@ -36,7 +33,7 @@ trait MobileModule extends EventModule with LineModule {
 
     val moveScheduler = system.scheduler.schedule( 0 millis, 80 millis )( self ! MoveBitch )
 
-    def moveBitch: Receive = { case MoveBitch ⇒ this emit MoveAttempt( position, movement ) }
+    def moveBitch: Receive = { case MoveBitch ⇒ this emit Moved( position, movement ) }
     override def receive = moveBitch orElse super.receive
 
     protected def standing: Handle

@@ -72,7 +72,7 @@ trait PlayerModule extends MobileModule with ConnectionModule {
       case Invalid( msg: String )  ⇒
       case KeyUp( 81 )             ⇒ self ! PoisonPill
       case KeyDown( 32 | 38 | 87 ) ⇒ jump()
-      case Moved( `self`, p, m ) ⇒
+      case Moved( p, m ) if sender == self ⇒
         move( p, m )
         cs send s""" { "x" : ${position.x}, "y" : ${position.y} } """
       case _ ⇒
