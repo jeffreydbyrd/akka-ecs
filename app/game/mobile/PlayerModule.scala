@@ -16,7 +16,7 @@ trait PlayerModule extends MobileModule with ConnectionModule {
   this: RoomModule ⇒
 
   /** We all share one room for now */
-  lazy val ROOMREF = system.actorOf( Props( new Room( "temp" ) ) )
+  lazy val ROOMREF = Room.create( "temp" )
 
   implicit val TIMEOUT = akka.util.Timeout( 1.second )
 
@@ -79,7 +79,7 @@ trait PlayerModule extends MobileModule with ConnectionModule {
       } getOrElse {
         sender ! Connected
         this.handle = standing orElse default
-        
+
         // Switch to normal EventHandler behavior, with our extra Playing behavior to handle JsonCmds
         context become { playing orElse super.receive }
       }
@@ -123,6 +123,11 @@ trait PlayerModule extends MobileModule with ConnectionModule {
       ROOMREF ! Subscribe
       None
     }
+  }
+
+  object Player {
+    def create( username: String, cs: ClientService[ String ] ) =
+      system.actorOf( Props( new Player( username, cs ) ), name = username )
   }
 
   /**

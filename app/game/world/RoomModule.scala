@@ -3,6 +3,7 @@ package game.world
 import akka.actor.ActorRef
 import game.EventModule
 import game.mobile.PlayerModule
+import akka.actor.Props
 
 /**
  * Defines structures and messages for Room behavior. Rooms are asynchronous
@@ -27,7 +28,7 @@ trait RoomModule extends EventModule {
   trait RoomEventHandler extends ActorEventHandler {
     val id: String
     val gravity: BigDecimal
-    
+
     /** This Room's default gravity simply modifies a movement's y-value */
     val gravitate: Adjust = {
       case Moved( p, m ) ⇒ Moved( p, Movement( m.x, m.y + gravity ) )
@@ -47,5 +48,9 @@ trait RoomModule extends EventModule {
   class Room( override val id: String ) extends RoomEventHandler {
     override val gravity: BigDecimal = -1
     outgoing = outgoing ::: DoubleSided( Point( 0, 0 ), Point( 200, 200 ) ).outgoing
+  }
+
+  object Room {
+    def create( id: String ) = system.actorOf( Props( new Room( id ) ), name = id )
   }
 }

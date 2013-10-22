@@ -50,16 +50,16 @@ trait Application extends Controller with LoggingModule {
    * WebSocket.async[String] expects a function Request => (Iteratee[String], Enumerator[String]), where the
    * Iteratee[String] handles incoming messages from the client, and the Enumerator[String] pushes messages
    * to the client. Play will wire everything else together for us.
-   * 
+   *
    * Here, our Iteratee 'in' forwards messages to the Player Actor. The Player Actor can use 'channel' to
-   * send messages to our Enumerator. To account for problems, we ask the Player Actor for confirmation 
-   * that it started. If it sends back NotConnected( msg ) then instead we return a single-message 
-   * Enumerator. 
+   * send messages to our Enumerator. To account for problems, we ask the Player Actor for confirmation
+   * that it started. If it sends back NotConnected( msg ) then instead we return a single-message
+   * Enumerator.
    */
   def websocket( username: String ) = WebSocket.async[ String ] { implicit request ⇒
     val ( enumerator, channel ) = Concurrent.broadcast[ String ]
     val cs = new PlayClientService( channel )
-    val player = system.actorOf( Props( new Player( username, cs ) ) )
+    val player = Player.create(username, cs);
 
     ( player ? Start ) map {
 
