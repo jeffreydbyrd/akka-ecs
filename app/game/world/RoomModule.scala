@@ -1,16 +1,20 @@
 package game.world
 
-import akka.actor.ActorRef
-import game.EventModule
-import game.mobile.PlayerModule
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.math.BigDecimal.int2bigDecimal
+
 import akka.actor.Props
+import akka.pattern.ask
+import game.EventModule
+import game.GameModule
+import game.mobile.PlayerModule
 
 /**
  * Defines structures and messages for Room behavior. Rooms are asynchronous
  * EventHandlers that mediate almost all Events that propagate through the world.
  */
-trait RoomModule extends EventModule {
-  this: PlayerModule with SurfaceModule ⇒
+trait RoomModule extends EventModule with SurfaceModule {
+  this: PlayerModule with GameModule ⇒
 
   case object Arrived extends Event
 
@@ -38,10 +42,19 @@ trait RoomModule extends EventModule {
     incoming = incoming :+ gravitate
     outgoing = outgoing ::: List( floor, leftWall, rightWall ).flatMap( _.outgoing )
 
+    def listen: Receive = {
+      // create a new player, tell him to Start, forward his response to sender
+      case NewPlayer( name, cs ) ⇒
+        { newPlayer( name, cs ) ? Start } foreach { resp ⇒ sender forward resp }
+    }
+    override def receive = listen orElse super.receive
+
     def default: Handle = {
       case mv: Moved ⇒ emit( mv, forwarding = true )
       case _         ⇒ // yum
     }
+
+    def newPlayer( name: String, cs: ClientService ) = context.actorOf( Props( new Player( name, cs ) ), name = name )
   }
 
   /** Concrete implementation of a RoomEventHandler */
@@ -50,7 +63,4 @@ trait RoomModule extends EventModule {
     outgoing = outgoing ::: DoubleSided( Point( 0, 0 ), Point( 200, 200 ) ).outgoing
   }
 
-  object Room {
-    def create( id: String ) = system.actorOf( Props( new Room( id ) ), name = id )
-  }
 }

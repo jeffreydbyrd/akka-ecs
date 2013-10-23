@@ -1,6 +1,7 @@
 package game.mobile
 
 import scala.util.Success
+import scala.concurrent.ExecutionContext.Implicits.global
 import org.specs2.mutable.Specification
 import akka.actor.ActorSystem
 import akka.pattern.ask
@@ -8,34 +9,35 @@ import akka.testkit.TestActorRef
 import game.ConnectionModule
 import game.world.RoomModule
 import game.world.SurfaceModule
+import game.GameModule
+import akka.actor.ActorRef
 
 class PlayerModuleSpec
     extends PlayerModule
     with ConnectionModule
     with RoomModule
+    with GameModule
     with SurfaceModule
     with Specification {
 
   implicit val system: ActorSystem = ActorSystem( "PlayerModuleSpec" )
 
-  val NOOP: ClientService[ String ] = new ClientService[ String ] {
+  val NOOP: ClientService = new ClientService {
     override def send( d: String ) = {}
     override def close {}
   }
 
-  trait Dummy extends GenericPlayer[ String ] {
-    val cs: ClientService[ String ] = NOOP
+  trait Dummy extends GenericPlayer {
+    val cs: ClientService = NOOP
     val name = "dummy"
     var position = Position( 5, 5, height, width )
   }
 
   "When a Player actor is initialized, it" should {
-    "return None when I call setup" in {
-      new Dummy { def test = setup }.test must beNone
-    }
 
-    "return Connected when I send Start" in {
-      { TestActorRef( new Dummy with PlayerEventHandler ) ? Start }.value.get.get === Connected
+    "return it's own actor ref when I send Start" in {
+      val testAr:ActorRef = TestActorRef( new Dummy with PlayerEventHandler ) 
+      { testAr ? Start }.value.get.get === testAr
     }
 
     "return NotConnected( msg ) when setup returns Some( msg )" in {

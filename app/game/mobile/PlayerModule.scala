@@ -4,31 +4,22 @@ import scala.concurrent.duration.DurationInt
 import scala.math.BigDecimal.int2bigDecimal
 import scala.util.parsing.json.JSON
 import scala.util.parsing.json.JSONObject
-
 import akka.actor.PoisonPill
 import akka.actor.Props
 import akka.actor.actorRef2Scala
 import game.ConnectionModule
 import game.world.RoomModule
+import akka.actor.ActorRef
 
 /** Defines a module used for handling a Player */
 trait PlayerModule extends MobileModule with ConnectionModule {
   this: RoomModule ⇒
-
-  /** We all share one room for now */
-  lazy val ROOMREF = Room.create( "temp" )
-
-  implicit val TIMEOUT = akka.util.Timeout( 1.second )
 
   //======================================
   // Player-Client Communication
   //======================================
   /** Used to tell a Player Actor to start. The caller should wait for a confirmation */
   case object Start
-  /** Used to tell the App that it's connected */
-  case object Connected
-  /** Used to tell the App that it's not connected */
-  case class NotConnected( msg: String )
   /** Used by the App to deliver a raw JSON formatted string to the Player */
   case class JsonCmd( msg: String )
 
@@ -40,8 +31,8 @@ trait PlayerModule extends MobileModule with ConnectionModule {
   case class Click( x: Int, y: Int ) extends Event
   case object Quit extends Event
 
-  trait GenericPlayer[ D ] extends Mobile {
-    val cs: ClientService[ D ]
+  trait GenericPlayer extends Mobile {
+    val cs: ClientService
     val height = 4
     val width = 2
     /**
@@ -58,9 +49,9 @@ trait PlayerModule extends MobileModule with ConnectionModule {
    */
   trait PlayerEventHandler
       extends MobileEventHandler
-      with GenericPlayer[ String ] {
+      with GenericPlayer {
 
-    val cs: ClientService[ String ]
+    val cs: ClientService
 
     // Override the EventHandler's receive function because we don't want to handle Events yet
     override def receive = { case Start ⇒ start }
@@ -69,15 +60,16 @@ trait PlayerModule extends MobileModule with ConnectionModule {
     /**
      *  Constructs the Player Actor by fetching data from the database. entering the World,
      *  and reporting to the App on its success (Connected or NotConnected). If the Player
-     *  fails to start, he must kill himself. If he succeeds, he
+     *  fails to start, he must kill himself. If he succeeds, he switches to a standing
+     *  state.
      */
     def start =
       setup map { msg ⇒ // if there's a message then something went wrong
         logger.error( msg )
-        sender ! NotConnected( msg )
+        sender ! msg
         self ! PoisonPill // failed to start... you know what to do :(
       } getOrElse {
-        sender ! Connected
+        sender ! self
         this.handle = standing orElse default
 
         // Switch to normal EventHandler behavior, with our extra Playing behavior to handle JsonCmds
@@ -106,7 +98,6 @@ trait PlayerModule extends MobileModule with ConnectionModule {
 
     override def postStop {
       this emit Quit
-      this.subscribers foreach { _ ! Unsubscribe }
       cs send "quit"
       this.moveScheduler.cancel
       cs.close
@@ -114,20 +105,13 @@ trait PlayerModule extends MobileModule with ConnectionModule {
 
   }
 
-  class Player( val name: String, override val cs: ClientService[ String ] ) extends PlayerEventHandler {
+  class Player( val name: String, override val cs: ClientService ) extends PlayerEventHandler {
     //temporary:
     var position = newPosition( 10, 30 )
     override def setup = {
       logger.info( "%s joined the game".format( this.name ) )
-      subscribers = subscribers :+ ROOMREF
-      ROOMREF ! Subscribe
       None
     }
-  }
-
-  object Player {
-    def create( username: String, cs: ClientService[ String ] ) =
-      system.actorOf( Props( new Player( username, cs ) ), name = username )
   }
 
   /**

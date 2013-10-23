@@ -30,15 +30,11 @@ trait EventModule extends LoggingModule {
 
   /** A PartialFunction used by EventHandlers to modify incoming and outgoing Events */
   type Adjust = PartialFunction[ Event, Event ]
-  
+
   /** A PartialFunction used by EventHandlers to handle certain Events */
   type Handle = PartialFunction[ Event, Unit ]
 
   // Actor messages:
-  /** Tells an EventHandler I want to subscribe to his Events */
-  case object Subscribe
-  /** Tells an EventHandler I want to unsubscribe from his Events */
-  case object Unsubscribe
   /** Tells the target EventHandler to add 'as' to the outgoing list of Adjusts */
   case class AddOut( as: List[ Adjust ] )
   /** Tells the target EventHandler to remove 'as' from the outgoing list of Adjusts */
@@ -88,15 +84,8 @@ trait EventModule extends LoggingModule {
   trait ActorEventHandler extends EventHandler with Actor {
     val logger: LoggingService = new AkkaLoggingService( this, context )
 
-    /**
-     * A list of ActorRefs (ActorEventHandler) that this EventHandler will emit its Events to
-     */
-    var subscribers: List[ ActorRef ] = Nil
-
     override def receive = {
       case e: Event        ⇒ this.handle( adjust( incoming, e ) )
-      case Subscribe       ⇒ subscribers = subscribers :+ sender
-      case Unsubscribe     ⇒ subscribers = subscribers.filterNot( _ == sender )
       case AddOut( as )    ⇒ outgoing = outgoing ::: as
       case AddIn( as )     ⇒ incoming = incoming ::: as
       case RemoveOut( as ) ⇒ outgoing = removeAll( outgoing, as )
@@ -106,13 +95,13 @@ trait EventModule extends LoggingModule {
 
     /**
      * Pipes an Event through the 'outgoing' list and then sends the end result to each of the
-     * 'subscribers'. If forwarding == true, then the Event is forwarded according to Akka's
-     * forwarding documentation:
+     * parent and children ActorRefs. If forwarding == true, then the Event is forwarded 
+     * according to Akka's forwarding documentation:
      * (http://doc.akka.io/docs/akka/snapshot/scala/actors.html#Forward_message)
      */
     protected def emit( e: Event, forwarding: Boolean = false ): Unit = {
       val finalEvent = adjust( outgoing, e )
-      for ( s ← subscribers )
+      for ( s ← context.parent :: context.children.toList )
         if ( forwarding ) s forward finalEvent
         else s ! finalEvent
     }

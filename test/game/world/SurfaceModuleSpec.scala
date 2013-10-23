@@ -1,19 +1,20 @@
 package game.world
 
 import org.specs2.mutable.Specification
-
 import game.ConnectionModule
 import game.EventModule
 import game.mobile.MobileModule
 import game.mobile.PlayerModule
+import game.GameModule
 
 class SurfaceModuleSpec
     extends SurfaceModule
     with EventModule
+    with MobileModule
     with RoomModule
     with PlayerModule
+    with GameModule
     with ConnectionModule
-    with MobileModule
     with Specification { // that's a lot of mixins
 
   override val system = null

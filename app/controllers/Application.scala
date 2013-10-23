@@ -21,17 +21,15 @@ import play.api.mvc.Controller
 import play.api.mvc.WebSocket
 import game.world.SurfaceModule
 import game.util.logging.LoggingModule
+import game.GameModule
+import akka.actor.ActorRef
 
 /**
  * The entire Doppelgamer stack gets composed in this one object.
  */
 object Application
     extends Application
-    with PlayerModule
-    with ConnectionModule
-    with LoggingModule
-    with RoomModule
-    with SurfaceModule {
+    with GameModule {
   override val system: ActorSystem = akka.actor.ActorSystem( "Doppelsystem" )
 }
 
@@ -40,8 +38,8 @@ object Application
  * WebSocket creation.
  * @author biff
  */
-trait Application extends Controller with LoggingModule {
-  this: PlayerModule ⇒
+trait Application extends Controller {
+  this: GameModule ⇒
 
   /** Serves the main page */
   def index = Action { Ok { views.html.index() } }
@@ -59,15 +57,14 @@ trait Application extends Controller with LoggingModule {
   def websocket( username: String ) = WebSocket.async[ String ] { implicit request ⇒
     val ( enumerator, channel ) = Concurrent.broadcast[ String ]
     val cs = new PlayClientService( channel )
-    val player = Player.create(username, cs);
 
-    ( player ? Start ) map {
+    ( game ? NewPlayer( username, cs ) ) map {
 
-      case Connected ⇒
-        val in = Iteratee.foreach[ String ] { json ⇒ player ! JsonCmd( json ) }
+      case plrRef: ActorRef ⇒
+        val in = Iteratee.foreach[ String ] { json ⇒ plrRef ! JsonCmd( json ) }
         ( in, enumerator )
 
-      case NotConnected( msg ) ⇒
+      case msg: String ⇒
         val in = Done[ String, Unit ]( {}, Input.EOF )
         val ret = JsObject( Seq( "error" -> JsString( msg ) ) )
         val out = Enumerator[ String ]( ret.toString ) andThen Enumerator.enumInput( Input.EOF )

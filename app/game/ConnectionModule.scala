@@ -10,12 +10,12 @@ import play.api.libs.iteratee.Concurrent.Channel
 trait ConnectionModule {
 
   /** Defines a Closeable service that sends data of type D to the client */
-  trait ClientService[ D ] extends Closeable {
-    def send( data: D ): Unit
+  trait ClientService extends Closeable {
+    def send( data: String ): Unit
   }
 
   /** A simple service that uses a Play Channel object to get String data to the client */
-  class PlayClientService( val c: Channel[ String ] ) extends ClientService[ String ] {
+  class PlayClientService( val c: Channel[ String ] ) extends ClientService {
     override def send( d: String ) = c push d
     override def close = c.eofAndEnd
   }
