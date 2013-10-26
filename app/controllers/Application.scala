@@ -31,7 +31,7 @@ object Application
     extends Application
     with GameModule {
   override val system: ActorSystem = akka.actor.ActorSystem( "Doppelsystem" )
-  override val GAME: ActorRef = system.actorOf( Props( new GameEventHandler ), name = "game" )
+  override val GAME: ActorRef = system.actorOf( Props( new Game ), name = "game" )
 }
 
 /**
@@ -61,7 +61,7 @@ trait Application extends Controller with LoggingModule {
     ( GAME ? AddPlayer( username ) ) map {
       case ( plr: ActorRef, cs: PlayFrameworkClientService ) ⇒
         val in = Iteratee.foreach[ String ] { json ⇒ plr ! JsonCmd( json ) }
-        logger.info( s"Application is now sending messages directly to $username actor." )
+        logger.info( s"Now sending messages directly to ${plr.toString}." )
         ( in, cs.enumerator )
 
       case msg: String ⇒

@@ -28,9 +28,7 @@ trait GameModule
   // ====
   case class AddPlayer( name: String )
 
-  trait Game
-
-  class GameEventHandler extends Game with ActorEventHandler {
+  class Game extends ActorEventHandler {
     // TODO: build the world from database
 
     /** We all share one room for now */
