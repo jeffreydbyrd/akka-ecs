@@ -18,6 +18,7 @@ class SurfaceModuleSpec
     with Specification { // that's a lot of mixins
 
   override val system = null
+  val GAME = null
 
   "Surface.inBounds(p)" should {
     "return true when p is within the X and Y bounds of a Surface" in {

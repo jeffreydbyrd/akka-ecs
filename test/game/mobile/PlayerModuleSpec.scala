@@ -1,16 +1,15 @@
 package game.mobile
 
-import scala.util.Success
 import scala.concurrent.ExecutionContext.Implicits.global
 import org.specs2.mutable.Specification
+import akka.actor.ActorRef
 import akka.actor.ActorSystem
 import akka.pattern.ask
-import akka.testkit.TestActorRef
 import game.ConnectionModule
+import game.GameModule
 import game.world.RoomModule
 import game.world.SurfaceModule
-import game.GameModule
-import akka.actor.ActorRef
+import akka.testkit.TestActorRef
 
 class PlayerModuleSpec
     extends PlayerModule
@@ -21,6 +20,7 @@ class PlayerModuleSpec
     with Specification {
 
   implicit val system: ActorSystem = ActorSystem( "PlayerModuleSpec" )
+  val GAME = null
 
   val NOOP: ClientService = new ClientService {
     override def send( d: String ) = {}
@@ -35,12 +35,12 @@ class PlayerModuleSpec
 
   "When a Player actor is initialized, it" should {
 
-    "return it's own actor ref when I send Start" in {
-      val testAr:ActorRef = TestActorRef( new Dummy with PlayerEventHandler ) 
-      { testAr ? Start }.value.get.get === testAr
+    "return its own actor ref when I send Start" in {
+      val testAr: ActorRef = TestActorRef( new Dummy with PlayerEventHandler )
+      ( testAr ? Start ).value.get.get === ( testAr, NOOP )
     }
 
-    "return NotConnected( msg ) when setup returns Some( msg )" in {
+    "return msg:String when setup returns Some( msg )" in {
       {
         TestActorRef(
           new Dummy with PlayerEventHandler {
@@ -48,7 +48,7 @@ class PlayerModuleSpec
             def test = setup
           }
         ) ? Start
-      }.value.get.get === NotConnected( "message" )
+      }.value.get.get === "message"
     }
 
   }

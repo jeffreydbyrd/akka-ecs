@@ -38,14 +38,18 @@ trait RoomModule extends EventModule with SurfaceModule {
       case Moved( p, m ) ⇒ Moved( p, Movement( m.x, m.y + gravity ) )
     }
 
+    def newPlayer( name: String ) = context.actorOf( Props( new Player( name ) ), name = name )
+
     // Include the room's default gravity and default walls
     incoming = incoming :+ gravitate
     outgoing = outgoing ::: List( floor, leftWall, rightWall ).flatMap( _.outgoing )
 
     def listen: Receive = {
       // create a new player, tell him to Start, forward his response to sender
-      case NewPlayer( name, cs ) ⇒
-        { newPlayer( name, cs ) ? Start } foreach { resp ⇒ sender forward resp }
+      case AddPlayer( name ) ⇒
+        logger.info( s"${self.path} received AddPlayer( $name )" )
+        val game = sender
+        ( newPlayer( name ) ? Start ) foreach { resp ⇒ game ! resp }
     }
     override def receive = listen orElse super.receive
 
@@ -53,8 +57,6 @@ trait RoomModule extends EventModule with SurfaceModule {
       case mv: Moved ⇒ emit( mv, forwarding = true )
       case _         ⇒ // yum
     }
-
-    def newPlayer( name: String, cs: ClientService ) = context.actorOf( Props( new Player( name, cs ) ), name = name )
   }
 
   /** Concrete implementation of a RoomEventHandler */

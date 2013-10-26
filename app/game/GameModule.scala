@@ -2,7 +2,6 @@ package game
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.DurationInt
-
 import akka.actor.Actor
 import akka.actor.Props
 import akka.actor.actorRef2Scala
@@ -10,33 +9,36 @@ import akka.pattern.ask
 import game.mobile.PlayerModule
 import game.util.logging.LoggingModule
 import game.world.RoomModule
+import akka.actor.ActorRef
 
 /*
  * Defines the top-level actor exposed to the world.
  */
 trait GameModule
     extends EventModule
-    with ConnectionModule
     with PlayerModule
     with RoomModule {
 
   implicit val TIMEOUT = akka.util.Timeout( 1.second )
 
-  val game = system.actorOf( Props[ Game ], name = "game" )
+  val GAME: ActorRef
 
   // ====
   // Game Commands
   // ====
-  case class NewPlayer( name: String, cs: ClientService )
+  case class AddPlayer( name: String )
 
-  class Game extends ActorEventHandler {
+  trait Game
+
+  class GameEventHandler extends Game with ActorEventHandler {
     // TODO: build the world from database
 
     /** We all share one room for now */
     lazy val ROOMREF = context.actorOf( Props( new Room( "temp" ) ), name = "temp" )
 
     def listening: Receive = {
-      case np @ NewPlayer( name, _ ) ⇒
+      case ap @ AddPlayer( username ) ⇒
+      	logger.info(s"Play Framework notified Game that $username wants to join.")
         /*
          * TODO:
          *   - get the Player data from database service.
@@ -44,9 +46,10 @@ trait GameModule
          *   - Get the ActorRef of the player's room
          */
         // Tell the Room we have a new player and forward the room's response back to the app
-        { ROOMREF ? np } foreach { resp ⇒ sender forward resp }
+        val app = sender
+        ( ROOMREF ? ap ) foreach { resp ⇒ app ! resp }
     }
-    
+
     override def receive = listening orElse super.receive
 
     override def default = {

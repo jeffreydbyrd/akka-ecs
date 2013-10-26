@@ -31,6 +31,7 @@ object Application
     extends Application
     with GameModule {
   override val system: ActorSystem = akka.actor.ActorSystem( "Doppelsystem" )
+  override val GAME:ActorRef = system.actorOf( Props( new GameEventHandler ), name = "game" )
 }
 
 /**
@@ -49,26 +50,21 @@ trait Application extends Controller {
    * Iteratee[String] handles incoming messages from the client, and the Enumerator[String] pushes messages
    * to the client. Play will wire everything else together for us.
    *
-   * Here, our Iteratee 'in' forwards messages to the Player Actor. The Player Actor can use 'channel' to
-   * send messages to our Enumerator. To account for problems, we ask the Player Actor for confirmation
-   * that it started. If it sends back NotConnected( msg ) then instead we return a single-message
-   * Enumerator.
+   * In this case, we ask the game to add a Player with username, and the game sends back an ActorRef that we
+   * wire 'in' to. It also sends back a ClientService that has an Enumerator[String] we can give to Play.
+   * If something goes wrong, we get a msg:String back, and we return a single-element Enumerator[String]
+   * containing the message.
    */
   def websocket( username: String ) = WebSocket.async[ String ] { implicit request ⇒
-    val ( enumerator, channel ) = Concurrent.broadcast[ String ]
-    val cs = new PlayClientService( channel )
-
-    ( game ? NewPlayer( username, cs ) ) map {
-
-      case plrRef: ActorRef ⇒
-        val in = Iteratee.foreach[ String ] { json ⇒ plrRef ! JsonCmd( json ) }
-        ( in, enumerator )
+    ( GAME ? AddPlayer( username ) ) map {
+      case ( plr: ActorRef, cs: PlayFrameworkClientService ) ⇒
+        val in = Iteratee.foreach[ String ] { json ⇒ plr ! JsonCmd( json ) }
+        ( in, cs.enumerator )
 
       case msg: String ⇒
         val in = Done[ String, Unit ]( {}, Input.EOF )
         val ret = JsObject( Seq( "error" -> JsString( msg ) ) )
         val out = Enumerator[ String ]( ret.toString ) andThen Enumerator.enumInput( Input.EOF )
-        cs.close
         ( in, out )
     }
   }

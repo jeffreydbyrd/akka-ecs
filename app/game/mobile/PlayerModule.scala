@@ -69,10 +69,10 @@ trait PlayerModule extends MobileModule with ConnectionModule {
         sender ! msg
         self ! PoisonPill // failed to start... you know what to do :(
       } getOrElse {
-        sender ! self
+        sender ! ( self, cs )
         this.handle = standing orElse default
 
-        // Switch to normal EventHandler behavior, with our extra Playing behavior to handle JsonCmds
+        // Switch to normal EventHandler behavior, with our extra playing behavior to handle JsonCmds
         context become { playing orElse super.receive }
       }
 
@@ -105,7 +105,9 @@ trait PlayerModule extends MobileModule with ConnectionModule {
 
   }
 
-  class Player( val name: String, override val cs: ClientService ) extends PlayerEventHandler {
+  class Player( val name: String ) extends PlayerEventHandler {
+    override val cs = new PlayFrameworkClientService
+
     //temporary:
     var position = newPosition( 10, 30 )
     override def setup = {

@@ -2,6 +2,7 @@ package game
 
 import java.io.Closeable
 import play.api.libs.iteratee.Concurrent.Channel
+import play.api.libs.iteratee.Concurrent
 
 /**
  * Defines a ClientService data structure whose one purpose is to get data to
@@ -15,9 +16,11 @@ trait ConnectionModule {
   }
 
   /** A simple service that uses a Play Channel object to get String data to the client */
-  class PlayClientService( val c: Channel[ String ] ) extends ClientService {
-    override def send( d: String ) = c push d
-    override def close = c.eofAndEnd
+  class PlayFrameworkClientService extends ClientService {
+    val ( enumerator, channel ) = Concurrent.broadcast[ String ]
+
+    override def send( d: String ) = channel push d
+    override def close = channel.eofAndEnd
   }
 
 }
