@@ -31,7 +31,7 @@ object Application
     extends Application
     with GameModule {
   override val system: ActorSystem = akka.actor.ActorSystem( "Doppelsystem" )
-  override val GAME:ActorRef = system.actorOf( Props( new GameEventHandler ), name = "game" )
+  override val GAME: ActorRef = system.actorOf( Props( new GameEventHandler ), name = "game" )
 }
 
 /**
@@ -39,8 +39,10 @@ object Application
  * WebSocket creation.
  * @author biff
  */
-trait Application extends Controller {
+trait Application extends Controller with LoggingModule {
   this: GameModule ⇒
+
+  val logger = new PlayLoggingService
 
   /** Serves the main page */
   def index = Action { Ok { views.html.index() } }
@@ -59,6 +61,7 @@ trait Application extends Controller {
     ( GAME ? AddPlayer( username ) ) map {
       case ( plr: ActorRef, cs: PlayFrameworkClientService ) ⇒
         val in = Iteratee.foreach[ String ] { json ⇒ plr ! JsonCmd( json ) }
+        logger.info( s"Application is now sending messages directly to $username actor." )
         ( in, cs.enumerator )
 
       case msg: String ⇒

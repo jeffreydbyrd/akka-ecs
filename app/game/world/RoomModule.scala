@@ -47,9 +47,8 @@ trait RoomModule extends EventModule with SurfaceModule {
     def listen: Receive = {
       // create a new player, tell him to Start, forward his response to sender
       case AddPlayer( name ) ⇒
-        logger.info( s"${self.path} received AddPlayer( $name )" )
-        val game = sender
-        ( newPlayer( name ) ? Start ) foreach { resp ⇒ game ! resp }
+        logger.info( s"received AddPlayer( $name ) from game actor" )
+        newPlayer( name ) forward Start
     }
     override def receive = listen orElse super.receive
 

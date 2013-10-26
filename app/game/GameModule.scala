@@ -38,16 +38,14 @@ trait GameModule
 
     def listening: Receive = {
       case ap @ AddPlayer( username ) ⇒
-      	logger.info(s"Play Framework notified Game that $username wants to join.")
+        logger.info( s"received AddPlayer( $username )." )
         /*
          * TODO:
          *   - get the Player data from database service.
          *   - Get the actor path of the player from the data
          *   - Get the ActorRef of the player's room
          */
-        // Tell the Room we have a new player and forward the room's response back to the app
-        val app = sender
-        ( ROOMREF ? ap ) foreach { resp ⇒ app ! resp }
+        ROOMREF forward ap
     }
 
     override def receive = listening orElse super.receive
