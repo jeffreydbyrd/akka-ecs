@@ -59,10 +59,6 @@ Your Eclipse version probably does not recognize Scala code. Visit the [scala-id
 
 Lastly, there is an optional Play! plugin for Eclipse that makes it a pleasure to edit the routes file and the html templates. Go to `help` > `install new software`. Open up the drop-down menu at the top and select Scala IDE. Select `Scala IDE Plugins` > `Play2 support in Scala IDE` and click next. Continue through the installation as normal. After restarting Eclipse, you should have nice syntax highlighting in your routes and template files.
 
-# [CoffeeScript?](http://coffeescript.org/)
-
-I really like CoffeeScript and I'm wondering how practical it could be in writing the client-side engine. It's much more comprehensive and expressive than raw JS, but harder to debug since the browser reads it as JS. Also, it uses white space to delimit blocks, which can be a pain for tired eyes.
-
 # Visit the Wiki
 
 [Visit the wiki](https://github.com/biffbyrd/scalatree/wiki) for detail on the game universe, mechanics, and system.
