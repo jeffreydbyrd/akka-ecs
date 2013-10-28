@@ -70,7 +70,7 @@ trait PlayerModule extends MobileModule with ConnectionModule {
         self ! PoisonPill // failed to start... you know what to do :(
       } getOrElse {
         sender ! ( self, cs )
-        this.handle = standing orElse default
+        handle = standing orElse default
 
         // Switch to normal EventHandler behavior, with our extra playing behavior to handle JsonCmds
         context become { playing orElse super.receive }
@@ -83,7 +83,7 @@ trait PlayerModule extends MobileModule with ConnectionModule {
       case KeyDown( 32 | 38 | 87 ) ⇒ jump()
       case evt @ Moved( p, m ) if sender == self ⇒
         move( evt )
-        cs send s""" { "x" : ${position.x}, "y" : ${position.y} } """
+        cs send s""" { "type":"move", "id":"$name", "position":[${position.x}, ${position.y}] } """
       case _ ⇒
     }
 
@@ -98,7 +98,7 @@ trait PlayerModule extends MobileModule with ConnectionModule {
 
     override def postStop {
       this emit Quit
-      cs send "quit"
+      cs send s""" { "type":"quit", "message":"later!" } """
       this.moveScheduler.cancel
       cs.close
     }
