@@ -55,7 +55,16 @@ trait PlayerModule extends MobileModule with ConnectionModule {
 
     // Override the EventHandler's receive function because we don't want to handle Events yet
     override def receive = { case Start ⇒ start }
-    def playing: Receive = { case JsonCmd( json ) ⇒ handle( getCommand( json ) ) }
+    def playing: Receive = {
+      case JsonCmd( json ) ⇒ handle( getCommand( json ) )
+      case RoomData( refs ) ⇒
+        for ( ref ← refs ) cs send {
+          s""" {"type":"create", 
+          		"id":"${ref.path}", 
+          		"position":[${position.x},${position.y}],
+          		"dimensions":[$width, $height] } """
+        }
+    }
 
     /**
      *  Constructs the Player Actor by fetching data from the database. entering the World,
@@ -74,6 +83,7 @@ trait PlayerModule extends MobileModule with ConnectionModule {
 
         // Switch to normal EventHandler behavior, with our extra playing behavior to handle JsonCmds
         context become { playing orElse super.receive }
+        emit( Arrived )
       }
 
     override def default: Handle = {
@@ -83,7 +93,8 @@ trait PlayerModule extends MobileModule with ConnectionModule {
       case KeyDown( 32 | 38 | 87 ) ⇒ jump()
       case evt @ Moved( p, m ) if sender == self ⇒
         move( evt )
-        cs send s""" { "type":"move", "id":"$name", "position":[${position.x}, ${position.y}] } """
+        if ( !( m.x == 0 && m.y == 0 ) )
+          cs send s""" { "type":"move", "id":"${self.path}", "position":[${position.x}, ${position.y}] } """
       case _ ⇒
     }
 
@@ -97,7 +108,8 @@ trait PlayerModule extends MobileModule with ConnectionModule {
     }
 
     override def postStop {
-      this emit Quit
+      logger.info( s"${self.path} terminated." )
+      emit( Quit )
       cs send s""" { "type":"quit", "message":"later!" } """
       this.moveScheduler.cancel
       cs.close

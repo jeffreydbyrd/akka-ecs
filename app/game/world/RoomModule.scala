@@ -2,12 +2,12 @@ package game.world
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.math.BigDecimal.int2bigDecimal
-
 import akka.actor.Props
 import akka.pattern.ask
 import game.EventModule
 import game.GameModule
 import game.mobile.PlayerModule
+import akka.actor.ActorRef
 
 /**
  * Defines structures and messages for Room behavior. Rooms are asynchronous
@@ -17,6 +17,8 @@ trait RoomModule extends EventModule with SurfaceModule {
   this: PlayerModule with GameModule ⇒
 
   case object Arrived extends Event
+
+  case class RoomData( children: Iterable[ ActorRef ] )
 
   // All rooms in the game are equipped with the same 4 surrounding surfaces:
   val floor = DoubleSided( Point( 0, 0 ), Point( 200, 0 ) )
@@ -53,6 +55,7 @@ trait RoomModule extends EventModule with SurfaceModule {
     override def receive = listen orElse super.receive
 
     def default: Handle = {
+      case Arrived   ⇒ sender ! RoomData( context.children )
       case mv: Moved ⇒ emit( mv, forwarding = true )
       case _         ⇒ // yum
     }

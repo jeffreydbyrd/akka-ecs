@@ -9,10 +9,10 @@
 	 * Constants
 	 **************************************************************************/
 
-	/** We will display a 600 x 600 px canvas */
+	/** We will display a 400 x 400 px canvas */
 	var DIMENSIONS = {
-		w : 600,
-		h : 600
+		w : 400,
+		h : 400
 	};
 
 	/**
@@ -29,16 +29,19 @@
 	 */
 	var COMMANDS = {
 		"quit" : function(data) {
-
+			conn.close();
+			document.write("<p>" + data.message + "</p");
 		},
 		"create" : function(data) {
-
+			view.add(data);
+			console.log(data);
 		},
 		"move" : function(data) {
+			view.move(data.id, data.position[0], data.position[1]);
 			console.log(data);
 		},
 		"delete" : function(data) {
-
+			view.remove(data.id);
 		}
 	}
 
@@ -57,17 +60,27 @@
 		var self = this;
 
 		this.websocket = new WebSocket(url);
+
 		this.websocket.onopen = function(evt) {
 			console.log("websocket opened");
 		};
 
+		this.websocket.onclose = function() {
+			console.log("websocket closed");
+		}
+
 		this.websocket.onmessage = function(evt) {
 			var cmd = JSON.parse(evt.data);
 			COMMANDS[cmd.type](cmd);
+			view.draw();
 		};
 
 		this.send = function(str) {
 			self.websocket.send(str);
+		};
+
+		this.close = function() {
+			self.websocket.close();
 		};
 
 	}
@@ -77,13 +90,13 @@
 	 * set of `entities` that can move around the View
 	 */
 	function View() {
-		this.stage = new Kinetic.Stage({
+		var stage = new Kinetic.Stage({
 			container : 'container',
 			width : DIMENSIONS.w,
 			height : DIMENSIONS.h
 		});
 		var layer = new Kinetic.Layer();
-		this.stage.add(layer);
+		stage.add(layer);
 
 		/**
 		 * `entities` is a mapping between `id`s and Kinetic Nodes that move
@@ -98,10 +111,10 @@
 		this.add = function(ent) {
 			var id = ent.id;
 			entities[id] = new Kinetic.Rect({
-				x : ent.position[0],
-				y : ent.position[1],
-				width : ent.dimensions[0],
-				height : ent.dimensions[1],
+				x : ent.position[0] * K,
+				y : ent.position[1] * K,
+				width : ent.dimensions[0] * K,
+				height : ent.dimensions[1] * K,
 				fill : 'black',
 				stroke : 'black',
 				strokeWidth : 1
@@ -111,15 +124,20 @@
 
 		/** Removes an entity from this view */
 		this.remove = function(id) {
-			entity[id].destroy();
+			if (entities[id])
+				entities[id].destroy();
 		};
 
 		/** Moves the `entity` with `id` to position (`x`, `y`) */
 		this.move = function(id, x, y) {
-			if (entity[id]) {
-				entity[id].setX(x);
-				entity[id].setY(DIMENSIONS.h - y);
+			if (entities[id]) {
+				entities[id].setX(x * K);
+				entities[id].setY(DIMENSIONS.h - (y * K));
 			}
+		};
+
+		this.draw = function() {
+			stage.draw();
 		};
 	}
 
@@ -129,7 +147,7 @@
 
 	var view = new View();
 
-	var server = new Connection(ADDRESS);
+	var conn = new Connection(ADDRESS);
 
 	/***************************************************************************
 	 * Capture keydown & keyup events and send to the server
@@ -140,11 +158,21 @@
 			type : evt.type,
 			data : evt.keyCode
 		};
-		return server.send(JSON.stringify(cmd));
+		return conn.send(JSON.stringify(cmd));
 	};
 
 	var body = document.getElementById("body");
 	body.onkeydown = onkey;
 	body.onkeyup = onkey;
+
+	/***************************************************************************
+	 * Send a "quit" signal to the server just before the page unloads
+	 **************************************************************************/
+	window.onbeforeunload = function() {
+		onkey({
+			type : "keydown",
+			keyCode : 81
+		});
+	};
 
 }).call(this);
