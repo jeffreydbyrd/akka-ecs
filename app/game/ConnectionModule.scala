@@ -55,7 +55,7 @@ trait ConnectionModule {
       val id = count
       val msg = s""" {"id" : "$id", "message" : $d """
       buffer = buffer + ( id -> msg )
-      count += 1
+      count = count + 1
       super.send( msg )
     }
   }
