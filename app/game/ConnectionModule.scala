@@ -21,7 +21,7 @@ import java.nio.BufferOverflowException
  */
 trait ConnectionModule {
 
-  /** Defines a Closeable service that sends data of type D to the client */
+  /** Defines a Closeable service that sends String data to the client */
   trait ConnectionService extends Closeable {
     def send( data: String ): Unit
   }
