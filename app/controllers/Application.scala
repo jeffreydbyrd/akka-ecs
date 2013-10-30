@@ -59,7 +59,7 @@ trait Application extends Controller with LoggingModule {
    */
   def websocket( username: String ) = WebSocket.async[ String ] { implicit request ⇒
     ( GAME ? AddPlayer( username ) ) map {
-      case ( plr: ActorRef, cs: PlayFrameworkClientService ) ⇒
+      case ( plr: ActorRef, cs: PlayConnection ) ⇒
         val in = Iteratee.foreach[ String ] { json ⇒ plr ! JsonCmd( json ) }
         logger.info( s"Now sending messages directly to ${plr.toString}." )
         ( in, cs.enumerator )

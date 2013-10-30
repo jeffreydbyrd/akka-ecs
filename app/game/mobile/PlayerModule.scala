@@ -32,7 +32,6 @@ trait PlayerModule extends MobileModule with ConnectionModule {
   case object Quit extends Event
 
   trait GenericPlayer extends Mobile {
-    val cs: ClientService
     val height = 4
     val width = 2
     /**
@@ -51,19 +50,18 @@ trait PlayerModule extends MobileModule with ConnectionModule {
       extends MobileEventHandler
       with GenericPlayer {
 
-    val cs: ClientService
+    val connection: ActorRef
 
     // Override the EventHandler's receive function because we don't want to handle Events yet
     override def receive = { case Start ⇒ start }
     def playing: Receive = {
       case JsonCmd( json ) ⇒ handle( getCommand( json ) )
       case RoomData( refs ) ⇒
-        for ( ref ← refs ) cs send {
-          s""" {"type":"create", 
-          		"id":"${ref.path}", 
-          		"position":[${position.x},${position.y}],
-          		"dimensions":[$width, $height] } """
-        }
+        for ( ref ← refs )
+          connection ! s""" {"type":"create", 
+                       "id":"${ref.path}", 
+                       "position":[${position.x},${position.y}],
+                       "dimensions":[$width, $height] } """
     }
 
     /**
@@ -78,12 +76,13 @@ trait PlayerModule extends MobileModule with ConnectionModule {
         sender ! msg
         self ! PoisonPill // failed to start... you know what to do :(
       } getOrElse {
-        sender ! ( self, cs )
+        sender ! ( self, connection )
         handle = standing orElse default
 
         // Switch to normal EventHandler behavior, with our extra playing behavior to handle JsonCmds
         context become { playing orElse super.receive }
         emit( Arrived )
+        logger.info( "%s joined the game".format( self.path ) )
       }
 
     override def default: Handle = {
@@ -94,7 +93,7 @@ trait PlayerModule extends MobileModule with ConnectionModule {
       case evt @ Moved( p, m ) if sender == self ⇒
         move( evt )
         if ( !( m.x == 0 && m.y == 0 ) )
-          cs send s""" { "type":"move", "id":"${self.path}", "position":[${position.x}, ${position.y}] } """
+          connection ! s""" { "type":"move", "id":"${self.path}", "position":[${position.x}, ${position.y}] } """
       case _ ⇒
     }
 
@@ -110,22 +109,20 @@ trait PlayerModule extends MobileModule with ConnectionModule {
     override def postStop {
       logger.info( s"${self.path} terminated." )
       emit( Quit )
-      cs send s""" { "type":"quit", "message":"later!" } """
+      connection ! s""" { "type":"quit", "message":"later!" } """
       this.moveScheduler.cancel
-      cs.close
+      connection ! Close
     }
 
   }
 
   class Player( val name: String ) extends PlayerEventHandler {
-    override val cs = new PlayFrameworkClientService
+    private class ConnectionImpl extends PlayConnection with BufferingActorConnection
+    override val connection = context.actorOf( Props( new ConnectionImpl ) )
 
     //temporary:
     var position = newPosition( 10, 30 )
-    override def setup = {
-      logger.info( "%s joined the game".format( this.name ) )
-      None
-    }
+    override def setup = None
   }
 
   /**
