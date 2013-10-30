@@ -35,7 +35,6 @@ trait ConnectionModule {
   }
 
   type MessageId = Int
-  case class Ack( id: MessageId )
 
   /**
    * A ConnectionService that accounts for dropped messages by buffering a sent message and holding
@@ -66,9 +65,11 @@ trait ConnectionModule {
   trait ActorConnection extends ConnectionService with Actor {
     override def receive = {
       case str: String ⇒ send( str )
-      case Close       ⇒ close
+      case Close       ⇒ close()
     }
   }
+  
+  case class Ack( id: MessageId )
 
   trait BufferingActorConnection extends ActorConnection with BufferingConnection {
     override def acknowledge: Receive = { case Ack( id ) ⇒ super.ack( id ) }
