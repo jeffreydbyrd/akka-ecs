@@ -1,7 +1,9 @@
 /*******************************************************************************
  * The DoppelClient
  * 
- * Depends on kinetic.js
+ * Depends on kinetic.js. Extracts a `username` from the URL
+ * (http://a.b.c.d:80#username=???) and establishes a WebSocket connection with
+ * the server using `username`.
  ******************************************************************************/
 (function() {
 
@@ -21,7 +23,13 @@
 	 */
 	var K = DIMENSIONS.h / 200;
 
-	var ADDRESS = "ws://127.0.0.1:9000/test?username=jb";
+	var USERNAME = function() {
+		var hash = window.location.hash;
+		var i = hash.indexOf("username=") + 9
+		return hash.substring(i);
+	}();
+
+	var ADDRESS = "ws://127.0.0.1:9000/test?username=" + USERNAME;
 
 	/**
 	 * The set of functions that the server can execute remotely. Each function
@@ -51,7 +59,8 @@
 
 	/**
 	 * A Connection sends messages to and receives messages from a server.
-	 * Connections expects JSON formatted strings.
+	 * Connections expects JSON formatted strings. Connections also send ACKs
+	 * back to the server to confirm that a message was received.
 	 * 
 	 * @param url -
 	 *            a websocket URL string
@@ -73,13 +82,16 @@
 			var msg = JSON.parse(evt.data);
 			var id = msg.id;
 			var cmd = msg.message;
-			var ack = JSON.stringify({
-				type : "ack",
-				data : id
-			});
-			websocket.send(ack);
 			COMMANDS[cmd.type](cmd);
 			view.draw();
+
+			if (msg.ack === true) {
+				var ack = JSON.stringify({
+					type : "ack",
+					data : id
+				});
+				websocket.send(ack);
+			}
 		};
 
 		this.send = function(str) {

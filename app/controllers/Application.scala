@@ -24,6 +24,9 @@ import game.util.logging.LoggingModule
 import game.GameModule
 import akka.actor.ActorRef
 import scala.concurrent.Future
+import scala.util.parsing.json.JSON
+import scala.util.parsing.json.JSONObject
+import play.api.libs.json.Json
 
 /**
  * The entire Doppelgamer stack gets composed in this one object.
@@ -62,10 +65,31 @@ trait Application extends Controller with LoggingModule {
       conn ← ( GAME ? AddPlayer( username ) ).mapTo[ ActorRef ]
       ReturnEnum( out ) ← conn ? GetEnum
     } yield {
-      val in = Iteratee.foreach[ String ] { json  ⇒ conn ! ToPlayer( json ) }
+      val in = Iteratee.foreach[ String ] { json ⇒ conn ! getCommand( json ) }
       logger.info( s"Now sending messages directly to ${conn.toString()}." )
       ( in, out )
     }
   }
 
+  /**
+   * Creates an Event based on the contents of 'json'. The schema of the content is
+   * simply : { type: ..., data: ... }.
+   * There are only a few types of commands a client can send: keydown, keyup, click, and ack.
+   * Depending on the type, 'data' will be wrapped in the appropriate Event object.
+   */
+  def getCommand( json: String ): Event = {
+    val parsed = Json.parse( json )
+    val data = parsed \ "data"
+    ( parsed \ "type" ).asOpt[ String ].flatMap {
+      case "ack"     ⇒ data.asOpt[ Long ].map( Ack( _ ) )
+      case "keyup"   ⇒ data.asOpt[ Int ].map( KeyUp( _ ) )
+      case "keydown" ⇒ data.asOpt[ Int ].map( KeyDown( _ ) )
+      case "click" ⇒ for {
+        x ← ( data \ "x" ).asOpt[ Int ]
+        y ← ( data \ "y" ).asOpt[ Int ]
+      } yield Click( x, y )
+    } getOrElse {
+      Invalid
+    }
+  }
 }

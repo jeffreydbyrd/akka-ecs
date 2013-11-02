@@ -15,7 +15,7 @@ import akka.actor.ActorRef
 trait PlayerModule extends MobileModule with ConnectionModule {
   this: RoomModule ⇒
 
-  case class Invalid( msg: String ) extends Event
+  case object Invalid extends Event
   case class KeyUp( code: Int ) extends Event
   case class KeyDown( code: Int ) extends Event
   case class Click( x: Int, y: Int ) extends Event
@@ -46,15 +46,15 @@ trait PlayerModule extends MobileModule with ConnectionModule {
     val connection: ActorRef
 
     // Override the EventHandler's receive function because we don't want to handle Events yet
-    override def receive = { case Start ⇒ start }
+    override def receive = { case Start ⇒ start() }
     def playing: Receive = {
-      case ToPlayer( json ) ⇒ handle( getCommand( json ) )
       case RoomData( refs ) ⇒
         for ( ref ← refs )
-          connection ! s""" {"type":"create", 
-                       "id":"${ref.path}", 
-                       "position":[${position.x},${position.y}],
-                       "dimensions":[$width, $height] } """
+          connection ! ToClient(
+            s""" {"type":"create", 
+                    "id":"${ref.path}", 
+                    "position":[${position.x},${position.y}],
+                    "dimensions":[$width, $height] } """ )
     }
 
     /**
@@ -63,7 +63,7 @@ trait PlayerModule extends MobileModule with ConnectionModule {
      *  fails to start, he must kill himself. If he succeeds, he switches to a standing
      *  state.
      */
-    def start =
+    def start() =
       setup map { msg ⇒ // if there's a message then something went wrong
         logger.error( msg )
         sender ! msg
@@ -81,7 +81,7 @@ trait PlayerModule extends MobileModule with ConnectionModule {
     override def default: Handle = {
       case ack: Ack                ⇒ connection ! ack
       case Click( x: Int, y: Int ) ⇒
-      case Invalid( msg: String )  ⇒ logger.warn( msg )
+      case Invalid                 ⇒ logger.warn( "Invalid command!" )
       case KeyUp( 81 )             ⇒ self ! PoisonPill
       case KeyDown( 32 | 38 | 87 ) ⇒ jump()
       case evt @ Moved( p, m ) if sender == self ⇒
@@ -116,29 +116,6 @@ trait PlayerModule extends MobileModule with ConnectionModule {
     //temporary:
     var position = newPosition( 10, 30 )
     override def setup = None
-  }
-
-  /**
-   * Creates an Event based on the contents of 'json'. The schema of the content is
-   * simply : { type: ..., data: ... }.
-   * There are only a few types of commands a client can send: keydown, keyup, click, and ack.
-   * Depending on the type, 'data' will be wrapped in the appropriate Event object.
-   * If there is an error while parsing, Invalid is returned.
-   */
-  def getCommand( json: String ): Event = JSON.parseRaw( json ) match {
-    case Some( JSONObject( map ) ) ⇒ ( map.get( "type" ), map.get( "data" ) ) match {
-      case ( Some( "ack" ), Some( d: Double ) )     ⇒ Ack( d.toLong )
-      case ( Some( "keyup" ), Some( d: Double ) )   ⇒ KeyUp( d.toInt )
-      case ( Some( "keydown" ), Some( d: Double ) ) ⇒ KeyDown( d.toInt )
-      case ( Some( "click" ), Some( JSONObject( pos: Map[ String, Any ] ) ) ) ⇒
-        ( pos.get( "x" ), pos.get( "y" ) ) match {
-          case ( Some( x: Double ), Some( y: Double ) ) ⇒ Click( x.toInt, y.toInt )
-          case _ ⇒
-            Invalid( "A click command expects 'x' and 'y' integer values" )
-        }
-      case _ ⇒ Invalid( "Unrecognized command." )
-    }
-    case _ ⇒ Invalid( "Failed to parse JSON string." )
   }
 
 }

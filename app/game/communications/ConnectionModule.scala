@@ -24,7 +24,7 @@ trait ConnectionModule extends EventModule {
    */
   trait ConnectionService extends Closeable {
     def toClient( s: String ): Unit
-    def toPlayer( s: String ): Unit
+    def toPlayer( e: Event ): Unit
   }
 
   /**
@@ -76,7 +76,6 @@ trait ConnectionModule extends EventModule {
   }
 
   /** Used by the App to deliver a raw JSON formatted string to the Player */
-  case class ToPlayer( msg: String )
   case class ToClient( msg: String, buffer: Boolean = false )
   case class Ack( id: MessageId ) extends Event
 
@@ -90,11 +89,12 @@ trait ConnectionModule extends EventModule {
     var count: MessageId = 0
 
     override def receive = {
-      case Ack( id )        ⇒ ack( id )
-      case ToPlayer( json ) ⇒ toPlayer( json )
+      case Ack( id ) ⇒ ack( id )
+      case e: Event  ⇒ toPlayer( e )
       case ToClient( json, buff ) ⇒
-        if ( buff == true ) cache( count, json )
-        toClient( s""" {"id" : "$count", "message" : "$json"} """ )
+        val msg = s""" {"id" : "$count", "ack":$buff, "message" : "$json"} """
+        if ( buff == true ) cache( count, msg )
+        toClient( msg )
         count = count + 1
     }
   }
@@ -109,7 +109,7 @@ trait ConnectionModule extends EventModule {
    * to the Connection.
    */
   class PlayActorConnection( player: ActorRef ) extends PlayConnection with RetryingActorConnection {
-    override def toPlayer( s: String ) { context.parent ! ToPlayer( s ) }
+    override def toPlayer( e: Event ) { context.parent ! e }
     def getEnum: Receive = { case GetEnum ⇒ sender ! ReturnEnum( enumerator ) }
     override def receive = getEnum orElse super.receive
   }
