@@ -1,7 +1,7 @@
 package game.world
 
 import org.specs2.mutable.Specification
-import game.ConnectionModule
+import game.communications.ConnectionModule
 import game.EventModule
 import game.mobile.MobileModule
 import game.mobile.PlayerModule

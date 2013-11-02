@@ -54,33 +54,40 @@
 	 * Connections expects JSON formatted strings.
 	 * 
 	 * @param url -
-	 *            a URL string
+	 *            a websocket URL string
 	 */
 	function Connection(url) {
 		var self = this;
 
-		this.websocket = new WebSocket(url);
+		var websocket = new WebSocket(url);
 
-		this.websocket.onopen = function(evt) {
+		websocket.onopen = function(evt) {
 			console.log("websocket opened");
 		};
 
-		this.websocket.onclose = function() {
+		websocket.onclose = function() {
 			console.log("websocket closed");
 		}
 
-		this.websocket.onmessage = function(evt) {
-			var cmd = JSON.parse(evt.data);
+		websocket.onmessage = function(evt) {
+			var msg = JSON.parse(evt.data);
+			var id = msg.id;
+			var cmd = msg.message;
+			var ack = JSON.stringify({
+				type : "ack",
+				data : id
+			});
+			websocket.send(ack);
 			COMMANDS[cmd.type](cmd);
 			view.draw();
 		};
 
 		this.send = function(str) {
-			self.websocket.send(str);
+			websocket.send(str);
 		};
 
 		this.close = function() {
-			self.websocket.close();
+			websocket.close();
 		};
 
 	}

@@ -5,7 +5,7 @@ import org.specs2.mutable.Specification
 import akka.actor.ActorRef
 import akka.actor.ActorSystem
 import akka.pattern.ask
-import game.ConnectionModule
+import game.communications.ConnectionModule
 import game.GameModule
 import game.world.RoomModule
 import game.world.SurfaceModule
@@ -22,21 +22,24 @@ class PlayerModuleSpec
   implicit val system: ActorSystem = ActorSystem( "PlayerModuleSpec" )
   val GAME = null
 
-  val NOOP: ClientService = new ClientService {
-    override def send( d: String ) = {}
-    override def close {}
-  }
+  val NOOP: ActorRef = TestActorRef( new RetryingActorConnection {
+    override def toClient( s: String ) = {}
+    override def toPlayer( s: String ) = {}
+    override def close = {}
+  } )
 
   trait Dummy extends GenericPlayer {
-    val cs: ClientService = NOOP
     val name = "dummy"
     var position = Position( 5, 5, height, width )
   }
 
   "When a Player actor is initialized, it" should {
 
-    "return its own actor ref when I send Start" in {
-      val testAr: ActorRef = TestActorRef( new Dummy with PlayerEventHandler )
+    "return its own actor ref and connection when I send Start" in {
+      val testAr: ActorRef =
+        TestActorRef( new Dummy with PlayerEventHandler {
+          override val connection = NOOP
+        } )
       ( testAr ? Start ).value.get.get === ( testAr, NOOP )
     }
 
@@ -44,6 +47,7 @@ class PlayerModuleSpec
       {
         TestActorRef(
           new Dummy with PlayerEventHandler {
+            override val connection = NOOP
             override def setup = Some( "message" )
             def test = setup
           }

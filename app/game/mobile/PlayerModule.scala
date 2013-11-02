@@ -7,7 +7,7 @@ import scala.util.parsing.json.JSONObject
 import akka.actor.PoisonPill
 import akka.actor.Props
 import akka.actor.actorRef2Scala
-import game.ConnectionModule
+import game.communications.ConnectionModule
 import game.world.RoomModule
 import akka.actor.ActorRef
 
@@ -15,21 +15,14 @@ import akka.actor.ActorRef
 trait PlayerModule extends MobileModule with ConnectionModule {
   this: RoomModule ⇒
 
-  //======================================
-  // Player-Client Communication
-  //======================================
-  /** Used to tell a Player Actor to start. The caller should wait for a confirmation */
-  case object Start
-  /** Used by the App to deliver a raw JSON formatted string to the Player */
-  case class JsonCmd( msg: String )
-
-  // Events:
-  /** Used to signal that an incoming command from the client was invalid */
   case class Invalid( msg: String ) extends Event
   case class KeyUp( code: Int ) extends Event
   case class KeyDown( code: Int ) extends Event
   case class Click( x: Int, y: Int ) extends Event
   case object Quit extends Event
+
+  /** Used to tell a Player Actor to start. The caller should wait for a confirmation */
+  case object Start
 
   trait GenericPlayer extends Mobile {
     val height = 4
@@ -55,7 +48,7 @@ trait PlayerModule extends MobileModule with ConnectionModule {
     // Override the EventHandler's receive function because we don't want to handle Events yet
     override def receive = { case Start ⇒ start }
     def playing: Receive = {
-      case JsonCmd( json ) ⇒ handle( getCommand( json ) )
+      case ToPlayer( json ) ⇒ handle( getCommand( json ) )
       case RoomData( refs ) ⇒
         for ( ref ← refs )
           connection ! s""" {"type":"create", 
@@ -76,7 +69,7 @@ trait PlayerModule extends MobileModule with ConnectionModule {
         sender ! msg
         self ! PoisonPill // failed to start... you know what to do :(
       } getOrElse {
-        sender ! ( self, connection )
+        sender ! connection
         handle = standing orElse default
 
         // Switch to normal EventHandler behavior, with our extra playing behavior to handle JsonCmds
@@ -86,6 +79,7 @@ trait PlayerModule extends MobileModule with ConnectionModule {
       }
 
     override def default: Handle = {
+      case ack: Ack                ⇒ connection ! ack
       case Click( x: Int, y: Int ) ⇒
       case Invalid( msg: String )  ⇒ logger.warn( msg )
       case KeyUp( 81 )             ⇒ self ! PoisonPill
@@ -108,17 +102,16 @@ trait PlayerModule extends MobileModule with ConnectionModule {
 
     override def postStop {
       logger.info( s"${self.path} terminated." )
-      emit( Quit )
       connection ! s""" { "type":"quit", "message":"later!" } """
       this.moveScheduler.cancel
-      connection ! Close
+      emit( Quit )
     }
 
   }
 
   class Player( val name: String ) extends PlayerEventHandler {
-    private class ConnectionImpl extends PlayConnection with BufferingActorConnection
-    override val connection = context.actorOf( Props( new ConnectionImpl ) )
+
+    override val connection = context.actorOf( Props( new PlayActorConnection( self ) ) )
 
     //temporary:
     var position = newPosition( 10, 30 )
@@ -126,14 +119,15 @@ trait PlayerModule extends MobileModule with ConnectionModule {
   }
 
   /**
-   * Creates a Command object based on the contents of 'json'. The schema of the content is
+   * Creates an Event based on the contents of 'json'. The schema of the content is
    * simply : { type: ..., data: ... }.
-   * There are only a few types of commands a client can send: keydown, keyup, click.
+   * There are only a few types of commands a client can send: keydown, keyup, click, and ack.
    * Depending on the type, 'data' will be wrapped in the appropriate Event object.
    * If there is an error while parsing, Invalid is returned.
    */
   def getCommand( json: String ): Event = JSON.parseRaw( json ) match {
     case Some( JSONObject( map ) ) ⇒ ( map.get( "type" ), map.get( "data" ) ) match {
+      case ( Some( "ack" ), Some( d: Double ) )     ⇒ Ack( d.toLong )
       case ( Some( "keyup" ), Some( d: Double ) )   ⇒ KeyUp( d.toInt )
       case ( Some( "keydown" ), Some( d: Double ) ) ⇒ KeyDown( d.toInt )
       case ( Some( "click" ), Some( JSONObject( pos: Map[ String, Any ] ) ) ) ⇒

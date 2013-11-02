@@ -5,7 +5,7 @@ import akka.actor.ActorSystem
 import akka.actor.Props
 import akka.actor.actorRef2Scala
 import akka.pattern.ask
-import game.ConnectionModule
+import game.communications.ConnectionModule
 import game.mobile.PlayerModule
 import game.world.RoomModule
 import play.api.libs.iteratee.Concurrent
@@ -23,6 +23,7 @@ import game.world.SurfaceModule
 import game.util.logging.LoggingModule
 import game.GameModule
 import akka.actor.ActorRef
+import scala.concurrent.Future
 
 /**
  * The entire Doppelgamer stack gets composed in this one object.
@@ -52,23 +53,18 @@ trait Application extends Controller with LoggingModule {
    * Iteratee[String] handles incoming messages from the client, and the Enumerator[String] pushes messages
    * to the client. Play will wire everything else together for us.
    *
-   * In this case, we ask the game to add a Player with username, and the game sends back an ActorRef that we
-   * wire 'in' to. It also sends back a ClientService that has an Enumerator[String] we can give to Play.
-   * If something goes wrong, we get a msg:String back, and we return a single-element Enumerator[String]
-   * containing the message.
+   * In this case, we ask the game to add a Player with username, and the game sends back an ActorRef, which
+   * our Iteratee[String] forwards all incoming data to. Since we can expect this ActorRef to represent a
+   * `PlayActorConnection`, we can also ask for its Enumerator[String] `out`.
    */
   def websocket( username: String ) = WebSocket.async[ String ] { implicit request ⇒
-    ( GAME ? AddPlayer( username ) ) map {
-      case ( plr: ActorRef, cs: PlayConnection ) ⇒
-        val in = Iteratee.foreach[ String ] { json ⇒ plr ! JsonCmd( json ) }
-        logger.info( s"Now sending messages directly to ${plr.toString}." )
-        ( in, cs.enumerator )
-
-      case msg: String ⇒
-        val in = Done[ String, Unit ]( {}, Input.EOF )
-        val ret = JsObject( Seq( "error" -> JsString( msg ) ) )
-        val out = Enumerator[ String ]( ret.toString ) andThen Enumerator.enumInput( Input.EOF )
-        ( in, out )
+    for {
+      conn ← ( GAME ? AddPlayer( username ) ).mapTo[ ActorRef ]
+      ReturnEnum( out ) ← conn ? GetEnum
+    } yield {
+      val in = Iteratee.foreach[ String ] { json  ⇒ conn ! ToPlayer( json ) }
+      logger.info( s"Now sending messages directly to ${conn.toString()}." )
+      ( in, out )
     }
   }
 
