@@ -1,32 +1,19 @@
 package controllers
 
 import scala.concurrent.ExecutionContext.Implicits.global
+
+import akka.actor.ActorRef
 import akka.actor.ActorSystem
 import akka.actor.Props
 import akka.actor.actorRef2Scala
 import akka.pattern.ask
-import game.communications.ConnectionModule
-import game.mobile.PlayerModule
-import game.world.RoomModule
-import play.api.libs.iteratee.Concurrent
-import play.api.libs.iteratee.Concurrent.Channel
-import play.api.libs.iteratee.Done
-import play.api.libs.iteratee.Enumerator
-import play.api.libs.iteratee.Input
+import game.GameModule
+import game.util.logging.LoggingModule
 import play.api.libs.iteratee.Iteratee
-import play.api.libs.json.JsObject
-import play.api.libs.json.JsString
+import play.api.libs.json.Json
 import play.api.mvc.Action
 import play.api.mvc.Controller
 import play.api.mvc.WebSocket
-import game.world.SurfaceModule
-import game.util.logging.LoggingModule
-import game.GameModule
-import akka.actor.ActorRef
-import scala.concurrent.Future
-import scala.util.parsing.json.JSON
-import scala.util.parsing.json.JSONObject
-import play.api.libs.json.Json
 
 /**
  * The entire Doppelgamer stack gets composed in this one object.
@@ -64,8 +51,8 @@ trait Application extends Controller with LoggingModule {
     for {
       conn ← ( GAME ? AddPlayer( username ) ).mapTo[ ActorRef ]
       ReturnEnum( out ) ← conn ? GetEnum
+      in = Iteratee.foreach[ String ] { conn ! getCommand( _ ) }
     } yield {
-      val in = Iteratee.foreach[ String ] { json ⇒ conn ! getCommand( json ) }
       logger.info( s"Now sending messages directly to ${conn.toString()}." )
       ( in, out )
     }
@@ -81,7 +68,7 @@ trait Application extends Controller with LoggingModule {
     val parsed = Json.parse( json )
     val data = parsed \ "data"
     ( parsed \ "type" ).asOpt[ String ].flatMap {
-      case "ack"     ⇒ data.asOpt[ Long ].map( Ack( _ ) )
+      case "ack"     ⇒ data.asOpt[ Int ].map( Ack( _ ) )
       case "keyup"   ⇒ data.asOpt[ Int ].map( KeyUp( _ ) )
       case "keydown" ⇒ data.asOpt[ Int ].map( KeyDown( _ ) )
       case "click" ⇒ for {
@@ -89,7 +76,7 @@ trait Application extends Controller with LoggingModule {
         y ← ( data \ "y" ).asOpt[ Int ]
       } yield Click( x, y )
     } getOrElse {
-      Invalid
+      Invalid( json )
     }
   }
 }

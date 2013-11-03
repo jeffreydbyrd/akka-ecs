@@ -35,24 +35,12 @@ class PlayerModuleSpec
 
   "When a Player actor is initialized, it" should {
 
-    "return its own actor ref and connection when I send Start" in {
+    "return its own connection ActorRef when I send Start" in {
       val testAr: ActorRef =
         TestActorRef( new Dummy with PlayerEventHandler {
           override val connection = NOOP
         } )
-      ( testAr ? Start ).value.get.get === ( testAr, NOOP )
-    }
-
-    "return msg:String when setup returns Some( msg )" in {
-      {
-        TestActorRef(
-          new Dummy with PlayerEventHandler {
-            override val connection = NOOP
-            override def setup = Some( "message" )
-            def test = setup
-          }
-        ) ? Start
-      }.value.get.get === "message"
+      ( testAr ? Start ).value.get.get === NOOP
     }
 
   }

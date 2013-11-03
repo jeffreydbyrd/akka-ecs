@@ -51,7 +51,7 @@
 		"delete" : function(data) {
 			view.remove(data.id);
 		}
-	}
+	};
 
 	/***************************************************************************
 	 * Prototypes
@@ -78,20 +78,20 @@
 			console.log("websocket closed");
 		}
 
+		/** evt.data schema === {id : ???, message: { type: ???, .... } } */
 		websocket.onmessage = function(evt) {
+			console.log(evt.data);
 			var msg = JSON.parse(evt.data);
 			var id = msg.id;
 			var cmd = msg.message;
 			COMMANDS[cmd.type](cmd);
 			view.draw();
 
-			if (msg.ack === true) {
-				var ack = JSON.stringify({
-					type : "ack",
-					data : id
-				});
-				websocket.send(ack);
-			}
+			var ack = JSON.stringify({
+				type : "ack",
+				data : id
+			});
+			websocket.send(ack);
 		};
 
 		this.send = function(str) {

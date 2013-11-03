@@ -29,7 +29,6 @@ trait RoomModule extends EventModule with SurfaceModule {
   /**
    * An ActorEventHandler that mediates almost all Events that propagate through the world.
    * Every Room in existence shares the same 4 Surfaces to form a box that contains mobiles.
-   * Every
    */
   trait RoomEventHandler extends ActorEventHandler {
     val id: String
@@ -47,7 +46,7 @@ trait RoomModule extends EventModule with SurfaceModule {
     outgoing = outgoing ::: List( floor, leftWall, rightWall ).flatMap( _.outgoing )
 
     def listen: Receive = {
-      // create a new player, tell him to Start, forward his response to sender
+      // create a new player, tell him to Start
       case AddPlayer( name ) ⇒
         logger.info( s"received AddPlayer( $name ) from game actor" )
         newPlayer( name ) forward Start
@@ -64,6 +63,8 @@ trait RoomModule extends EventModule with SurfaceModule {
   /** Concrete implementation of a RoomEventHandler */
   class Room( override val id: String ) extends RoomEventHandler {
     override val gravity: BigDecimal = -1
+    
+    // put a big slanted surface through the middle of the room:
     outgoing = outgoing ::: DoubleSided( Point( 0, 0 ), Point( 200, 200 ) ).outgoing
   }
 

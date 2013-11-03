@@ -54,11 +54,8 @@ trait ConnectionModule extends EventModule {
      * the remaining data in the `buffer` to the Client
      */
     def ack( id: MessageId ) {
-      val newbuf = buffer - id
-      if ( newbuf != buffer ) {
-        buffer = newbuf
-        retry()
-      }
+      buffer = buffer - id
+      retry()
     }
 
     /**
@@ -92,7 +89,7 @@ trait ConnectionModule extends EventModule {
       case Ack( id ) ⇒ ack( id )
       case e: Event  ⇒ toPlayer( e )
       case ToClient( json, buff ) ⇒
-        val msg = s""" {"id" : "$count", "ack":$buff, "message" : "$json"} """
+        val msg = s""" {"id" : $count, "ack":$buff, "message" : $json} """
         if ( buff == true ) cache( count, msg )
         toClient( msg )
         count = count + 1
@@ -112,5 +109,9 @@ trait ConnectionModule extends EventModule {
     override def toPlayer( e: Event ) { context.parent ! e }
     def getEnum: Receive = { case GetEnum ⇒ sender ! ReturnEnum( enumerator ) }
     override def receive = getEnum orElse super.receive
+
+    override def postStop {
+      toClient( s"""{"id":$count, "message": { "type":"quit", "message":"later!" } } """ )
+    }
   }
 }
