@@ -10,10 +10,11 @@ import akka.actor.actorRef2Scala
 import game.communications.ConnectionModule
 import game.world.RoomModule
 import akka.actor.ActorRef
+import game.EventModule
 
 /** Defines a module used for handling a Player */
-trait PlayerModule extends MobileModule with ConnectionModule {
-  this: RoomModule ⇒
+trait PlayerModule {
+  this: EventModule with MobileModule with RoomModule with ConnectionModule ⇒
 
   case class Invalid( s: String ) extends Event
   case class KeyUp( code: Int ) extends Event

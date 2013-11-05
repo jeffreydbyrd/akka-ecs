@@ -1,7 +1,6 @@
 package controllers
 
 import scala.concurrent.ExecutionContext.Implicits.global
-
 import akka.actor.ActorRef
 import akka.actor.ActorSystem
 import akka.actor.Props
@@ -14,13 +13,26 @@ import play.api.libs.json.Json
 import play.api.mvc.Action
 import play.api.mvc.Controller
 import play.api.mvc.WebSocket
+import game.EventModule
+import game.mobile.PlayerModule
+import game.world.RoomModule
+import game.communications.ConnectionModule
+import game.world.SurfaceModule
+import game.mobile.MobileModule
 
 /**
- * The entire Doppelgamer stack gets composed in this one object.
+ * The entire Doppelgamer stack gets composed into this one object.
  */
 object Application
     extends Application
-    with GameModule {
+    with EventModule
+    with GameModule
+    with RoomModule
+    with SurfaceModule
+    with PlayerModule
+    with MobileModule
+    with ConnectionModule
+    with LoggingModule {
   override val system: ActorSystem = akka.actor.ActorSystem( "Doppelsystem" )
   override val GAME: ActorRef = system.actorOf( Props( new Game ), name = "game" )
 }
@@ -28,10 +40,9 @@ object Application
 /**
  * Defines a controller that serves the client-side engine and handles
  * WebSocket creation.
- * @author biff
  */
-trait Application extends Controller with LoggingModule {
-  this: GameModule ⇒
+trait Application extends Controller {
+  this: GameModule with ConnectionModule with PlayerModule with LoggingModule with EventModule ⇒
 
   val logger = new PlayLoggingService
 
@@ -53,7 +64,7 @@ trait Application extends Controller with LoggingModule {
       ReturnEnum( out ) ← conn ? GetEnum
       in = Iteratee.foreach[ String ] { conn ! getCommand( _ ) }
     } yield {
-      logger.info( s"Now sending messages directly to ${conn.toString()}." )
+      logger.info( s"Now sending messages directly to ${conn.path}." )
       ( in, out )
     }
   }

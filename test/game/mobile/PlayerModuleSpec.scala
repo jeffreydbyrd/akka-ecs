@@ -10,14 +10,19 @@ import game.GameModule
 import game.world.RoomModule
 import game.world.SurfaceModule
 import akka.testkit.TestActorRef
+import game.EventModule
+import game.util.logging.LoggingModule
 
 class PlayerModuleSpec
     extends PlayerModule
-    with ConnectionModule
-    with RoomModule
+    with Specification
+    with EventModule
     with GameModule
+    with RoomModule
     with SurfaceModule
-    with Specification {
+    with MobileModule
+    with ConnectionModule
+    with LoggingModule {
 
   implicit val system: ActorSystem = ActorSystem( "PlayerModuleSpec" )
   val GAME = null

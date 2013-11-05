@@ -8,22 +8,22 @@ import java.math.MathContext
 import java.math.RoundingMode
 
 /**
- * A surface is a Line that can be either a Wall or a Floor. A Wall always has a vertical 
+ * A surface is a Line that can be either a Wall or a Floor. A Wall always has a vertical
  * (undefined) slope, while a Floor always has a Defined slope. A Surface is designed to
- * impede a Mobile's Movement. We do this by extending AdjustHandler and providing  
- * Adjusts that alter Moved Events. Whatever uses a Surface can use the Adjust functions 
+ * impede a Mobile's Movement. We do this by extending AdjustHandler and providing
+ * Adjusts that alter Moved Events. Whatever uses a Surface can use the Adjust functions
  * however it wants. For example, a Room can include them in its 'outgoing' Adjust list:
- * 
+ *
  * {{{
  * val floor = DoubleSided( Point( 0, 0 ), Point( 200, 0 ) )
  * outgoing = outgoing ::: floor.outgoing
  * }}}
- * 
+ *
  * In fact, the RoomEventHandler does just that to make sure Mobiles don't fall into
  * infinity.
  */
-trait SurfaceModule extends LineModule with EventModule {
-  this: MobileModule ⇒
+trait SurfaceModule extends LineModule {
+  this: EventModule with MobileModule ⇒
 
   implicit val rm = BigDecimal.RoundingMode.HALF_UP
 

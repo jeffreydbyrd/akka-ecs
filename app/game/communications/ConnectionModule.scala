@@ -16,7 +16,7 @@ import akka.actor.ActorRef
  * Defines a ConnectionService data structure whose one purpose is to get data to
  * the client and to clean up resources when closed.
  */
-trait ConnectionModule extends EventModule {
+trait ConnectionModule { this: EventModule ⇒
 
   /**
    *  Defines a bidirectional, Closeable service that forwards messages from the Player

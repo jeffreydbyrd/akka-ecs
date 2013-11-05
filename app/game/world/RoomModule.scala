@@ -8,13 +8,14 @@ import game.EventModule
 import game.GameModule
 import game.mobile.PlayerModule
 import akka.actor.ActorRef
+import game.mobile.MobileModule
 
 /**
  * Defines structures and messages for Room behavior. Rooms are asynchronous
  * EventHandlers that mediate almost all Events that propagate through the world.
  */
-trait RoomModule extends EventModule with SurfaceModule {
-  this: PlayerModule with GameModule ⇒
+trait RoomModule {
+  this: EventModule with SurfaceModule with MobileModule with PlayerModule with GameModule ⇒
 
   case object Arrived extends Event
 
@@ -63,7 +64,7 @@ trait RoomModule extends EventModule with SurfaceModule {
   /** Concrete implementation of a RoomEventHandler */
   class Room( override val id: String ) extends RoomEventHandler {
     override val gravity: BigDecimal = -1
-    
+
     // put a big slanted surface through the middle of the room:
     outgoing = outgoing ::: DoubleSided( Point( 0, 0 ), Point( 200, 200 ) ).outgoing
   }

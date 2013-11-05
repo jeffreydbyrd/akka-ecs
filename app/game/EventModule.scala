@@ -11,7 +11,7 @@ import game.util.logging.LoggingModule
  * encapsulate asynchronous state and behavior, which trickles down through
  * the rest of the application logic.
  */
-trait EventModule extends LoggingModule {
+trait EventModule { this: LoggingModule ⇒
 
   /** The one ActorSystem that the game should use */
   implicit def system: ActorSystem
@@ -95,7 +95,7 @@ trait EventModule extends LoggingModule {
 
     /**
      * Pipes an Event through the 'outgoing' list and then sends the end result to each of the
-     * parent and children ActorRefs. If forwarding == true, then the Event is forwarded 
+     * parent and children ActorRefs. If forwarding == true, then the Event is forwarded
      * according to Akka's forwarding documentation:
      * (http://doc.akka.io/docs/akka/snapshot/scala/actors.html#Forward_message)
      */

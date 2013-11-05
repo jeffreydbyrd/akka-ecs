@@ -9,10 +9,10 @@ import game.util.math.LineModule
 /**
  * Defines the behavior for all mobile entities (Players and NPCs)
  */
-trait MobileModule extends EventModule with LineModule {
-  this: RoomModule ⇒
+trait MobileModule {
+  this: EventModule with LineModule with RoomModule ⇒
 
-  /** How fast often I move (fixed) */
+  /** How often I move (fixed) */
   val MOVE_INTERVAL = 80
 
   /** How fast I move (for now, until we get Stats) */
@@ -23,7 +23,7 @@ trait MobileModule extends EventModule with LineModule {
 
   /** Represents a simple X and Y movement */
   case class Movement( val x: BigDecimal, val y: BigDecimal )
-  
+
   /**
    * Basic dimensions of a Mobile Position, representing a square in 2D space.
    * The x and y vals are the center of the square.
@@ -76,7 +76,7 @@ trait MobileModule extends EventModule with LineModule {
     protected def moving: Handle
 
     /** Mutates this Mobile's inner position and movement according p and m */
-    protected def move( mv:Moved ) {
+    protected def move( mv: Moved ) {
       this.position = newPosition( mv.p.x + mv.m.x, mv.p.y + mv.m.y )
       this.movement = Movement( movement.x, mv.m.y )
     }

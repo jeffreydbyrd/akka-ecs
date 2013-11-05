@@ -2,8 +2,6 @@ package game.items
 
 import game.EventModule
 
-trait ItemModule extends EventModule {
-  
-  
+trait ItemModule {
 
 }

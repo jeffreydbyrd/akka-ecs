@@ -3,10 +3,12 @@ package game
 import org.specs2.mutable.Specification
 import akka.actor.ActorSystem
 import akka.testkit.TestActorRef
+import game.util.logging.LoggingModule
 
 class EventModuleSpec
     extends EventModule
-    with Specification {
+    with Specification 
+    with LoggingModule {
 
   implicit val system: ActorSystem = ActorSystem( "EventModuleSpec" )
 

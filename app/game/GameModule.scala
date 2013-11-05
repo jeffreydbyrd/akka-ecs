@@ -14,10 +14,7 @@ import akka.actor.ActorRef
 /*
  * Defines the top-level actor exposed to the world.
  */
-trait GameModule
-    extends EventModule
-    with PlayerModule
-    with RoomModule {
+trait GameModule { this: EventModule with PlayerModule with RoomModule ⇒
 
   implicit val TIMEOUT = akka.util.Timeout( 1.second )
 

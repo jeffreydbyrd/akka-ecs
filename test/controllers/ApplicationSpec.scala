@@ -2,9 +2,26 @@ package controllers
 
 import org.specs2.mutable.Specification
 import game.GameModule
+import game.EventModule
+import game.util.logging.LoggingModule
+import akka.io.BackpressureBuffer.Ack
+import game.mobile.PlayerModule
+import game.world.RoomModule
+import game.world.SurfaceModule
+import game.communications.ConnectionModule
+import game.mobile.MobileModule
 
-class ApplicationSpec extends Application with Specification
-    with GameModule {
+class ApplicationSpec
+    extends Application
+    with Specification
+    with EventModule
+    with GameModule
+    with RoomModule
+    with SurfaceModule
+    with PlayerModule
+    with MobileModule
+    with ConnectionModule
+    with LoggingModule {
 
   implicit def system: akka.actor.ActorSystem = null
   val GAME: akka.actor.ActorRef = null

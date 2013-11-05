@@ -6,16 +6,18 @@ import game.EventModule
 import game.mobile.MobileModule
 import game.mobile.PlayerModule
 import game.GameModule
+import game.util.logging.LoggingModule
 
 class SurfaceModuleSpec
     extends SurfaceModule
+    with Specification
     with EventModule
-    with MobileModule
+    with GameModule
     with RoomModule
     with PlayerModule
-    with GameModule
+    with MobileModule
     with ConnectionModule
-    with Specification { // that's a lot of mixins
+    with LoggingModule {
 
   override val system = null
   val GAME = null
