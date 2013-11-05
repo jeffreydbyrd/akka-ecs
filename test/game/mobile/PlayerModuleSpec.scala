@@ -1,17 +1,24 @@
 package game.mobile
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration.DurationInt
+
 import org.specs2.mutable.Specification
+
+import akka.actor.ActorRef
 import akka.actor.ActorRef
 import akka.actor.ActorSystem
+import akka.actor.ActorSystem
+import akka.actor.actorRef2Scala
 import akka.pattern.ask
-import game.communications.ConnectionModule
-import game.GameModule
-import game.world.RoomModule
-import game.world.SurfaceModule
+import akka.pattern.ask
 import akka.testkit.TestActorRef
 import game.EventModule
+import game.GameModule
+import game.communications.ConnectionModule
 import game.util.logging.LoggingModule
+import game.world.RoomModule
+import game.world.SurfaceModule
 
 class PlayerModuleSpec
     extends PlayerModule
@@ -25,7 +32,8 @@ class PlayerModuleSpec
     with LoggingModule {
 
   implicit val system: ActorSystem = ActorSystem( "PlayerModuleSpec" )
-  val GAME = null
+  val game = null
+  implicit val timeout = akka.util.Timeout( 500 )
 
   val NOOP: ActorRef = TestActorRef( new RetryingActorConnection {
     override def toClient( s: String ) = {}

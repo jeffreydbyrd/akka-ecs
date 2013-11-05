@@ -20,7 +20,8 @@ class SurfaceModuleSpec
     with LoggingModule {
 
   override val system = null
-  val GAME = null
+  val game = null
+  val timeout = null
 
   "Surface.inBounds(p)" should {
     "return true when p is within the X and Y bounds of a Surface" in {

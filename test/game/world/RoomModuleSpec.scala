@@ -20,6 +20,7 @@ class RoomModuleSpec
     with ConnectionModule
     with LoggingModule {
   implicit def system: akka.actor.ActorSystem = ActorSystem( "RoomModuleSpec" )
-  val GAME: akka.actor.ActorRef = null
+  val game: akka.actor.ActorRef = null
+  val timeout = null
 
 }

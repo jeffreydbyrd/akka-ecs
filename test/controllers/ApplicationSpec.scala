@@ -24,7 +24,8 @@ class ApplicationSpec
     with LoggingModule {
 
   implicit def system: akka.actor.ActorSystem = null
-  val GAME: akka.actor.ActorRef = null
+  val game: akka.actor.ActorRef = null
+  val timeout = null
 
   "getCommand(String)" should {
     val ack = """ {"type" : "ack" , "data" : 42} """
