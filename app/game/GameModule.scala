@@ -1,7 +1,6 @@
 package game
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration.DurationInt
 import akka.actor.Actor
 import akka.actor.Props
 import akka.actor.actorRef2Scala
@@ -16,9 +15,9 @@ import akka.actor.ActorRef
  */
 trait GameModule { this: EventModule with PlayerModule with RoomModule ⇒
 
-  implicit val TIMEOUT = akka.util.Timeout( 1.second )
+  implicit val timeout: akka.util.Timeout
 
-  val GAME: ActorRef
+  val game: ActorRef
 
   // ====
   // Game Commands
@@ -33,7 +32,6 @@ trait GameModule { this: EventModule with PlayerModule with RoomModule ⇒
 
     def listening: Receive = {
       case ap @ AddPlayer( username ) ⇒
-        logger.info( s"received AddPlayer( $username )." )
         /*
          * TODO:
          *   - get the Player data from database service.

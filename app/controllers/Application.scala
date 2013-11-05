@@ -1,6 +1,7 @@
 package controllers
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration.DurationInt
 import akka.actor.ActorRef
 import akka.actor.ActorSystem
 import akka.actor.Props
@@ -34,7 +35,8 @@ object Application
     with ConnectionModule
     with LoggingModule {
   override val system: ActorSystem = akka.actor.ActorSystem( "Doppelsystem" )
-  override val GAME: ActorRef = system.actorOf( Props( new Game ), name = "game" )
+  override val game: ActorRef = system.actorOf( Props( new Game ), name = "game" )
+  override val timeout = akka.util.Timeout( 5 second )
 }
 
 /**
@@ -60,13 +62,10 @@ trait Application extends Controller {
    */
   def websocket( username: String ) = WebSocket.async[ String ] { implicit request ⇒
     for {
-      conn ← ( GAME ? AddPlayer( username ) ).mapTo[ ActorRef ]
+      conn ← ( game ? AddPlayer( username ) ).mapTo[ ActorRef ]
       ReturnEnum( out ) ← conn ? GetEnum
       in = Iteratee.foreach[ String ] { conn ! getCommand( _ ) }
-    } yield {
-      logger.info( s"Now sending messages directly to ${conn.path}." )
-      ( in, out )
-    }
+    } yield ( in, out )
   }
 
   /**

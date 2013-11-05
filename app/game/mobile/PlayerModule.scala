@@ -77,7 +77,7 @@ trait PlayerModule {
         // Switch to normal EventHandler behavior, with our extra playing behavior to handle JsonCmds
         context become { playing orElse super.receive }
         emit( Arrived )
-        logger.info( "%s joined the game".format( self.path ) )
+        logger.info( "joined the game" )
       }
 
     override def default: Handle = {
@@ -103,7 +103,7 @@ trait PlayerModule {
     }
 
     override def postStop {
-      logger.info( s"${self.path} terminated." )
+      logger.info( s"terminated." )
       this.moveScheduler.cancel
       emit( Quit )
     }

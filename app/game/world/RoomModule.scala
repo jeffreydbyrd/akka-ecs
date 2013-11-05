@@ -48,9 +48,7 @@ trait RoomModule {
 
     def listen: Receive = {
       // create a new player, tell him to Start
-      case AddPlayer( name ) ⇒
-        logger.info( s"received AddPlayer( $name ) from game actor" )
-        newPlayer( name ) forward Start
+      case AddPlayer( name ) ⇒ newPlayer( name ) forward Start
     }
     override def receive = listen orElse super.receive
 
