@@ -19,7 +19,7 @@ trait RoomModule {
 
   case object Arrived extends Event
 
-  case class RoomData( children: Iterable[ ActorRef ] )
+  case class RoomData( children: Iterable[ ActorRef ] ) extends Event
 
   // All rooms in the game are equipped with the same 4 surrounding surfaces:
   val floor = DoubleSided( Point( 0, 0 ), Point( 200, 0 ) )

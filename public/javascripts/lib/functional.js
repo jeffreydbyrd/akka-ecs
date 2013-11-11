@@ -3,7 +3,8 @@
  * more Arrays provided. 'f' must take the same number of parameters as the
  * number of Arrays provided. `map` only iterates as many times as the length of
  * the shortest Array provided. For example: a function `add` takes 2 params and
- * returns their sum (ie. add(3,5) == 8). Then map(add, [1,2,3], [1,2]) == [2,4].
+ * returns their sum (ie. add(3,5) == 8). Then map(add, [1,2,3], [1,2]) ==
+ * [2,4].
  */
 function map(f) {
 	var lsts = [];
@@ -46,4 +47,103 @@ function reduce(f, lst) {
 	for ( var i = 2; i < lst.length; i++)
 		accum = f(accum, lst[i]);
 	return accum;
+}
+
+/*******************************************************************************
+ * A Functional Linked List
+ ******************************************************************************/
+
+var Nil = {
+	isEmpty : true,
+	length : 0,
+	cons : function(el) {
+		return new NonEmptyList(el, this);
+	},
+	foreach : function(f) { /* noop */
+	},
+	map : function(f) {
+		return this;
+	},
+	flatMap : this.map,
+	reduce : this.map
+};
+
+function NonEmptyList(first, rest) {
+	this.head = first;
+	this.tail = rest;
+	this.isEmpty = false;
+	this.length = rest.length + 1;
+	this.cons = Nil.cons;
+	this.foreach = function(f) {
+		f(this.head);
+		this.tail.foreach(f);
+	};
+	this.map = function(f) { // f(x)
+		return this.tail.map(f).cons(f(this.head));
+	};
+	this.flatMap = function(f) { // f(x) returns list
+		val lst = f(this.head);
+		
+	};
+	this.reduce = function(f) { // f(acc, x)
+		var acc = this.head;
+		var these = this.tail;
+		while (!these.isEmpty) {
+			acc = f(acc, these.head);
+			these = these.tail;
+		}
+		return acc;
+	};
+}
+
+function list() {
+	var lst = Nil;
+	for (i in arguments)
+		lst = lst.cons(arguments[arguments.length - 1 - i]);
+	return lst;
+}
+
+/*******************************************************************************
+ * Monadic Option
+ ******************************************************************************/
+
+var None = {
+	isDefined : false,
+	map : function(f) { // f returns a new value
+		return this;
+	},
+	flatMap : function(f) { // f returns Some or None
+		return this;
+	},
+	filter : function(f) {
+		return this;
+	},
+	asArray : []
+};
+
+function Some(ref) {
+	this.isDefined = true;
+	this.map = function(f) { // f returns a new value
+		return new Some(f(ref));
+	};
+	this.flatMap = function(f) { // f returns Some or None
+		return f(ref);
+	};
+	this.filter = function(p) { // p is a predicate
+		if (p(ref))
+			return this;
+		return None;
+	}
+	this.asArray = [ ref ];
+	this.get = ref;
+}
+
+function maybe(nullable) {
+	if (nullable == null)
+		return None;
+	return new Some(nullable);
+}
+
+function test() {
+
 }

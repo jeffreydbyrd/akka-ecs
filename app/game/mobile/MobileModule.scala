@@ -16,7 +16,7 @@ trait MobileModule {
   val MOVE_INTERVAL = 80
 
   /** How fast I move (for now, until we get Stats) */
-  val SPEED = 1
+  val SPEED = 5
 
   /** How high I can jump (for now, until we get Stats) */
   val HOPS = 5

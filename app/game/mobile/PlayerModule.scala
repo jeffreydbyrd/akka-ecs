@@ -50,7 +50,7 @@ trait PlayerModule {
 
     // Override the EventHandler's receive function because we don't want to handle Events yet
     override def receive = { case Start ⇒ start() }
-    def playing: Receive = {
+    def observing: Receive = {
       case RoomData( refs ) ⇒
         for ( ref ← refs )
           connection ! ToClient(
@@ -75,7 +75,7 @@ trait PlayerModule {
         handle = standing orElse default
 
         // Switch to normal EventHandler behavior, with our extra playing behavior to handle JsonCmds
-        context become { playing orElse super.receive }
+        context become { observing orElse super.receive }
         emit( Arrived )
         logger.info( "joined the game" )
       }

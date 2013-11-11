@@ -42,10 +42,12 @@
 		},
 		"create" : function(data) {
 			view.add(data);
+			view.draw();
 			console.log(data);
 		},
 		"move" : function(data) {
 			view.move(data.id, data.position[0], data.position[1]);
+			view.draw();
 			console.log(data);
 		},
 		"delete" : function(data) {
@@ -69,6 +71,7 @@
 		var self = this;
 
 		var websocket = new WebSocket(url);
+		var count = 0;
 
 		websocket.onopen = function(evt) {
 			console.log("websocket opened");
@@ -76,16 +79,16 @@
 
 		websocket.onclose = function() {
 			console.log("websocket closed");
-		}
+		};
 
 		/** evt.data schema === {id : ???, message: { type: ???, .... } } */
 		websocket.onmessage = function(evt) {
 			console.log(evt.data);
 			var msg = JSON.parse(evt.data);
 			var id = msg.id;
+			count = id;
 			var cmd = msg.message;
 			COMMANDS[cmd.type](cmd);
-			view.draw();
 
 			var ack = JSON.stringify({
 				type : "ack",
@@ -129,16 +132,18 @@
 		 */
 		this.add = function(ent) {
 			var id = ent.id;
-			entities[id] = new Kinetic.Rect({
-				x : ent.position[0] * K,
-				y : ent.position[1] * K,
-				width : ent.dimensions[0] * K,
-				height : ent.dimensions[1] * K,
-				fill : 'black',
-				stroke : 'black',
-				strokeWidth : 1
-			});
-			layer.add(entities[id]);
+			if (!entities[id]) {
+				entities[id] = new Kinetic.Rect({
+					x : ent.position[0] * K,
+					y : ent.position[1] * K,
+					width : ent.dimensions[0] * K,
+					height : ent.dimensions[1] * K,
+					fill : 'black',
+					stroke : 'black',
+					strokeWidth : 1
+				});
+				layer.add(entities[id]);
+			}
 		};
 
 		/** Removes an entity from this view */
