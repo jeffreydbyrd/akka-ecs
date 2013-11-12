@@ -50,40 +50,53 @@ function reduce(f, lst) {
 }
 
 /*******************************************************************************
- * A Functional Linked List
+ * Functional Linked List
  ******************************************************************************/
 
-var Nil = {
-	isEmpty : true,
-	length : 0,
-	cons : function(el) {
-		return new NonEmptyList(el, this);
-	},
-	foreach : function(f) { /* noop */
-	},
-	map : function(f) {
-		return this;
-	},
-	flatMap : this.map,
-	reduce : this.map
-};
+var Nil = (function() {
+	function NIL() {
+		this.isEmpty = true;
+		this.length = 0;
+		this.prepend = function(el) {
+			return new NonEmptyList(el, this);
+		};
+		this.concat = function(lst) {
+			return lst;
+		};
+		this.foreach = function(f) { /* noop */
+		};
+		this.map = function(f) {
+			return this;
+		};
+		this.flatMap = this.map;
+		this.reduce = this.map;
+		this.toArray = function() {
+			return [];
+		};
+	}
+	return new NIL();
+})();
 
 function NonEmptyList(first, rest) {
 	this.head = first;
 	this.tail = rest;
 	this.isEmpty = false;
 	this.length = rest.length + 1;
-	this.cons = Nil.cons;
+	this.prepend = Nil.prepend;
+	this.concat = function(lst) {
+		if (lst.isEmpty)
+			return this;
+		return this.tail.concat(lst).prepend(this.head);
+	};
 	this.foreach = function(f) {
 		f(this.head);
 		this.tail.foreach(f);
 	};
 	this.map = function(f) { // f(x)
-		return this.tail.map(f).cons(f(this.head));
+		return this.tail.map(f).prepend(f(this.head));
 	};
 	this.flatMap = function(f) { // f(x) returns list
-		val lst = f(this.head);
-		
+		return f(this.head).concat(this.tail.flatMap(f));
 	};
 	this.reduce = function(f) { // f(acc, x)
 		var acc = this.head;
@@ -94,17 +107,20 @@ function NonEmptyList(first, rest) {
 		}
 		return acc;
 	};
+	this.toArray = function() {
+		return [ this.head ].concat(this.tail.toArray());
+	};
 }
 
-function list() {
+function List() {
 	var lst = Nil;
 	for (i in arguments)
-		lst = lst.cons(arguments[arguments.length - 1 - i]);
+		lst = lst.prepend(arguments[arguments.length - 1 - i]);
 	return lst;
 }
 
 /*******************************************************************************
- * Monadic Option
+ * Option
  ******************************************************************************/
 
 var None = {
@@ -139,7 +155,7 @@ function Some(ref) {
 }
 
 function maybe(nullable) {
-	if (nullable == null)
+	if (nullable == null || typeof nullable == "undefined")
 		return None;
 	return new Some(nullable);
 }
