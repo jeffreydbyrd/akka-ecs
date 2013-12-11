@@ -22,7 +22,7 @@ Clone the repo and cd to the project's root directory
 
 ```bash
 $ git clone git@github.com:Doppelgamer/doppelengine.git
-$ cd doppelgamer
+$ cd doppelengine
 ```
 
 and run the app.
