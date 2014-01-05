@@ -21,8 +21,8 @@ export PATH=/Users/biff/play-2.1.1/:$PATH
 Clone the repo and cd to the project's root directory
 
 ```bash
-$ git clone git@github.com:Doppelgamer/doppelgamer.git
-$ cd doppelgamer
+$ git clone git@github.com:Doppelgamer/doppelengine.git
+$ cd doppelengine
 ```
 
 and run the app.
