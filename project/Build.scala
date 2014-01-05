@@ -4,8 +4,8 @@ import play.Project._
 
 object ApplicationBuild extends Build {
 
-  val appName = "doppelgamer"
-  val appVersion = "1.0-SNAPSHOT"
+  val appName = "doppelengine"
+  val appVersion = "0.0-SNAPSHOT"
 
   val appDependencies = Seq(
     "com.typesafe.akka" %% "akka-testkit" % "2.3-SNAPSHOT"
