@@ -7,44 +7,24 @@ import akka.actor.ActorSystem
 import akka.actor.Props
 import akka.actor.actorRef2Scala
 import akka.pattern.ask
-import game.GameModule
-import game.util.logging.LoggingModule
 import play.api.libs.iteratee.Iteratee
 import play.api.libs.json.Json
 import play.api.mvc.Action
 import play.api.mvc.Controller
 import play.api.mvc.WebSocket
-import game.EventModule
-import game.mobile.PlayerModule
-import game.world.RoomModule
-import game.communications.ConnectionModule
-import game.world.SurfaceModule
-import game.mobile.MobileModule
+import game.util.logging.PlayLoggingService
+import game.communications.PlayActorConnection._
+import game.EventHandler._
+import game.AdjustHandler._
+import game.communications.RetryingConnection.Ack
+import game.mobile.Player._
 
 /**
- * The entire Doppelgamer stack gets composed into this one object.
- */
-object Application
-    extends Application
-    with EventModule
-    with GameModule
-    with RoomModule
-    with SurfaceModule
-    with PlayerModule
-    with MobileModule
-    with ConnectionModule
-    with LoggingModule {
-  override val system: ActorSystem = akka.actor.ActorSystem( "Doppelsystem" )
-  override val game: ActorRef = system.actorOf( Props( new Game ), name = "game" )
-  override val timeout = akka.util.Timeout( 5 second )
-}
-
-/**
- * Defines a controller that serves the client-side engine and handles
+ * Defines a Play controller that serves the client-side engine and handles
  * WebSocket creation.
  */
-trait Application extends Controller {
-  this: GameModule with ConnectionModule with PlayerModule with LoggingModule with EventModule ⇒
+object Application extends Controller {
+  import game.Game._
 
   val logger = new PlayLoggingService
 

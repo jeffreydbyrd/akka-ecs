@@ -2,16 +2,14 @@ package game.mobile
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.DurationInt
-import game.EventModule
-import game.world.RoomModule
-import game.util.math.LineModule
+import game.ActorEventHandler
+import game.util.math.PointLike
+import game.util.math.Point
+import game.EventHandler._
+import game.AdjustHandler._
+import game.Game
 
-/**
- * Defines the behavior for all mobile entities (Players and NPCs)
- */
-trait MobileModule {
-  this: EventModule with LineModule with RoomModule ⇒
-
+object Mobile {
   /** How often I move (fixed) */
   val MOVE_INTERVAL = 80
 
@@ -20,33 +18,35 @@ trait MobileModule {
 
   /** How high I can jump (for now, until we get Stats) */
   val HOPS = 5
-
   /** Represents a simple X and Y movement */
-  case class Movement( val x: BigDecimal, val y: BigDecimal )
-
-  /**
-   * Basic dimensions of a Mobile Position, representing a square in 2D space.
-   * The x and y vals are the center of the square.
-   */
-  case class Position(
-      val x: BigDecimal,
-      val y: BigDecimal,
-      height: Int,
-      width: Int ) extends PointLike {
-    lazy val head = Point( x, y + ( height / 2 ) )
-    lazy val feet = Point( x, y - ( height / 2 ) )
-    lazy val right = Point( x + ( width / 2 ), y )
-    lazy val left = Point( x - ( width / 2 ), y )
+case class Movement( val x: BigDecimal, val y: BigDecimal )
+/**
+ * Basic dimensions of a Mobile Position, representing a square in 2D space.
+ * The x and y vals are the center of the square.
+ */
+case class Position(
+		val x: BigDecimal,
+		val y: BigDecimal,
+		height: Int,
+		width: Int ) extends PointLike {
+	  lazy val head = Point( x, y + ( height / 2 ) )
+			  lazy val feet = Point( x, y - ( height / 2 ) )
+			  lazy val right = Point( x + ( width / 2 ), y )
+			  lazy val left = Point( x - ( width / 2 ), y )
   }
-
   /** A simple message for telling a Mobile to move */
-  case object MoveBitch
-  case class Moved( p: Position, m: Movement ) extends Event
+case object MoveBitch
+case class Moved( p: Position, m: Movement ) extends Event
+}
+
+
+
 
   /**
    * An entity with physical dimensions, a position, and that is current moving.
    */
   trait Mobile {
+    import Mobile._
     val name: String
     val height: Int
     val width: Int
@@ -58,12 +58,13 @@ trait MobileModule {
 
   /** A Mobile object that handles Events */
   trait MobileEventHandler extends ActorEventHandler with Mobile {
-
+	  import Mobile._
+	  
     /**
      *  An akka scheduler that repeatedly tells this Mobile to move every SPEED millis. It
      *  operates asynchronously, so this Mobile can concurrently react to other messages.
      */
-    val moveScheduler = system.scheduler.schedule( 0 millis, MOVE_INTERVAL millis )( self ! MoveBitch )
+    val moveScheduler = Game.system.scheduler.schedule( 0 millis, MOVE_INTERVAL millis )( self ! MoveBitch )
 
     // extend the EventHandler's receive method so that it responds to MoveBitch as well
     def moveBitch: Receive = { case MoveBitch ⇒ this emit Moved( position, movement ) }
@@ -98,4 +99,3 @@ trait MobileModule {
     protected def jump() = movement = Movement( movement.x, HOPS )
 
   }
-}

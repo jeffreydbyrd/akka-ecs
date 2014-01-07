@@ -8,7 +8,8 @@ object ApplicationBuild extends Build {
   val appVersion = "0.0-SNAPSHOT"
 
   val appDependencies = Seq(
-    "com.typesafe.akka" %% "akka-testkit" % "2.3-SNAPSHOT"
+    "com.typesafe.akka" %% "akka-testkit" % "2.3-SNAPSHOT",
+    "org.scalatest" % "scalatest_2.10" % "2.0" % "test"
   )
 
   val main = play.Project( appName, appVersion, appDependencies ).settings( 

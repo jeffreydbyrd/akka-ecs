@@ -1,27 +1,14 @@
 package game.world
 
 import org.specs2.mutable.Specification
-import game.communications.ConnectionModule
-import game.EventModule
-import game.mobile.MobileModule
-import game.mobile.PlayerModule
-import game.GameModule
-import game.util.logging.LoggingModule
+import game.util.math.Point
+import game.mobile.Mobile.Moved
+import game.mobile.Mobile.Position
+import game.mobile.Mobile.Movement
 
-class SurfaceModuleSpec
-    extends SurfaceModule
-    with Specification
-    with EventModule
-    with GameModule
-    with RoomModule
-    with PlayerModule
-    with MobileModule
-    with ConnectionModule
-    with LoggingModule {
+class SurfaceModuleSpec extends Specification {
 
-  override val system = null
-  val game = null
-  val timeout = null
+  import game.util.math.ImplicitBetween._
 
   "Surface.inBounds(p)" should {
     "return true when p is within the X and Y bounds of a Surface" in {

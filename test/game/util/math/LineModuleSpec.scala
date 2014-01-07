@@ -2,7 +2,7 @@ package game.util.math
 
 import org.specs2.mutable.Specification
 
-class LineModuleSpec extends LineModule with Specification {
+class LineModuleSpec extends Specification {
   "Slope.m" should {
     "return BigDec if the slope is a Slant" in {
       Slant( 2, 2 ).m === 1.0

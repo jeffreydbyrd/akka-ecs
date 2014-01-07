@@ -3,14 +3,14 @@ package game
 import org.specs2.mutable.Specification
 import akka.actor.ActorSystem
 import akka.testkit.TestActorRef
-import game.util.logging.LoggingModule
+import akka.testkit.TestKit
+import game.AdjustHandler._
+import game.EventHandler._
 
-class EventModuleSpec
-    extends EventModule
-    with Specification 
-    with LoggingModule {
-
-  implicit val system: ActorSystem = ActorSystem( "EventModuleSpec" )
+class EventModuleSpec extends TestKit( ActorSystem( "EventModuleSpec" ) )
+    with Specification {
+  
+  case class Test( v: Int ) extends Event
 
   val adj0: Adjust = { case x ⇒ x }
   val adj1: Adjust = { case Test( i ) ⇒ Test( 2 * i ) }
@@ -18,8 +18,6 @@ class EventModuleSpec
   val adj3: Adjust = { case Test( i ) if i % 7 == 0 ⇒ Test( 0 ) }
 
   val adjs = List( adj0, adj1, adj2, adj3 )
-
-  case class Test( v: Int ) extends Event
 
   trait TestEventHandler extends EventHandler {
     outgoing = adjs
