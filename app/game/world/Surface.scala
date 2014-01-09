@@ -1,19 +1,19 @@
 package game.world
 
-import scala.math._
-import java.math.MathContext
-import java.math.RoundingMode
-import game.util.math.Line
-import game.util.math.Vector
-import game.AdjustHandler._
-import game.EventHandler._
-import game.util.math.PointLike
-import game.util.math.ImplicitBetween._
-import game.AdjustHandler
+import scala.math.BigDecimal
+import scala.math.BigDecimal.double2bigDecimal
+import scala.math.BigDecimal.int2bigDecimal
+import scala.math.hypot
+
+import game.events.Adjust
+import game.events.AdjustHandler
 import game.mobile.Mobile.Moved
-import game.util.math.Point
-import game.mobile.Mobile.Movement
+import game.mobile.Movement
 import game.util.math.Intersection
+import game.util.math.Line
+import game.util.math.Point
+import game.util.math.PointLike
+import game.util.math.Vector
 
 /**
  * A surface is a Line that can be either a Wall or a Floor. A Wall always has a vertical
@@ -46,7 +46,7 @@ trait Surface extends Line with AdjustHandler {
    * resting directly on the Surface.
    */
   def inBounds( p: PointLike ): Boolean =
-    ( p.x between start.x -> end.x ) && ( p.y between start.y -> end.y )
+    ( start.x <= p.x && p.x <= end.x ) && ( start.y <= p.y && p.y <= end.y )
 }
 
 trait Floor extends Surface {

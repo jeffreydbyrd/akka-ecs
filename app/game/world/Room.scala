@@ -1,19 +1,18 @@
 package game.world
 
 import scala.math.BigDecimal.int2bigDecimal
-
 import akka.actor.ActorRef
 import akka.actor.Props
 import akka.actor.actorRef2Scala
-import game.ActorEventHandler
-import game.AdjustHandler.Adjust
-import game.EventHandler.Event
-import game.EventHandler.Handle
 import game.Game.AddPlayer
 import game.mobile.Mobile.Moved
-import game.mobile.Mobile.Movement
 import game.mobile.Player
 import game.util.math.Point
+import game.events.Event
+import game.events.EventHandler
+import game.events.Adjust
+import game.events.Handle
+import game.mobile.Movement
 
 object Room {
   case object Arrived extends Event
@@ -30,11 +29,13 @@ object Room {
  * An ActorEventHandler that mediates almost all Events that propagate through the world.
  * Every Room in existence shares the same 4 Surfaces to form a box that contains mobiles.
  */
-trait RoomEventHandler extends ActorEventHandler {
+class Room( val id: String ) extends EventHandler {
   import Room._
 
-  val id: String
-  val gravity: BigDecimal
+  val gravity: BigDecimal = -1
+
+  // put a big slanted surface through the middle of the room:
+  outgoing = outgoing ::: DoubleSided( Point( 0, 0 ), Point( 200, 200 ) ).outgoing
 
   /** This Room's default gravity simply modifies a movement's y-value */
   val gravitate: Adjust = {
@@ -58,12 +59,4 @@ trait RoomEventHandler extends ActorEventHandler {
     case mv: Moved ⇒ emit( mv, forwarding = true )
     case _         ⇒ // yum
   }
-}
-
-/** Concrete implementation of a RoomEventHandler */
-class Room( override val id: String ) extends RoomEventHandler {
-  override val gravity: BigDecimal = -1
-
-  // put a big slanted surface through the middle of the room:
-  outgoing = outgoing ::: DoubleSided( Point( 0, 0 ), Point( 200, 200 ) ).outgoing
 }

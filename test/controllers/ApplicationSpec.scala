@@ -2,43 +2,41 @@ package controllers
 
 import org.specs2.mutable.Specification
 import akka.io.BackpressureBuffer.Ack
+import org.scalatest.FunSuite
+import game.communications.RetryingConnection
+import game.mobile.Player
 
-class ApplicationSpec extends Specification {
+class ApplicationSpec extends FunSuite {
+  import Application._
 
-  import controllers.Application.getCommand
-  import game.communications.RetryingConnection
-  import game.mobile.Player
+  val ack = """ {"type" : "ack" , "data" : 42} """
+  val ku = """{"type" : "keyup", "data" : 65.0}"""
+  val kd = """{"type" : "keydown", "data" : 65}"""
+  val clk = """{"type" : "click", "data" : {"x" : 42, "y" : 5}}"""
 
-  "getCommand(String)" should {
-    val ack = """ {"type" : "ack" , "data" : 42} """
-    val ku = """{"type" : "keyup", "data" : 65.0}"""
-    val kd = """{"type" : "keydown", "data" : 65}"""
-    val clk = """{"type" : "click", "data" : {"x" : 42, "y" : 5}}"""
+  val unrec0 = """ {"type" : "keydown", "data" : "STRING"} """
+  val unrec1 = """ {"type" : "keydown", "KEY" : 65} """
 
-    val unrec0 = """ {"type" : "keydown", "data" : "STRING"} """
-    val unrec1 = """ {"type" : "keydown", "KEY" : 65} """
+  val clk1 = """ {"type" : "click", "data" : {"x" : "STRING"}} """
 
-    val clk1 = """ {"type" : "click", "data" : {"x" : "STRING"}} """
+  test( "getCommand should return Ack( 42 ) when json = {type: 'ack', data: 42}" ) {
+    getCommand( ack ) === RetryingConnection.Ack( 42 )
+  }
 
-    "return Ack( 42 ) when json = {type: 'ack', data: 42}" in {
-      getCommand( ack ) === RetryingConnection.Ack( 42 )
-    }
+  test( "getCommand should return KeyUp( 65 ) when json = {type : 'keyup', data : 65}" ) {
+    getCommand( ku ) === Player.KeyUp( 65 )
+  }
 
-    "return KeyUp( 65 ) when json = {type : 'keyup', data : 65}" in {
-      getCommand( ku ) === Player.KeyUp( 65 )
-    }
+  test( "getCommand should retun KeyDown( 65 ) when json = {type : 'keydown', data : 65}" ) {
+    getCommand( kd ) === Player.KeyDown( 65 )
+  }
 
-    "retun KeyDown( 65 ) when json = {type : 'keydown', data : 65}" in {
-      getCommand( kd ) === Player.KeyDown( 65 )
-    }
+  test( "getCommand should retun Click( 42, 5 ) when json = {type : 'click', data : {x: 42, y:5}}" ) {
+    getCommand( clk ) === Player.Click( 42, 5 )
+  }
 
-    "retun Click( 42, 5 ) when json = {type : 'click', data : {x: 42, y:5}}" in {
-      getCommand( clk ) === Player.Click( 42, 5 )
-    }
-
-    "return Invalid when the input doesn't follow the spec that getCommand expects" in {
-      getCommand( unrec0 ) === Player.Invalid
-      getCommand( unrec1 ) === Player.Invalid
-    }
+  test( "getCommand should return Invalid when the input doesn't follow the spec that getCommand expects" ) {
+    getCommand( unrec0 ) === Player.Invalid
+    getCommand( unrec1 ) === Player.Invalid
   }
 }

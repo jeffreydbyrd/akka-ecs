@@ -1,21 +1,19 @@
 package game.mobile
 
-import scala.concurrent.duration.DurationInt
 import scala.math.BigDecimal.int2bigDecimal
-import scala.util.parsing.json.JSON
-import scala.util.parsing.json.JSONObject
+
 import akka.actor.PoisonPill
 import akka.actor.Props
 import akka.actor.actorRef2Scala
-import akka.actor.ActorRef
-import game.EventHandler._
-import game.world.Room.RoomData
-import game.communications.RetryingConnection.ToClient
-import game.world.Room
-import game.communications.RetryingConnection.Ack
-import game.mobile.Player._
-import game.mobile.Mobile._
 import game.communications.PlayActorConnection
+import game.communications.RetryingConnection.Ack
+import game.communications.RetryingConnection.ToClient
+import game.events.Event
+import game.events.EventHandler
+import game.events.Handle
+import game.mobile.Mobile.Moved
+import game.world.Room
+import game.world.Room.RoomData
 
 object Player {
   case class Invalid( s: String ) extends Event
@@ -28,28 +26,22 @@ object Player {
   case object Start
 }
 
-trait GenericPlayer extends Mobile {
-  val height = 4
-  val width = 2
-
-  /**
-   * Sets up this Player object by retrieving state from the database.
-   * If something goes wrong, we return Some( errMsg ),
-   * otherwise we return None to indicate that everything's fine.
-   */
-  protected def setup(): Option[ String ] = None
-}
-
 /**
  * An asynchronous EventHandler that handles communication
  * with the client and also interacts with the game world.
  */
-trait PlayerEventHandler
-    extends MobileEventHandler
-    with GenericPlayer {
+class Player( val name: String ) extends Mobile with EventHandler {
+  import Player._
 
   /** Represents a RetryingActorConnection */
-  val connection: ActorRef
+  val connection = context.actorOf( Props( new PlayActorConnection( self ) ), name = "connection" )
+  val height = 4
+  val width = 2
+
+  //temporary:
+  var position = newPosition( 10, 30 )
+
+  def setup() = None
 
   // Override the EventHandler's receive function because we don't want to handle Events yet
   override def receive = { case Start ⇒ start() }
@@ -111,13 +103,4 @@ trait PlayerEventHandler
     emit( Quit )
   }
 
-}
-
-class Player( val name: String ) extends PlayerEventHandler {
-
-  override val connection = context.actorOf( Props( new PlayActorConnection( self ) ), name = "connection" )
-
-  //temporary:
-  var position = newPosition( 10, 30 )
-  override def setup = None
 }

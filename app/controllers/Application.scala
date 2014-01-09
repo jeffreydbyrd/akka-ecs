@@ -14,17 +14,17 @@ import play.api.mvc.Controller
 import play.api.mvc.WebSocket
 import game.util.logging.PlayLoggingService
 import game.communications.PlayActorConnection._
-import game.EventHandler._
-import game.AdjustHandler._
 import game.communications.RetryingConnection.Ack
 import game.mobile.Player._
+import game.events.Event
+import game.Game
 
 /**
  * Defines a Play controller that serves the client-side engine and handles
  * WebSocket creation.
  */
 object Application extends Controller {
-  import game.Game._
+  import Game._
 
   val logger = new PlayLoggingService
 

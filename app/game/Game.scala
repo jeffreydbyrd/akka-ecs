@@ -6,6 +6,7 @@ import akka.actor.ActorRef
 import akka.actor.ActorSystem
 import akka.actor.Props
 import akka.util.Timeout.durationToTimeout
+import game.events.EventHandler
 import game.world.Room
 
 object Game {
@@ -17,7 +18,7 @@ object Game {
   case class AddPlayer( name: String )
 }
 
-class Game extends ActorEventHandler {
+sealed class Game extends EventHandler {
   // TODO: build the world from database
 
   /** We all share one room for now */
