@@ -37,7 +37,7 @@ trait EventHandler extends AdjustHandler with Actor {
   protected def default: Handle
 
   /** Pipes an Event through the `adjusters` list and returns the end result */
-  protected def adjust( adjs: List[ Adjust ], e: Event ) =
+  protected def adjust( adjs: Set[ Adjust ], e: Event ) =
     adjs.foldLeft( e ) { ( evt, adj ) ⇒
       adj.applyOrElse( evt, ( _: Event ) ⇒ evt )
     }
@@ -46,10 +46,10 @@ trait EventHandler extends AdjustHandler with Actor {
 
   override def receive = {
     case e: Event        ⇒ this.handle( adjust( incoming, e ) )
-    case AddOut( as )    ⇒ outgoing = outgoing ::: as
-    case AddIn( as )     ⇒ incoming = incoming ::: as
-    case RemoveOut( as ) ⇒ outgoing = removeAll( outgoing, as )
-    case RemoveIn( as )  ⇒ incoming = removeAll( incoming, as )
+    case AddOut( as )    ⇒ outgoing = outgoing ++ as
+    case AddIn( as )     ⇒ incoming = incoming ++ as
+    case RemoveOut( as ) ⇒ outgoing = outgoing -- as
+    case RemoveIn( as )  ⇒ incoming = incoming -- as
   }
 
   /**

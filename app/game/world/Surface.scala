@@ -67,14 +67,14 @@ trait Floor extends Surface {
     p.y.setScale( 5, rm ) == ( slope.m * p.x + b ).setScale( 5, rm ) &&
       inBounds( p )
 
-  /*
-     * This function is defined for 2 cases:
-     * 1) Mobile is standing on floor and wants to move below it:
-     * Redirect the movement so that it has the same Slope as the Floor
-     * 
-     * 2) Mobile is above the Floor and wants to move below it:
-     * Keep the direction and Slope, but cut the distance short
-     */
+  /**
+   * This function is defined for 2 cases:
+   * 1) Mobile is standing on floor and wants to move below it:
+   * Redirect the movement so that it has the same Slope as the Floor
+   *
+   * 2) Mobile is above the Floor and wants to move below it:
+   * Keep the direction and Slope, but cut the distance short
+   */
   val onCollision: Adjust = {
     // Mobile is standing on Floor and wants to move below it:
     case Moved( p, mv ) if {
@@ -100,7 +100,7 @@ trait Floor extends Surface {
       Moved( p, newMovement )
   }
 
-  outgoing = List( onCollision )
+  outgoing = Set( onCollision )
 }
 
 case class Wall( xpos: Int,

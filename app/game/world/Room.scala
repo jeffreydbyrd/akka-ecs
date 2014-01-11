@@ -35,7 +35,8 @@ class Room( val id: String ) extends EventHandler {
   val gravity: BigDecimal = -1
 
   // put a big slanted surface through the middle of the room:
-  outgoing = outgoing ::: DoubleSided( Point( 0, 0 ), Point( 200, 200 ) ).outgoing
+  val slanted = DoubleSided( Point( 0, 0 ), Point( 200, 200 ) )
+  outgoing = outgoing ++ slanted.outgoing
 
   /** This Room's default gravity simply modifies a movement's y-value */
   val gravitate: Adjust = {
@@ -45,8 +46,8 @@ class Room( val id: String ) extends EventHandler {
   def newPlayer( name: String ) = context.actorOf( Props( new Player( name ) ), name = name )
 
   // Include the room's default gravity and default walls
-  incoming = incoming :+ gravitate
-  outgoing = outgoing ::: List( floor, leftWall, rightWall ).flatMap( _.outgoing )
+  incoming += gravitate
+  outgoing = outgoing ++ Set( floor, leftWall, rightWall ).flatMap( _.outgoing )
 
   def listen: Receive = {
     // create a new player, tell him to Start

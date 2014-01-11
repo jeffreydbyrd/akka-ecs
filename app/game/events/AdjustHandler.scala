@@ -20,9 +20,6 @@ object AdjustHandler {
  * both incoming and outgoing events.
  */
 trait AdjustHandler {
-  var incoming: List[ Adjust ] = Nil
-  var outgoing: List[ Adjust ] = Nil
-
-  protected def removeAll( current: List[ Adjust ], targets: List[ Adjust ] ): List[ Adjust ] =
-    current.filterNot( adj ⇒ targets.contains( adj ) )
+  var incoming: Set[ Adjust ] = Set()
+  var outgoing: Set[ Adjust ] = Set()
 }
