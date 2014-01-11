@@ -77,7 +77,7 @@ trait Floor extends Surface {
    */
   val onCollision: Adjust = {
     // Mobile is standing on Floor and wants to move below it:
-    case Moved( p, mv ) if {
+    case Moved( ar, p, mv ) if {
       onFloor( p.feet ) && belowFloor( Point( p.feet.x + mv.x, p.feet.y + mv.y ) )
     } ⇒
       val newMv =
@@ -86,10 +86,10 @@ trait Floor extends Surface {
           val k = hypot( slope.dx.toDouble, slope.dy.toDouble ) / mv.x
           Movement( slope.dx / k, slope.dy / k )
         }
-      Moved( p, newMv )
+      Moved( ar, p, newMv )
 
     // Mobile is above the Floor and wants to move below it:
-    case Moved( p, mv ) if {
+    case Moved( ar, p, mv ) if {
       aboveFloor( p.feet ) && belowFloor( Point( p.feet.x + mv.x, p.feet.y + mv.y ) )
     } ⇒
       val vector = Vector( Point( p.feet.x, p.feet.y ), Point( p.feet.x + mv.x, p.feet.y + mv.y ) )
@@ -97,7 +97,7 @@ trait Floor extends Surface {
       val newMovement =
         if ( inBounds( inter ) ) Movement( inter.x - p.x, inter.y - p.feet.y )
         else mv
-      Moved( p, newMovement )
+      Moved( ar, p, newMovement )
   }
 
   outgoing = Set( onCollision )
@@ -110,8 +110,8 @@ case class Wall( xpos: Int,
   lazy val end = Point( xpos, ybottom )
 
   val stop: Adjust = {
-    case Moved( p, m ) if inBounds( p.left ) || inBounds( p.right ) ⇒
-      Moved( p, Movement( 0, m.y ) )
+    case Moved( ar, p, m ) if inBounds( p.left ) || inBounds( p.right ) ⇒
+      Moved( ar, p, Movement( 0, m.y ) )
   }
 
   //    adjusts = adjusts ::: List( stopLeft, stopRight )

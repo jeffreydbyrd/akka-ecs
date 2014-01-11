@@ -23,7 +23,7 @@ class SurfaceSpec extends FunSuiteLike {
 
   test( "Floor.onCollision redirect the Movement of a Mobile standing on Floor and moving into it" ) {
     val floor = new SingleSided( Point( 0, 0 ), Point( 10, 10 ) )
-    val event = Moved( Position( 5, 7, 4, 2 ), Movement( 1, -1 ) )
+    val event = Moved( null, Position( 5, 7, 4, 2 ), Movement( 1, -1 ) )
     val newMv = ( floor.onCollision( event ) ).asInstanceOf[ Moved ].m
     ( 0 <= newMv.x && newMv.x <= 1 ) === true
     ( 0 <= newMv.y && newMv.y <= 1 ) === true
@@ -31,7 +31,7 @@ class SurfaceSpec extends FunSuiteLike {
 
   test( "Floor.onCollision should shorten the Movement of a Mobile falling into the Floor" ) {
     val floor = new SingleSided( Point( 0, 0 ), Point( 10, 10 ) )
-    val event = Moved( Position( 0, 4, 4, 2 ), Movement( 2, -2 ) )
+    val event = Moved( null, Position( 0, 4, 4, 2 ), Movement( 2, -2 ) )
     val newMv = ( floor.onCollision( event ) ).asInstanceOf[ Moved ].m
     newMv.x === 1
     newMv.y === -1
@@ -39,7 +39,7 @@ class SurfaceSpec extends FunSuiteLike {
 
   test( "Floor.onCollision should be undefined for Movement that does not intersect with the Floor" ) {
     val floor = new SingleSided( Point( 0, 0 ), Point( 10, 10 ) )
-    val event = Moved( Position( 0, 10, 4, 2 ), Movement( 2, -2 ) )
+    val event = Moved( null, Position( 0, 10, 4, 2 ), Movement( 2, -2 ) )
     floor.onCollision.isDefinedAt( event ) === false
   }
 

@@ -35,9 +35,5 @@ sealed class Game extends EventHandler {
       ROOMREF forward ap
   }
 
-  override def receive = listening orElse super.receive
-
-  override def default = {
-    case _ ⇒
-  }
+  override def receive = listening
 }

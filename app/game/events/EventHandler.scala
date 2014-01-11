@@ -1,11 +1,10 @@
 package game.events
 
-import AdjustHandler.AddIn
-import AdjustHandler.AddOut
-import AdjustHandler.RemoveIn
-import AdjustHandler.RemoveOut
+import AdjustHandler.Add
+import AdjustHandler.Remove
 import akka.actor.Actor
 import akka.actor.actorRef2Scala
+import akka.event.LoggingReceive
 import game.util.logging.AkkaLoggingService
 import game.util.logging.LoggingService
 
@@ -28,41 +27,29 @@ case object Nullified extends Event
  * to handle Events
  */
 trait EventHandler extends AdjustHandler with Actor {
-  /**
-   * Represents the entry point for all Events into this EventHandler.
-   * It initially points to 'default' for its behavior, but you can
-   * swap in other Handle functions at runtime.
-   */
-  protected var handle: Handle = default
-  protected def default: Handle
-
-  /** Pipes an Event through the `adjusters` list and returns the end result */
-  protected def adjust( adjs: Set[ Adjust ], e: Event ) =
-    adjs.foldLeft( e ) { ( evt, adj ) ⇒
-      adj.applyOrElse( evt, ( _: Event ) ⇒ evt )
-    }
+  import AdjustHandler._
 
   val logger: LoggingService = new AkkaLoggingService( this, context )
 
-  override def receive = {
-    case e: Event        ⇒ this.handle( adjust( incoming, e ) )
-    case AddOut( as )    ⇒ outgoing = outgoing ++ as
-    case AddIn( as )     ⇒ incoming = incoming ++ as
-    case RemoveOut( as ) ⇒ outgoing = outgoing -- as
-    case RemoveIn( as )  ⇒ incoming = incoming -- as
+  val addRemoveAdjusts: Receive = LoggingReceive {
+    case Add( as )    ⇒ add( as )
+    case Remove( as ) ⇒ remove( as )
   }
+
+  /** Pipes an Event through the `adjusters` list and returns the end result */
+  private def adjust( e: Event ) =
+    outgoing.foldLeft( e ) { ( evt, adj ) ⇒
+      adj.applyOrElse( evt, ( _: Event ) ⇒ evt )
+    }
 
   /**
    * Pipes an Event through the 'outgoing' list and then sends the end result to each of the
-   * parent and children ActorRefs. If forwarding == true, then the Event is forwarded
-   * according to Akka's forwarding documentation:
-   * (http://doc.akka.io/docs/akka/snapshot/scala/actors.html#Forward_message)
+   * parent and children ActorRefs.
    */
-  protected def emit( e: Event, forwarding: Boolean = false ): Unit = {
-    val finalEvent = adjust( outgoing, e )
+  protected def emit( e: Event ): Unit = {
+    val finalEvent = adjust( e )
     for ( s ← context.parent :: context.children.toList )
-      if ( forwarding ) s forward finalEvent
-      else s ! finalEvent
+      s ! finalEvent
   }
 
 }

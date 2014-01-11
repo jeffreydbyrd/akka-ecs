@@ -2,16 +2,10 @@ package game.events
 
 object AdjustHandler {
   /** Tells the target EventHandler to add 'as' to the outgoing list of Adjusts */
-  case class AddOut( as: List[ Adjust ] )
+  case class Add( as: Set[ Adjust ] )
 
   /** Tells the target EventHandler to remove 'as' from the outgoing list of Adjusts */
-  case class RemoveOut( as: List[ Adjust ] )
-
-  /** Tells the target EventHandler to add 'as' to the incoming list of Adjusts */
-  case class AddIn( as: List[ Adjust ] )
-
-  /** Tells the target EventHandler to remove 'as' from the incoming list of Adjusts */
-  case class RemoveIn( as: List[ Adjust ] )
+  case class Remove( as: Set[ Adjust ] )
 }
 
 /**
@@ -20,6 +14,8 @@ object AdjustHandler {
  * both incoming and outgoing events.
  */
 trait AdjustHandler {
-  var incoming: Set[ Adjust ] = Set()
   var outgoing: Set[ Adjust ] = Set()
+
+  def add( adjusts: Set[ Adjust ] ) = outgoing = outgoing ++ adjusts
+  def remove( adjusts: Set[ Adjust ] ) = outgoing = outgoing -- adjusts
 }
