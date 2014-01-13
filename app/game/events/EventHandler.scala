@@ -31,7 +31,7 @@ trait EventHandler extends AdjustHandler with Actor {
 
   val logger: LoggingService = new AkkaLoggingService( this, context )
 
-  val addRemoveAdjusts: Receive = LoggingReceive {
+  val addRemoveAdjusts: Receive = {
     case Add( as )    ⇒ add( as )
     case Remove( as ) ⇒ remove( as )
   }

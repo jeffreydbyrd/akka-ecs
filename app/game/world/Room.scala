@@ -39,8 +39,6 @@ object Room {
 class Room( val id: String ) extends EventHandler {
   import Room._
 
-  outgoing = outgoing ++ slanted.outgoing
-
   /** This Room's default gravity simply modifies a movement's y-value */
   val gravitate: Adjust = {
     case Moved( ar, p, m ) ⇒ Moved( ar, p, Movement( m.x, m.y + gravity ) )
@@ -48,21 +46,19 @@ class Room( val id: String ) extends EventHandler {
 
   // Include the room's default gravity and default walls
   outgoing = outgoing + gravitate ++ Set( floor, leftWall, rightWall ).flatMap( _.outgoing )
+  outgoing = outgoing ++ slanted.outgoing
 
   def newPlayer( name: String ) = context.actorOf( Props( new Player( name ) ), name = name )
 
-  val addPlayer: Receive = {
+  val roomBehavior: Receive = {
     // create a new player, tell him to Start
     case AddPlayer( name ) ⇒ newPlayer( name ) forward Player.Start
-  }
-
-  val default: Receive = {
-    case Arrived   ⇒ sender ! RoomData( context.children )
-    case mv: Moved ⇒ emit( mv )
+    case Arrived           ⇒ sender ! RoomData( context.children )
+    case mv: Moved         ⇒ emit( mv )
   }
 
   override def receive = LoggingReceive {
-    addPlayer orElse addRemoveAdjusts orElse default
+    addRemoveAdjusts orElse roomBehavior
   }
 
 }

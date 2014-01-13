@@ -11,6 +11,7 @@ import game.events.Handle
 import game.util.math.Point
 import game.util.math.PointLike
 import akka.actor.ActorRef
+import akka.event.LoggingReceive
 
 /** Represents a simple X and Y movement */
 case class Movement( val x: BigDecimal, val y: BigDecimal )
@@ -48,7 +49,11 @@ object Mobile {
 }
 
 /**
- * An entity with physical dimensions, a position, and that is current moving.
+ * An `EventHandler` that emits a `Moved` `Event` on every `Tick` that it receives. However
+ * it has no opinion on when it should and shouldn't move. It provides basic methods for
+ * making the transitions happen (moveLeft, moveRight, move, stopMoving). Classes
+ * implementing this trait must define the Receive behavor for `standing`, `moving`, and
+ * `mobileBehavior`.
  */
 trait Mobile extends EventHandler {
   import Mobile._
@@ -60,38 +65,44 @@ trait Mobile extends EventHandler {
   var position: Position
   var movement = Movement( 0, 0 )
 
-  /** The behavior of this Mobile while it's standing still */
+  /** Defines the messages this Mobile responds to while standing still */
   protected def standing: Receive
 
-  /** The behavior of this Mobile while it's moving */
+  /** Defines the messages this Mobile responds to while moving */
   protected def moving: Receive
 
-  /** The logic that ultimately calls `move`, `startMoving`, and `stopMoving` */
+  /** Core logic relevant to whatever class is implementing Mobile */
   protected def mobileBehavior: Receive
 
   /**
    *  An akka scheduler that repeatedly tells this Mobile to move every SPEED millis. It
    *  operates asynchronously, so this Mobile can concurrently react to other messages.
    */
-  val moveScheduler = Game.system.scheduler.schedule( 0 millis, MOVE_INTERVAL millis )( self ! EmitMovement )
+  protected val moveScheduler = Game.system.scheduler.schedule( 0 millis, MOVE_INTERVAL millis )( self ! EmitMovement )
 
-  override def receive: Receive = {
+  val emitMovement: Receive = {
     case EmitMovement ⇒ emit( Moved( self, position, movement ) )
   }
 
-  /** Mutates this Mobile's inner position and movement according p and m */
+  private def standingBehavior = LoggingReceive { standing orElse mobileBehavior orElse emitMovement }
+  private def movingBehavior = LoggingReceive { moving orElse mobileBehavior orElse emitMovement }
+
+  override def receive: Receive = standingBehavior
+
+  /** Mutates this Mobile's inner position and movement according to p and m */
   protected def move( mv: Moved ) {
     this.position = newPosition( mv.p.x + mv.m.x, mv.p.y + mv.m.y )
     this.movement = Movement( movement.x, mv.m.y )
   }
 
-  protected def startMoving( xdir: Int ) = {
-    context become { standing orElse mobileBehavior orElse receive }
-    this.movement = Movement( 0, movement.y )
+  private def startMoving( xdir: Int ) = {
+    context become movingBehavior
+    this.movement = Movement( xdir, movement.y )
   }
 
+  /** Puts this Mobile back into a `standing` state */
   protected def stopMoving() = {
-    context become { standing orElse mobileBehavior orElse receive }
+    context become standingBehavior
     this.movement = Movement( 0, movement.y )
   }
 

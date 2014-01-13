@@ -1,13 +1,13 @@
 package game
 
 import scala.concurrent.duration.DurationInt
-
 import akka.actor.ActorRef
 import akka.actor.ActorSystem
 import akka.actor.Props
 import akka.util.Timeout.durationToTimeout
 import game.events.EventHandler
 import game.world.Room
+import akka.event.LoggingReceive
 
 object Game {
   implicit val timeout: akka.util.Timeout = 1 second
@@ -35,5 +35,5 @@ sealed class Game extends EventHandler {
       ROOMREF forward ap
   }
 
-  override def receive = listening
+  override def receive = { listening }
 }
