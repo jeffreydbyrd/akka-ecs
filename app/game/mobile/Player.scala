@@ -1,7 +1,6 @@
 package game.mobile
 
 import scala.math.BigDecimal.int2bigDecimal
-
 import akka.actor.PoisonPill
 import akka.actor.Props
 import akka.actor.actorRef2Scala
@@ -14,22 +13,25 @@ import game.events.Handle
 import game.mobile.Mobile.Moved
 import game.world.Room
 import game.world.Room.RoomData
+import akka.actor.ActorRef
 
 object Player {
+  def props( name: String ) = Props( classOf[ Player ], name )
+
+  // Handled Events:
   case class Invalid( s: String ) extends Event
   case class KeyUp( code: Int ) extends Event
   case class KeyDown( code: Int ) extends Event
   case class Click( x: Int, y: Int ) extends Event
-  case object Quit extends Event
 
-  /** Used to tell a Player Actor to start. The caller should wait for a confirmation */
-  case object Start
+  // Received messages:
+  case class Start( room: ActorRef, client: ActorRef )
+
+  // Sent Messages
+  case object Quit extends Event
+  case class StartResponse( connectionService: ActorRef )
 }
 
-/**
- * An asynchronous EventHandler that handles communication
- * with the client and also interacts with the game world.
- */
 class Player( val name: String ) extends Mobile {
   import Player._
   import Mobile._
@@ -44,9 +46,10 @@ class Player( val name: String ) extends Mobile {
   var position = newPosition( 10, 30 )
 
   val mobileBehavior: Receive = {
-    case Start ⇒
-      sender ! connection
-      emit( Room.Arrived )
+    case Start( room, client ) ⇒
+      client ! StartResponse( connection )
+      subscribers += room
+      room ! Room.Arrived
       logger.info( "joined the game" )
     case ack: Ack                ⇒ connection ! ack
     case Click( x: Int, y: Int ) ⇒
@@ -76,7 +79,6 @@ class Player( val name: String ) extends Mobile {
 
   override def postStop {
     logger.info( s"terminated." )
-    this.moveScheduler.cancel
     emit( Quit )
   }
 

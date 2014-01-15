@@ -6,7 +6,6 @@ import scala.math.BigDecimal.int2bigDecimal
 import scala.math.hypot
 
 import game.events.Adjust
-import game.events.AdjustHandler
 import game.mobile.Mobile.Moved
 import game.mobile.Movement
 import game.util.math.Intersection
@@ -38,7 +37,7 @@ object Surface {
  * A Surface is essentially just a line, owned by Room objects, that supplies Adjust
  * functions to modify Moved Events
  */
-trait Surface extends Line with AdjustHandler {
+trait Surface extends Line {
   /**
    * Returns true if 'p' is within the X and Y bounds of this Surface. If you draw
    * a box around this Surface, with the Start & End points resting in the corners,
@@ -99,8 +98,6 @@ trait Floor extends Surface {
         else mv
       Moved( ar, p, newMovement )
   }
-
-  outgoing = Set( onCollision )
 }
 
 case class Wall( xpos: Int,

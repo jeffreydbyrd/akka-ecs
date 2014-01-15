@@ -1,39 +1,44 @@
 package game
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.DurationInt
+
 import akka.actor.ActorRef
 import akka.actor.ActorSystem
+import akka.actor.Cancellable
 import akka.actor.Props
+import akka.event.LoggingReceive
 import akka.util.Timeout.durationToTimeout
+import game.events.Event
 import game.events.EventHandler
 import game.world.Room
-import akka.event.LoggingReceive
 
 object Game {
+  // global values:
   implicit val timeout: akka.util.Timeout = 1 second
   val system: ActorSystem = akka.actor.ActorSystem( "Doppelsystem" )
+  val game: ActorRef = system.actorOf( Props[ Game ], name = "game" )
 
-  val game: ActorRef = system.actorOf( Props( new Game ), name = "game" )
-
+  // Received messages
   case class AddPlayer( name: String )
+
+  // Sent messages
+  case class NewPlayer( client: ActorRef, name: String ) extends Event
+  case object Tick extends Event
 }
 
 sealed class Game extends EventHandler {
-  // TODO: build the world from database
+  import Game._
+  import scala.concurrent.duration._
 
-  /** We all share one room for now */
-  lazy val ROOMREF = context.actorOf( Props( new Room( "temp" ) ), name = "temp" )
+  // We all share one room for now
+  subscribers += context.actorOf( Room.props( "TEMP" ), name = "temp" )
 
-  def listening: Receive = {
-    case ap @ Game.AddPlayer( username ) ⇒
-      /*
-         * TODO:
-         *   - get the Player data from database service.
-         *   - Get the actor path of the player from the data
-         *   - Get the ActorRef of the player's room
-         */
-      ROOMREF forward ap
+  val ticker =
+    system.scheduler.schedule( 50 milliseconds, 50 milliseconds, self, Tick )
+
+  override def receive = LoggingReceive {
+    case Tick                  ⇒ emit( Tick )
+    case AddPlayer( username ) ⇒ emit( NewPlayer( sender, username ) )
   }
-
-  override def receive = { listening }
 }

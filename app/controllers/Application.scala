@@ -18,6 +18,7 @@ import game.communications.RetryingConnection.Ack
 import game.mobile.Player._
 import game.events.Event
 import game.Game
+import game.mobile.Player
 
 /**
  * Defines a Play controller that serves the client-side engine and handles
@@ -42,7 +43,7 @@ object Application extends Controller {
    */
   def websocket( username: String ) = WebSocket.async[ String ] { implicit request ⇒
     for {
-      conn ← ( game ? AddPlayer( username ) ).mapTo[ ActorRef ]
+      Player.StartResponse( conn ) ← ( game ? AddPlayer( username ) )
       ReturnEnum( out ) ← conn ? GetEnum
       in = Iteratee.foreach[ String ] { conn ! getCommand( _ ) }
     } yield ( in, out )

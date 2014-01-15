@@ -32,20 +32,14 @@ case class Position(
 }
 
 object Mobile {
-  /** How often I move (fixed) */
-  val MOVE_INTERVAL = 80
-
-  /** How fast I move (for now, until we get Stats) */
+  // How fast I move (for now, until we get Stats)
   val SPEED = 5
 
-  /** How high I can jump (for now, until we get Stats) */
+  // How high I can jump (for now, until we get Stats)
   val HOPS = 5
 
+  // Handled Events:
   case class Moved( mobile: ActorRef, p: Position, m: Movement ) extends Event
-
-  /** A simple message for telling a Mobile to move */
-  trait Command
-  case object EmitMovement extends Command
 }
 
 /**
@@ -74,18 +68,12 @@ trait Mobile extends EventHandler {
   /** Core logic relevant to whatever class is implementing Mobile */
   protected def mobileBehavior: Receive
 
-  /**
-   *  An akka scheduler that repeatedly tells this Mobile to move every SPEED millis. It
-   *  operates asynchronously, so this Mobile can concurrently react to other messages.
-   */
-  protected val moveScheduler = Game.system.scheduler.schedule( 0 millis, MOVE_INTERVAL millis )( self ! EmitMovement )
-
   val emitMovement: Receive = {
-    case EmitMovement ⇒ emit( Moved( self, position, movement ) )
+    case Game.Tick ⇒ emit( Moved( self, position, movement ) )
   }
 
-  private def standingBehavior = LoggingReceive { standing orElse mobileBehavior orElse emitMovement }
-  private def movingBehavior = LoggingReceive { moving orElse mobileBehavior orElse emitMovement }
+  private def standingBehavior = LoggingReceive { standing orElse mobileBehavior orElse emitMovement orElse eventHandler }
+  private def movingBehavior = LoggingReceive { moving orElse mobileBehavior orElse emitMovement orElse eventHandler }
 
   override def receive: Receive = standingBehavior
 

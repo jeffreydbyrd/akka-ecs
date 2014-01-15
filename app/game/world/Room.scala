@@ -1,23 +1,27 @@
 package game.world
 
 import scala.math.BigDecimal.int2bigDecimal
+
 import akka.actor.ActorRef
 import akka.actor.Props
 import akka.actor.actorRef2Scala
-import game.Game.AddPlayer
-import game.mobile.Mobile.Moved
-import game.mobile.Player
-import game.util.math.Point
+import akka.event.LoggingReceive
+import game.Game
+import game.events.Adjust
 import game.events.Event
 import game.events.EventHandler
-import game.events.Adjust
-import game.events.Handle
+import game.mobile.Mobile.Moved
 import game.mobile.Movement
-import akka.event.LoggingReceive
+import game.mobile.Player
+import game.util.math.Point
 
 object Room {
+  def props( name: String ) = Props( classOf[ Room ], name )
+
+  // Received Messages
   case object Arrived extends Event
 
+  // Sent Messages
   case class RoomData( children: Iterable[ ActorRef ] ) extends Event
 
   // All rooms in the game are equipped with the same 4 surrounding surfaces:
@@ -44,21 +48,22 @@ class Room( val id: String ) extends EventHandler {
     case Moved( ar, p, m ) ⇒ Moved( ar, p, Movement( m.x, m.y + gravity ) )
   }
 
-  // Include the room's default gravity and default walls
-  outgoing = outgoing + gravitate ++ Set( floor, leftWall, rightWall ).flatMap( _.outgoing )
-  outgoing = outgoing ++ slanted.outgoing
-
-  def newPlayer( name: String ) = context.actorOf( Props( new Player( name ) ), name = name )
+  // Include the room's default gravity and default floors
+  adjusters = adjusters + gravitate + floor.onCollision + slanted.onCollision
 
   val roomBehavior: Receive = {
     // create a new player, tell him to Start
-    case AddPlayer( name ) ⇒ newPlayer( name ) forward Player.Start
-    case Arrived           ⇒ sender ! RoomData( context.children )
-    case mv: Moved         ⇒ emit( mv )
+    case Game.NewPlayer( client, name ) ⇒
+      val plr = context.actorOf( Player.props( name ), name = name )
+      subscribers += plr
+      plr ! Player.Start( self, client )
+    case Arrived   ⇒ sender ! RoomData( context.children )
+    case mv: Moved ⇒ emit( mv )
+    case Game.Tick ⇒ emit( Game.Tick )
   }
 
   override def receive = LoggingReceive {
-    addRemoveAdjusts orElse roomBehavior
+    eventHandler orElse roomBehavior
   }
 
 }
