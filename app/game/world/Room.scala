@@ -1,7 +1,6 @@
 package game.world
 
 import scala.math.BigDecimal.int2bigDecimal
-
 import akka.actor.ActorRef
 import akka.actor.Props
 import akka.actor.actorRef2Scala
@@ -14,6 +13,11 @@ import game.mobile.Mobile.Moved
 import game.mobile.Movement
 import game.mobile.Player
 import game.util.math.Point
+import org.jbox2d.dynamics.World
+import org.jbox2d.common.Vec2
+import org.jbox2d.dynamics.BodyDef
+import org.jbox2d.collision.shapes.PolygonShape
+import org.jbox2d.dynamics.BodyType
 
 object Room {
   def props( name: String ) = Props( classOf[ Room ], name )
@@ -24,16 +28,7 @@ object Room {
   // Sent Messages
   case class RoomData( children: Iterable[ ActorRef ] ) extends Event
 
-  // All rooms in the game are equipped with the same 4 surrounding surfaces:
-  val floor = DoubleSided( Point( 0, 0 ), Point( 200, 0 ) )
-  val ceiling = DoubleSided( Point( 0, 200 ), Point( 200, 200 ) )
-  val leftWall = Wall( 0, 200, 0 )
-  val rightWall = Wall( 200, 200, 0 )
-
-  val gravity: BigDecimal = -1
-
-  // put a big slanted surface through the middle of the room:
-  val slanted = DoubleSided( Point( 0, 0 ), Point( 200, 200 ) )
+  val gravity: Int = -10
 }
 
 /**
@@ -43,13 +38,19 @@ object Room {
 class Room( val id: String ) extends EventHandler {
   import Room._
 
-  /** This Room's default gravity simply modifies a movement's y-value */
-  val gravitate: Adjust = {
-    case Moved( ar, p, m ) ⇒ Moved( ar, p, Movement( m.x, m.y + gravity ) )
-  }
+  val boxWorld = new World( new Vec2( 0, gravity ) )
+  
+  // define ground
+  val groundBodyDef = new BodyDef()
+  groundBodyDef.position.set( 0, 100 )
+  groundBodyDef.`type` = BodyType.STATIC
 
-  // Include the room's default gravity and default floors
-  adjusters = adjusters + gravitate + floor.onCollision + slanted.onCollision
+  val groundBody = boxWorld.createBody( groundBodyDef )
+  
+  val groundBox = new PolygonShape()
+  
+  groundBox.setAsBox( 50.0f, 10.0f )
+  val groundFixture = groundBody.createFixture( groundBox, 0.0f )
 
   val roomBehavior: Receive = {
     // create a new player, tell him to Start
