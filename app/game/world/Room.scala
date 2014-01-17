@@ -20,6 +20,8 @@ import org.jbox2d.dynamics.BodyType
 import org.jbox2d.dynamics.FixtureDef
 import org.jbox2d.collision.AABB
 import org.jbox2d.dynamics.Body
+import game.mobile.Mobile.StartedMoving
+import game.mobile.Mobile.StoppedMoving
 
 object Room {
   def props( name: String ) = Props( classOf[ Room ], name )
@@ -76,7 +78,8 @@ class Room( val id: String ) extends EventHandler {
   // mobile fixture def
   val mobileFixtureDef = new FixtureDef
   mobileFixtureDef.shape = mobileShape
-  mobileFixtureDef.density = 1
+  mobileFixtureDef.density = 0
+  mobileFixtureDef.restitution = 0
 
   var mobiles: Map[ ActorRef, Body ] = Map()
 
@@ -91,7 +94,9 @@ class Room( val id: String ) extends EventHandler {
       body.createFixture( mobileFixtureDef )
       mobiles += sender -> body
       sender ! RoomData( subscribers )
-    case mv: Moved ⇒ emit( mv )
+    case sm @ StartedMoving( mob, speed ) if mobiles.contains( mob ) ⇒
+      logger.info( "received " + sm )
+      mobiles( mob ).applyForceToCenter( new Vec2( speed, 0 ) )
     case Game.Tick ⇒
       boxWorld.step( timestep, velocityIterations, positionIterations )
       for {

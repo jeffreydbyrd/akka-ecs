@@ -14,12 +14,6 @@ import akka.actor.ActorRef
 import akka.event.LoggingReceive
 
 object Mobile {
-  // How fast I move (for now, until we get Stats)
-  val SPEED = 5
-
-  // How high I can jump (for now, until we get Stats)
-  val HOPS = 5
-
   // Received Events:
   case class Moved( mobile: ActorRef, x: Float, y: Float ) extends Event
 
@@ -39,11 +33,15 @@ trait Mobile extends EventHandler {
   import Mobile._
 
   val name: String
+
   val height: Int
   val width: Int
 
-  var x: Float = 50
-  var y: Float = 100
+  var speed: Int
+  var hops: Int
+
+  var x: Float
+  var y: Float
 
   /** Defines the messages this Mobile responds to while standing still */
   protected def standing: Receive
@@ -60,9 +58,9 @@ trait Mobile extends EventHandler {
   override def receive: Receive = standingBehavior
 
   /** Mutates this Mobile's inner position and movement according to p and m */
-  protected def move( mv: Moved ) {
-    this.x = mv.x
-    this.y = mv.y
+  protected def move( x: Float, y: Float ) {
+    this.x = x
+    this.y = y
   }
 
   private def startMoving( xdir: Int ) = {
@@ -75,8 +73,8 @@ trait Mobile extends EventHandler {
     emit( StoppedMoving( self ) )
   }
 
-  protected def moveLeft() = startMoving( -SPEED )
-  protected def moveRight() = startMoving( SPEED )
+  protected def moveLeft() = startMoving( -speed )
+  protected def moveRight() = startMoving( speed )
   protected def jump() = {}
 
 }

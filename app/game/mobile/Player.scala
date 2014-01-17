@@ -36,11 +36,17 @@ class Player( val name: String ) extends Mobile {
   import Player._
   import Mobile._
 
-  /** Represents a RetryingActorConnection */
-  val connection = context.actorOf( Props( new PlayActorConnection( self ) ), name = "connection" )
-
   val height = 4
   val width = 2
+
+  var speed = 200
+  var hops = 5
+
+  var x: Float = 0
+  var y: Float = 0
+
+  /** Represents a RetryingActorConnection */
+  val connection = context.actorOf( Props( new PlayActorConnection( self ) ), name = "connection" )
 
   val mobileBehavior: Receive = {
     case Start( room, client ) ⇒
@@ -53,7 +59,7 @@ class Player( val name: String ) extends Mobile {
     case KeyUp( 81 )             ⇒ self ! PoisonPill
     case KeyDown( 32 | 38 | 87 ) ⇒ jump()
     case evt: Moved if evt.mobile == self ⇒
-      move( evt )
+      move( evt.x, evt.y )
       connection ! ToClient( s""" { "type":"move", "id":"${self.path}", "position":[${evt.x}, ${evt.y}] } """ )
     case RoomData( refs ) ⇒
       for ( ref ← refs )
