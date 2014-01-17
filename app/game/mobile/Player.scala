@@ -42,9 +42,6 @@ class Player( val name: String ) extends Mobile {
   val height = 4
   val width = 2
 
-  //temporary:
-  var position = newPosition( 10, 30 )
-
   val mobileBehavior: Receive = {
     case Start( room, client ) ⇒
       client ! StartResponse( connection )
@@ -55,15 +52,14 @@ class Player( val name: String ) extends Mobile {
     case Click( x: Int, y: Int ) ⇒
     case KeyUp( 81 )             ⇒ self ! PoisonPill
     case KeyDown( 32 | 38 | 87 ) ⇒ jump()
-    case evt @ Moved( mobile, p, m ) if mobile == self ⇒
+    case evt: Moved if evt.mobile == self ⇒
       move( evt )
-      if ( !( m.x == 0 && m.y == 0 ) )
-        connection ! ToClient( s""" { "type":"move", "id":"${self.path}", "position":[${position.x}, ${position.y}] } """ )
+      connection ! ToClient( s""" { "type":"move", "id":"${self.path}", "position":[${evt.x}, ${evt.y}] } """ )
     case RoomData( refs ) ⇒
       for ( ref ← refs )
         connection ! ToClient(
           s""" {"type":"create", "id":"${ref.path}", 
-    			"position":[${position.x},${position.y}],
+    			"position":[${x},${y}],
     			"dimensions":[$width, $height] } """,
           true )
   }

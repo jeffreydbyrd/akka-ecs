@@ -10,7 +10,6 @@ import game.events.Adjust
 import game.events.Event
 import game.events.EventHandler
 import game.mobile.Mobile.Moved
-import game.mobile.Movement
 import game.mobile.Player
 import game.util.math.Point
 import org.jbox2d.dynamics.World
@@ -18,6 +17,9 @@ import org.jbox2d.common.Vec2
 import org.jbox2d.dynamics.BodyDef
 import org.jbox2d.collision.shapes.PolygonShape
 import org.jbox2d.dynamics.BodyType
+import org.jbox2d.dynamics.FixtureDef
+import org.jbox2d.collision.AABB
+import org.jbox2d.dynamics.Body
 
 object Room {
   def props( name: String ) = Props( classOf[ Room ], name )
@@ -39,18 +41,44 @@ class Room( val id: String ) extends EventHandler {
   import Room._
 
   val boxWorld = new World( new Vec2( 0, gravity ) )
-  
-  // define ground
-  val groundBodyDef = new BodyDef()
-  groundBodyDef.position.set( 0, 100 )
+
+  // define ground body
+  val groundBodyDef = new BodyDef
+  groundBodyDef.position.set( 0, 0 )
   groundBodyDef.`type` = BodyType.STATIC
 
-  val groundBody = boxWorld.createBody( groundBodyDef )
-  
-  val groundBox = new PolygonShape()
-  
-  groundBox.setAsBox( 50.0f, 10.0f )
-  val groundFixture = groundBody.createFixture( groundBox, 0.0f )
+  // define ground shape
+  val groundShape = new PolygonShape
+  groundShape.setAsBox( 200, 1 )
+
+  // define ground fixture
+  val groundFixtureDef = new FixtureDef
+  groundFixtureDef.shape = groundShape
+  groundFixtureDef.density = 1
+
+  // add body and give it a fixture
+  val body: Body = boxWorld.createBody( groundBodyDef )
+  body.createFixture( groundFixtureDef )
+
+  val timestep = 1.0f / 60.0f
+  val velocityIterations = 6;
+  val positionIterations = 2;
+
+  // mobile body def
+  val mobileBodyDef = new BodyDef
+  mobileBodyDef.position.set( 10, 200 )
+  mobileBodyDef.`type` = BodyType.DYNAMIC
+
+  // mobile shape:
+  val mobileShape = new PolygonShape
+  mobileShape.setAsBox( 4, 2 )
+
+  // mobile fixture def
+  val mobileFixtureDef = new FixtureDef
+  mobileFixtureDef.shape = mobileShape
+  mobileFixtureDef.density = 1
+
+  var mobiles: Map[ ActorRef, Body ] = Map()
 
   val roomBehavior: Receive = {
     // create a new player, tell him to Start
@@ -58,9 +86,21 @@ class Room( val id: String ) extends EventHandler {
       val plr = context.actorOf( Player.props( name ), name = name )
       subscribers += plr
       plr ! Player.Start( self, client )
-    case Arrived   ⇒ sender ! RoomData( context.children )
+    case Arrived ⇒
+      val body = boxWorld.createBody( mobileBodyDef )
+      body.createFixture( mobileFixtureDef )
+      mobiles += sender -> body
+      sender ! RoomData( subscribers )
     case mv: Moved ⇒ emit( mv )
-    case Game.Tick ⇒ emit( Game.Tick )
+    case Game.Tick ⇒
+      boxWorld.step( timestep, velocityIterations, positionIterations )
+      for {
+        ( ref, body ) ← mobiles
+      } {
+        val position = body.getPosition()
+        ref ! Moved( ref, position.x, position.y )
+      }
+      emit( Game.Tick )
   }
 
   override def receive = LoggingReceive {

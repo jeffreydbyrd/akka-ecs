@@ -35,7 +35,7 @@ sealed class Game extends EventHandler {
   subscribers += context.actorOf( Room.props( "TEMP" ), name = "temp" )
 
   val ticker =
-    system.scheduler.schedule( 50 milliseconds, 50 milliseconds, self, Tick )
+    system.scheduler.schedule( 100 milliseconds, 20 milliseconds, self, Tick )
 
   override def receive = LoggingReceive {
     case Tick                  ⇒ emit( Tick )
