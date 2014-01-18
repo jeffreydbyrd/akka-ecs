@@ -38,8 +38,8 @@ class Room( val id: String ) extends EventHandler {
       simulation ! PhysicsSimulation.AddMobile( mobile, x, y, w, h )
       sender ! RoomData( subscribers )
 
-    case sm: Player.StartedMoving ⇒ simulation ! sm
-    case sm: Player.StoppedMoving ⇒ simulation ! sm
+    case sm: Player.Walking ⇒ simulation ! sm
+    case sm: Player.Standing ⇒ simulation ! sm
 
     case Game.Tick ⇒
       simulation ! PhysicsSimulation.Step
@@ -49,7 +49,7 @@ class Room( val id: String ) extends EventHandler {
   }
 
   override def preStart() = {
-    simulation ! PhysicsSimulation.AddBlock( 0, 0, 100, 1 )
+    simulation ! PhysicsSimulation.AddBlock( 100, 10, 200, 1 )
   }
 
   override def receive = LoggingReceive {

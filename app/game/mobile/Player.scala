@@ -29,8 +29,8 @@ object Player {
 
   // Sent Messages
   case class StartResponse( connectionService: ActorRef )
-  case class StartedMoving( mobile: ActorRef, x: Int ) extends Event
-  case class StoppedMoving( mobile: ActorRef ) extends Event
+  case class Walking( mobile: ActorRef, x: Int ) extends Event
+  case class Standing( mobile: ActorRef ) extends Event
   case object Quit extends Event
 }
 
@@ -40,7 +40,7 @@ class Player( val name: String ) extends EventHandler {
   val height = 2
   val width = 1
 
-  var speed = 5
+  var speed = 10
   var hops = 5
 
   var x: Float = 25
@@ -57,8 +57,9 @@ class Player( val name: String ) extends EventHandler {
       logger.info( "joined the game" )
 
     case evt: Moved if evt.mobile == self ⇒
+      if ( evt.x != x || evt.y != y )
+        connection ! ToClient( s""" { "type":"move", "id":"${self.path}", "position":[${evt.x}, ${evt.y}] } """ )
       move( evt.x, evt.y )
-      connection ! ToClient( s""" { "type":"move", "id":"${self.path}", "position":[${evt.x}, ${evt.y}] } """ )
 
     case RoomData( refs ) ⇒
       for ( ref ← refs )
@@ -71,18 +72,18 @@ class Player( val name: String ) extends EventHandler {
     case ack: Ack                ⇒ connection ! ack
     case Click( x: Int, y: Int ) ⇒
     case KeyUp( 81 )             ⇒ self ! PoisonPill
-    case KeyDown( 32 | 38 | 87 ) ⇒ jump()
+    case KeyDown( 32 | 38 | 87 ) ⇒
   }
 
   val standing: Receive = {
     case KeyDown( 65 | 37 ) ⇒ moveLeft()
     case KeyDown( 68 | 39 ) ⇒ moveRight()
-    case Game.Tick          ⇒ emit( StoppedMoving( self ) )
+    case Game.Tick          ⇒ emit( Standing( self ) )
   }
 
   def moving( speed: Int ): Receive = {
     case KeyUp( 65 | 68 | 37 | 39 ) ⇒ stopMoving()
-    case Game.Tick                  ⇒ emit( StartedMoving( self, speed ) )
+    case Game.Tick                  ⇒ emit( Walking( self, speed ) )
   }
 
   private def standingBehavior = LoggingReceive { standing orElse mobileBehavior orElse eventHandler }
@@ -96,17 +97,16 @@ class Player( val name: String ) extends EventHandler {
 
   private def startMoving( xdir: Int ) = {
     context become movingBehavior( xdir )
-    emit( StartedMoving( self, xdir ) )
+    emit( Walking( self, xdir ) )
   }
 
   def stopMoving() = {
     context become standingBehavior
-    emit( StoppedMoving( self ) )
+    emit( Standing( self ) )
   }
 
   def moveLeft() = startMoving( -speed )
   def moveRight() = startMoving( speed )
-  def jump() = {}
 
   override def receive: Receive = standingBehavior
 

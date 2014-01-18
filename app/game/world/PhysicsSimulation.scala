@@ -79,8 +79,9 @@ class PhysicsSimulation( gx: Int, gy: Int ) extends Actor {
 
   def setSpeed( body: Body, speed: Int ) = {
     val vel = body.getLinearVelocity()
-    val velChange = speed - vel.x
-    val force = body.getMass() * velChange / timestep
+    var force: Float = 0
+    if ( speed == 0 ) force = vel.x * -15
+    else if ( scala.math.abs( vel.x ) < scala.math.abs( speed.toDouble ) ) force = speed * 10
     body.applyForce( new Vec2( force, 0 ), body.getWorldCenter() )
   }
 
@@ -93,10 +94,10 @@ class PhysicsSimulation( gx: Int, gy: Int ) extends Actor {
       val body = createMobile( x, y, w, h )
       mobiles += mob -> body
 
-    case Player.StartedMoving( mob, speed ) if mobiles.contains( mob ) ⇒
+    case Player.Walking( mob, speed ) if mobiles.contains( mob ) ⇒
       setSpeed( mobiles( mob ), speed )
 
-    case Player.StoppedMoving( mob ) if mobiles.contains( mob ) ⇒
+    case Player.Standing( mob ) if mobiles.contains( mob ) ⇒
       setSpeed( mobiles( mob ), 0 )
 
     case Step ⇒
