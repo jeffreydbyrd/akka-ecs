@@ -49,6 +49,11 @@ class Player( val name: String ) extends EventHandler {
   /** Represents a RetryingActorConnection */
   val connection = context.actorOf( Props( new PlayActorConnection( self ) ), name = "connection" )
 
+  def move( x: Float, y: Float ) = {
+    this.x = x
+    this.y = y
+  }
+
   val mobileBehavior: Receive = {
     case Start( room, client ) ⇒
       client ! StartResponse( connection )
@@ -76,37 +81,18 @@ class Player( val name: String ) extends EventHandler {
   }
 
   val standing: Receive = {
-    case KeyDown( 65 | 37 ) ⇒ moveLeft()
-    case KeyDown( 68 | 39 ) ⇒ moveRight()
+    case KeyDown( 65 | 37 ) ⇒ context become movingBehavior( -speed )
+    case KeyDown( 68 | 39 ) ⇒ context become movingBehavior( speed )
     case Game.Tick          ⇒ emit( Standing( self ) )
   }
 
   def moving( speed: Int ): Receive = {
-    case KeyUp( 65 | 68 | 37 | 39 ) ⇒ stopMoving()
+    case KeyUp( 65 | 68 | 37 | 39 ) ⇒ context become standingBehavior
     case Game.Tick                  ⇒ emit( Walking( self, speed ) )
   }
 
   private def standingBehavior = LoggingReceive { standing orElse mobileBehavior orElse eventHandler }
   private def movingBehavior( speed: Int ) = LoggingReceive { moving( speed ) orElse mobileBehavior orElse eventHandler }
-
-  /** Mutates this Mobile's inner position and movement according to p and m */
-  protected def move( x: Float, y: Float ) {
-    this.x = x
-    this.y = y
-  }
-
-  private def startMoving( xdir: Int ) = {
-    context become movingBehavior( xdir )
-    emit( Walking( self, xdir ) )
-  }
-
-  def stopMoving() = {
-    context become standingBehavior
-    emit( Standing( self ) )
-  }
-
-  def moveLeft() = startMoving( -speed )
-  def moveRight() = startMoving( speed )
 
   override def receive: Receive = standingBehavior
 

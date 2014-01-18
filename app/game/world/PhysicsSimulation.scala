@@ -18,9 +18,8 @@ object PhysicsSimulation {
 
   // Received Messages
   case object Step
-  case class AddBlock( x: Float, y: Float, w: Float, h: Float )
-  case class AddPlatform( x: Float, y: Float, w: Float, h: Float )
-  case class AddMobile( mobile: ActorRef, x: Float, y: Float, w: Float, h: Float )
+  case class CreateBlock( x: Float, y: Float, w: Float, h: Float )
+  case class CreateMobile( mobile: ActorRef, x: Float, y: Float, w: Float, h: Float )
   case class Checkup( mobile: ActorRef )
 
   // Sent Messages
@@ -88,9 +87,9 @@ class PhysicsSimulation( gx: Int, gy: Int ) extends Actor {
   var mobiles: Map[ ActorRef, Body ] = Map()
 
   override def receive = LoggingReceive {
-    case AddBlock( x, y, w, h ) ⇒ createBlock( x, y, w, h )
+    case CreateBlock( x, y, w, h ) ⇒ createBlock( x, y, w, h )
 
-    case AddMobile( mob, x, y, w, h ) ⇒
+    case CreateMobile( mob, x, y, w, h ) ⇒
       val body = createMobile( x, y, w, h )
       mobiles += mob -> body
 
