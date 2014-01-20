@@ -19,11 +19,13 @@
 	h : SCREEN_H / 1.1
     };
 
+    var INTERNAL_DIMENSIONS = 50;
+
     /**
      * The server expects a 200 x 200 cell room, so we need a multiplier. If the
      * server says "move 2 units left", we need to move (2*(DIMENSIONS.h / 200)) pixels left.
      */
-    var K = DIMENSIONS.h / 200;
+    var K = DIMENSIONS.h / INTERNAL_DIMENSIONS;
 
     var USERNAME = function() {
 	var hash = window.location.hash;

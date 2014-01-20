@@ -6,9 +6,6 @@ import game.events.Event
 
 object RetryingConnection {
   type MessageId = Long
-
-  case class ToClient( msg: String, buffer: Boolean = false )
-  case class Ack( id: MessageId ) extends Event
 }
 
 /**

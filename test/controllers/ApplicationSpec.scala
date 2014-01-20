@@ -3,8 +3,8 @@ package controllers
 import org.specs2.mutable.Specification
 import akka.io.BackpressureBuffer.Ack
 import org.scalatest.FunSuite
-import game.communications.RetryingConnection
 import game.mobile.Player
+import game.communications.RetryingActorConnection
 
 class ApplicationSpec extends FunSuite {
   import Application._
@@ -20,7 +20,7 @@ class ApplicationSpec extends FunSuite {
   val clk1 = """ {"type" : "click", "data" : {"x" : "STRING"}} """
 
   test( "getCommand should return Ack( 42 ) when json = {type: 'ack', data: 42}" ) {
-    getCommand( ack ) === RetryingConnection.Ack( 42 )
+    getCommand( ack ) === RetryingActorConnection.Ack( 42 )
   }
 
   test( "getCommand should return KeyUp( 65 ) when json = {type : 'keyup', data : 65}" ) {

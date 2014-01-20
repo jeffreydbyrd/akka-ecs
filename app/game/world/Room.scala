@@ -16,7 +16,7 @@ object Room {
   case class Arrived( mobile: ActorRef, x: Float, y: Float, width: Int, height: Int ) extends Event
 
   // Sent Messages
-  case class RoomData( subscribers: Iterable[ ActorRef ] ) extends Event
+  case class RoomData( subscribers: Iterable[ ActorRef ] )
 }
 
 /**
@@ -49,7 +49,7 @@ class Room( val id: String ) extends EventHandler {
   }
 
   override def preStart() = {
-    simulation ! PhysicsSimulation.CreateBlock( 100, 10, 200, 1 )
+    simulation ! PhysicsSimulation.CreateBlock( 25, 5, 50, 1 )
   }
 
   override def receive = LoggingReceive {

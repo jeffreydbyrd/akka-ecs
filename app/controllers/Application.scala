@@ -1,32 +1,32 @@
 package controllers
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration.DurationInt
-import akka.actor.ActorRef
-import akka.actor.ActorSystem
-import akka.actor.Props
 import akka.actor.actorRef2Scala
 import akka.pattern.ask
+import game.Game.AddPlayer
+import game.Game.timeout
+import game.communications.PlayActorConnection.GetEnum
+import game.communications.PlayActorConnection.ReturnEnum
+import game.events.Event
+import game.mobile.Player
+import game.mobile.Player.Click
+import game.mobile.Player.Invalid
+import game.mobile.Player.KeyDown
+import game.mobile.Player.KeyUp
+import game.util.logging.PlayLoggingService
 import play.api.libs.iteratee.Iteratee
 import play.api.libs.json.Json
 import play.api.mvc.Action
 import play.api.mvc.Controller
 import play.api.mvc.WebSocket
-import game.util.logging.PlayLoggingService
-import game.communications.PlayActorConnection._
-import game.communications.RetryingConnection.Ack
-import game.mobile.Player._
-import game.events.Event
+import game.communications.RetryingActorConnection
 import game.Game
-import game.mobile.Player
 
 /**
  * Defines a Play controller that serves the client-side engine and handles
  * WebSocket creation.
  */
 object Application extends Controller {
-  import Game._
-
   val logger = new PlayLoggingService
 
   /** Serves the main page */
@@ -43,7 +43,7 @@ object Application extends Controller {
    */
   def websocket( username: String ) = WebSocket.async[ String ] { implicit request ⇒
     for {
-      Player.StartResponse( conn ) ← ( game ? AddPlayer( username ) )
+      Player.StartResponse( conn ) ← ( Game.game ? AddPlayer( username ) )
       ReturnEnum( out ) ← conn ? GetEnum
       in = Iteratee.foreach[ String ] { conn ! getCommand( _ ) }
     } yield ( in, out )
@@ -59,7 +59,7 @@ object Application extends Controller {
     val parsed = Json.parse( json )
     val data = parsed \ "data"
     ( parsed \ "type" ).asOpt[ String ].flatMap {
-      case "ack"     ⇒ data.asOpt[ Int ].map( Ack( _ ) )
+      case "ack"     ⇒ data.asOpt[ Int ].map( RetryingActorConnection.Ack( _ ) )
       case "keyup"   ⇒ data.asOpt[ Int ].map( KeyUp( _ ) )
       case "keydown" ⇒ data.asOpt[ Int ].map( KeyDown( _ ) )
       case "click" ⇒ for {

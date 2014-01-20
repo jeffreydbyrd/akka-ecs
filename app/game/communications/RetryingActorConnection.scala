@@ -1,11 +1,13 @@
 package game.communications
 
-import RetryingConnection.Ack
 import RetryingConnection.MessageId
-import RetryingConnection.ToClient
 import akka.actor.Actor
 import game.events.Event
 
+object RetryingActorConnection {
+  case class ToClient( msg: String, buffer: Boolean = false )
+  case class Ack( id: MessageId ) extends Event
+}
 
 /**
  *  An asynchronous Connection that extends the RetryConnection behavior by receiving
@@ -14,7 +16,7 @@ import game.events.Event
  *  messages, but does not implement the toPlayer(String) function.
  */
 trait RetryingActorConnection extends Actor with RetryingConnection {
-  import RetryingConnection._
+  import RetryingActorConnection._
 
   var count: MessageId = 0
 

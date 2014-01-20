@@ -4,9 +4,15 @@ import akka.actor.ActorRef
 import akka.actor.actorRef2Scala
 import game.events.Event
 import play.api.libs.iteratee.Enumerator
+import akka.actor.Props
 
 object PlayActorConnection {
+  def props(player:ActorRef) = Props(classOf[PlayActorConnection], player)
+  
+  // Received Messages
   case object GetEnum
+  
+  // Sent Messages
   case class ReturnEnum( enum: Enumerator[ String ] )
 }
 

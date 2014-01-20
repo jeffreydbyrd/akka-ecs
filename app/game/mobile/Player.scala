@@ -5,8 +5,6 @@ import akka.actor.PoisonPill
 import akka.actor.Props
 import akka.actor.actorRef2Scala
 import game.communications.PlayActorConnection
-import game.communications.RetryingConnection.Ack
-import game.communications.RetryingConnection.ToClient
 import game.events.Event
 import game.events.EventHandler
 import game.events.Handle
@@ -15,6 +13,7 @@ import game.world.Room.RoomData
 import akka.actor.ActorRef
 import game.Game
 import akka.event.LoggingReceive
+import game.communications.RetryingActorConnection
 
 object Player {
   def props( name: String ) = Props( classOf[ Player ], name )
@@ -40,44 +39,42 @@ class Player( val name: String ) extends EventHandler {
   val height = 2
   val width = 1
 
-  var speed = 10
+  var speed = 5
   var hops = 5
 
   var x: Float = 25
   var y: Float = 100
 
   /** Represents a RetryingActorConnection */
-  val connection = context.actorOf( Props( new PlayActorConnection( self ) ), name = "connection" )
-
-  def move( x: Float, y: Float ) = {
-    this.x = x
-    this.y = y
-  }
+  val connection = context.actorOf( PlayActorConnection.props( self ), name = "connection" )
 
   val mobileBehavior: Receive = {
     case Start( room, client ) ⇒
       client ! StartResponse( connection )
       subscribers += room
       room ! Room.Arrived( self, x, y, width, height )
-      logger.info( "joined the game" )
 
     case evt: Moved if evt.mobile == self ⇒
       if ( evt.x != x || evt.y != y )
-        connection ! ToClient( s""" { "type":"move", "id":"${self.path}", "position":[${evt.x}, ${evt.y}] } """ )
-      move( evt.x, evt.y )
+        connection ! RetryingActorConnection.ToClient(
+          s""" { "type":"move", 
+          "id":"${self.path}", 
+          "position":[${evt.x}, ${evt.y}] } """ )
+      x = evt.x
+      y = evt.y
 
     case RoomData( refs ) ⇒
       for ( ref ← refs )
-        connection ! ToClient(
+        connection ! RetryingActorConnection.ToClient(
           s""" {"type":"create", "id":"${ref.path}", 
     			"position":[${x},${y}],
     			"dimensions":[$width, $height] } """,
           true )
 
-    case ack: Ack                ⇒ connection ! ack
-    case Click( x: Int, y: Int ) ⇒
-    case KeyUp( 81 )             ⇒ self ! PoisonPill
-    case KeyDown( 32 | 38 | 87 ) ⇒
+    case ack: RetryingActorConnection.Ack ⇒ connection ! ack
+    case Click( x: Int, y: Int )          ⇒
+    case KeyUp( 81 )                      ⇒ self ! PoisonPill
+    case KeyDown( 32 | 38 | 87 )          ⇒
   }
 
   val standing: Receive = {
