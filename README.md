@@ -61,4 +61,4 @@ Lastly, there is an optional Play! plugin for Eclipse that makes it a pleasure t
 
 # Visit the Wiki
 
-[Visit the wiki](https://github.com/biffbyrd/scalatree/wiki) for detail on the game universe, mechanics, and system.
+[Visit the wiki](https://github.com/Doppelgamer/doppelengine/wiki) for detail on the game universe, mechanics, and system.
