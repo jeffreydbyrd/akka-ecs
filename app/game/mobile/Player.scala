@@ -1,19 +1,19 @@
 package game.mobile
 
-import scala.math.BigDecimal.int2bigDecimal
+import akka.actor.ActorRef
 import akka.actor.PoisonPill
 import akka.actor.Props
 import akka.actor.actorRef2Scala
+import akka.event.LoggingReceive
+import game.Game
 import game.communications.PlayActorConnection
+import game.communications.RetryingActorConnection
 import game.events.Event
 import game.events.EventHandler
-import game.events.Handle
 import game.world.Room
 import game.world.Room.RoomData
-import akka.actor.ActorRef
-import game.Game
-import akka.event.LoggingReceive
-import game.communications.RetryingActorConnection
+import play.api.libs.json.Json
+import play.api.libs.json.Json.toJsFieldJsValueWrapper
 
 object Player {
   def props( name: String ) = Props( classOf[ Player ], name )
@@ -42,7 +42,7 @@ class Player( val name: String ) extends EventHandler {
   var speed = 5
   var hops = 5
 
-  var x: Float = 25
+  var x: Float = 5
   var y: Float = 100
 
   /** Represents a RetryingActorConnection */
@@ -55,21 +55,27 @@ class Player( val name: String ) extends EventHandler {
       room ! Room.Arrived( self, x, y, width, height )
 
     case evt: Moved if evt.mobile == self ⇒
-      if ( evt.x != x || evt.y != y )
-        connection ! RetryingActorConnection.ToClient(
-          s""" { "type":"move", 
-          "id":"${self.path}", 
-          "position":[${evt.x}, ${evt.y}] } """ )
+      if ( evt.x != x || evt.y != y ) {
+        val json = Json.obj(
+          "type" -> "move",
+          "id" -> self.path.toString,
+          "position" -> Json.arr( evt.x, evt.y )
+        )
+        connection ! RetryingActorConnection.ToClient( json.toString, false )
+      }
       x = evt.x
       y = evt.y
 
     case RoomData( refs ) ⇒
-      for ( ref ← refs )
-        connection ! RetryingActorConnection.ToClient(
-          s""" {"type":"create", "id":"${ref.path}", 
-    			"position":[${x},${y}],
-    			"dimensions":[$width, $height] } """,
-          true )
+      for ( ref ← refs ) {
+        val json = Json.obj(
+          "type" -> "create",
+          "id" -> ref.path.toString,
+          "position" -> Json.arr( x, y ),
+          "dimensions" -> Json.arr( width, height )
+        )
+        connection ! RetryingActorConnection.ToClient( json.toString, true )
+      }
 
     case ack: RetryingActorConnection.Ack ⇒ connection ! ack
     case Click( x: Int, y: Int )          ⇒
