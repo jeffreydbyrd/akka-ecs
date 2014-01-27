@@ -12,9 +12,10 @@ import akka.actor.Props
 import akka.actor.ActorRef
 import akka.event.LoggingReceive
 import game.mobile.Player
+import akka.actor.actorRef2Scala
 
-object PhysicsSimulation {
-  def props( gx: Int = 0, gy: Int = -9 ) = Props( classOf[ PhysicsSimulation ], gx, gy )
+object Simulation {
+  def props( gx: Int = 0, gy: Int = -9 ) = Props( classOf[ Simulation ], gx, gy )
 
   // Received Messages
   case object Step
@@ -31,8 +32,8 @@ object PhysicsSimulation {
  * Gravity represents real world gravity value (m/s^2). So gx defaults to 0, and
  * gy defaults to -9.
  */
-class PhysicsSimulation( gx: Int, gy: Int ) extends Actor {
-  import PhysicsSimulation._
+class Simulation( gx: Int, gy: Int ) extends Actor {
+  import Simulation._
 
   val timestep = 1.0f / 60.0f
   val velocityIterations = 6;

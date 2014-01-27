@@ -7,11 +7,11 @@ import play.api.libs.iteratee.Enumerator
 import akka.actor.Props
 
 object PlayActorConnection {
-  def props(player:ActorRef) = Props(classOf[PlayActorConnection], player)
-  
+  def props( player: ActorRef ) = Props( classOf[ PlayActorConnection ], player )
+
   // Received Messages
   case object GetEnum
-  
+
   // Sent Messages
   case class ReturnEnum( enum: Enumerator[ String ] )
 }
@@ -26,8 +26,9 @@ class PlayActorConnection( player: ActorRef ) extends PlayConnection with Retryi
   import PlayActorConnection._
 
   override def toPlayer( e: Event ) { context.parent ! e }
-  def getEnum: Receive = { case GetEnum ⇒ sender ! ReturnEnum( enumerator ) }
-  override def receive = getEnum orElse super.receive
+  override def receive = super.retrying orElse {
+    case GetEnum ⇒ sender ! ReturnEnum( enumerator )
+  }
 
   override def postStop {
     toClient( s"""{"id":$count, "message": { "type":"quit", "message":"later!" } } """ )

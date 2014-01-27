@@ -20,7 +20,7 @@ trait RetryingActorConnection extends Actor with RetryingConnection {
 
   var count: MessageId = 0
 
-  override def receive = {
+  def retrying: Receive = {
     case Ack( id ) ⇒ ack( id )
     case e: Event  ⇒ toPlayer( e )
     case ToClient( json, buff ) ⇒

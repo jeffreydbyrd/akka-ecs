@@ -22,8 +22,9 @@
     var INTERNAL_DIMENSIONS = 50;
 
     /**
-     * The server expects a 200 x 200 cell room, so we need a multiplier. If the
-     * server says "move 2 units left", we need to move (2*(DIMENSIONS.h / 200)) pixels left.
+     * The server uses a room with <INTERNAL_DIMENSIONS> cells, so we need a multiplier. If the
+     * server says "move 2 units left", we need to move (2*(DIMENSIONS.h / INTERNAL_DIMENSIONS)) 
+     * pixels left.
      */
     var K = DIMENSIONS.h / INTERNAL_DIMENSIONS;
 
@@ -140,8 +141,8 @@
 	    var id = ent.id;
 	    if (!entities[id]) {
 		entities[id] = new Kinetic.Rect({
-		    x : ent.position[0] * K,
-		    y : ent.position[1] * K,
+		    x : (ent.position[0] * K) - (ent.dimensions[0] / 2),
+		    y : DIMENSIONS.h - (ent.position[1] * K),
 		    width : ent.dimensions[0] * K,
 		    height : ent.dimensions[1] * K,
 		    fill : 'black',
@@ -161,7 +162,7 @@
 	/** Moves the `entity` with `id` to position (`x`, `y`) */
 	this.move = function(id, x, y) {
 	    if (entities[id]) {
-		entities[id].setX(x * K);
+		entities[id].setX(x * K / 2);
 		entities[id].setY(DIMENSIONS.h - (y * K));
 	    }
 	};

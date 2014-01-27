@@ -11,9 +11,10 @@ import game.communications.RetryingActorConnection
 import game.events.Event
 import game.events.EventHandler
 import game.world.Room
-import game.world.Room.RoomData
 import play.api.libs.json.Json
 import play.api.libs.json.Json.toJsFieldJsValueWrapper
+import play.api.libs.json.JsObject
+import game.world.physics.Fixture
 
 object Player {
   def props( name: String ) = Props( classOf[ Player ], name )
@@ -28,8 +29,10 @@ object Player {
 
   // Sent Messages
   case class StartResponse( connectionService: ActorRef )
-  case class Walking( mobile: ActorRef, x: Int ) extends Event
-  case class Standing( mobile: ActorRef ) extends Event
+
+  trait MobileBehavior
+  case class Walking( mobile: ActorRef, x: Int ) extends MobileBehavior with Event
+  case class Standing( mobile: ActorRef ) extends MobileBehavior with Event
   case object Quit extends Event
 }
 
@@ -51,8 +54,20 @@ class Player( val name: String ) extends EventHandler {
   val mobileBehavior: Receive = {
     case Start( room, client ) ⇒
       client ! StartResponse( connection )
+      val json: JsObject = Json.obj(
+        "type" -> "create",
+        "id" -> self.path.toString,
+        "position" -> Json.arr( x, y ),
+        "dimensions" -> Json.arr( width, height )
+      )
+      connection ! RetryingActorConnection.ToClient( json.toString, true )
       subscribers += room
       room ! Room.Arrived( self, x, y, width, height )
+
+    case Room.RoomData( fixtures ) ⇒
+      for ( f ← fixtures ) {
+        connection ! RetryingActorConnection.ToClient( Fixture.toJson( f ).toString, true )
+      }
 
     case evt: Moved if evt.mobile == self ⇒
       if ( evt.x != x || evt.y != y ) {
@@ -65,17 +80,6 @@ class Player( val name: String ) extends EventHandler {
       }
       x = evt.x
       y = evt.y
-
-    case RoomData( refs ) ⇒
-      for ( ref ← refs ) {
-        val json = Json.obj(
-          "type" -> "create",
-          "id" -> ref.path.toString,
-          "position" -> Json.arr( x, y ),
-          "dimensions" -> Json.arr( width, height )
-        )
-        connection ! RetryingActorConnection.ToClient( json.toString, true )
-      }
 
     case ack: RetryingActorConnection.Ack ⇒ connection ! ack
     case Click( x: Int, y: Int )          ⇒

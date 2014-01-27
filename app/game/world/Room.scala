@@ -8,6 +8,7 @@ import game.Game
 import game.events.Event
 import game.events.EventHandler
 import game.mobile.Player
+import game.world.physics.Fixture
 
 object Room {
   def props( name: String ) = Props( classOf[ Room ], name )
@@ -16,7 +17,7 @@ object Room {
   case class Arrived( mobile: ActorRef, x: Float, y: Float, width: Int, height: Int ) extends Event
 
   // Sent Messages
-  case class RoomData( subscribers: Iterable[ ActorRef ] )
+  case class RoomData( fixtures: Iterable[ Fixture ] )
 }
 
 /**
@@ -26,7 +27,10 @@ object Room {
 class Room( val id: String ) extends EventHandler {
   import Room._
 
-  val simulation = context.actorOf( PhysicsSimulation.props(), name = "simulation" )
+  val simulation = context.actorOf( Simulation.props(), name = "simulation" )
+
+  val floor = new game.world.physics.Rect( "test_fixture", 25, 5, 50, 1 )
+  val fixtures = Set( floor )
 
   val roomBehavior: Receive = {
     case Game.NewPlayer( client, name ) ⇒
@@ -34,22 +38,21 @@ class Room( val id: String ) extends EventHandler {
       subscribers += plr
       plr ! Player.Start( self, client )
 
-    case Arrived( mobile, x, y, w, h ) ⇒
-      simulation ! PhysicsSimulation.CreateMobile( mobile, x, y, w, h )
-      sender ! RoomData( subscribers )
+    case arr @ Arrived( mobile, x, y, w, h ) ⇒
+      simulation ! Simulation.CreateMobile( mobile, x, y, w, h )
+      sender ! RoomData( fixtures )
 
-    case sm: Player.Walking  ⇒ simulation ! sm
-    case sm: Player.Standing ⇒ simulation ! sm
+    case mb: Player.MobileBehavior ⇒ simulation ! mb
 
     case Game.Tick ⇒
-      simulation ! PhysicsSimulation.Step
+      simulation ! Simulation.Step
       emit( Game.Tick )
 
-    case PhysicsSimulation.Snapshot( mob, x, y ) ⇒ emit( Player.Moved( mob, x, y ) )
+    case Simulation.Snapshot( mob, x, y ) ⇒ emit( Player.Moved( mob, x, y ) )
   }
 
   override def preStart() = {
-    simulation ! PhysicsSimulation.CreateBlock( 25, 5, 50, 1 )
+    simulation ! Simulation.CreateBlock( floor.x, floor.y, floor.w, floor.h )
   }
 
   override def receive = LoggingReceive {
