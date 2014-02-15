@@ -29,8 +29,9 @@ class Room( val id: String ) extends EventHandler {
 
   val simulation = context.actorOf( Simulation.props(), name = "simulation" )
 
-  val floor = new game.world.physics.Rect( "test_fixture", 25, 5, 50, 1 )
-  val fixtures = Set( floor )
+  val floor = new game.world.physics.Rect( "test_fixture", 25, 0, 50, 1 )
+  val testBox = new game.world.physics.Rect( "text_box", 10, 10, 10, 10 )
+  val fixtures = Set( floor, testBox )
 
   val roomBehavior: Receive = {
     case Game.NewPlayer( client, name ) ⇒
@@ -52,7 +53,8 @@ class Room( val id: String ) extends EventHandler {
   }
 
   override def preStart() = {
-    simulation ! Simulation.CreateBlock( floor.x, floor.y, floor.w, floor.h )
+    for ( f ← fixtures )
+      simulation ! Simulation.CreateBlock( f.x, f.y, f.w, f.h )
   }
 
   override def receive = LoggingReceive {

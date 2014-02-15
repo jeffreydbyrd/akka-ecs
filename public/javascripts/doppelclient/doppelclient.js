@@ -15,8 +15,9 @@
     var SCREEN_H = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
 
     var DIMENSIONS = {
-	w : SCREEN_H / 1.1,
-	h : SCREEN_H / 1.1
+//	w : SCREEN_H / 1.1,
+//	h : SCREEN_H / 1.1
+	w : 1000, h:1000
     };
 
     var INTERNAL_DIMENSIONS = 50;
@@ -141,8 +142,8 @@
 	    var id = ent.id;
 	    if (!entities[id]) {
 		entities[id] = new Kinetic.Rect({
-		    x : (ent.position[0] * K) - (ent.dimensions[0] / 2),
-		    y : DIMENSIONS.h - (ent.position[1] * K),
+		    x : convertXPos(ent.position[0], ent.dimensions[0] * K),
+		    y : convertYPos(ent.position[1], ent.dimensions[1] * K),
 		    width : ent.dimensions[0] * K,
 		    height : ent.dimensions[1] * K,
 		    fill : 'black',
@@ -161,9 +162,10 @@
 
 	/** Moves the `entity` with `id` to position (`x`, `y`) */
 	this.move = function(id, x, y) {
+	    console.log(entities[id]);
 	    if (entities[id]) {
-		entities[id].setX(x * K / 2);
-		entities[id].setY(DIMENSIONS.h - (y * K));
+		entities[id].setX(convertXPos(x, entities[id].attrs.width));
+		entities[id].setY(convertYPos(y, entities[id].attrs.height));
 	    }
 	};
 
@@ -179,6 +181,21 @@
     var view = new View();
 
     var conn = new Connection(ADDRESS);
+
+    /**************************************************************************
+     * Functions
+     **************************************************************************/
+    function convertXPos(x, width) {
+	var xpos = x * K;
+	xpos = xpos - (width / 2);
+	return xpos;
+    }
+
+    function convertYPos(y, height){
+	var ypos = DIMENSIONS.h - (y * K);
+	ypos = ypos - (height / 2);
+	return ypos;
+    }
 
     /***************************************************************************
      * Capture keydown & keyup events and send to the server
