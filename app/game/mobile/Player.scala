@@ -46,7 +46,7 @@ class Player( val name: String ) extends EventHandler {
   var hops = 5
 
   var x: Float = 5
-  var y: Float = 100
+  var y: Float = 25
 
   /** Represents a RetryingActorConnection */
   val connection = context.actorOf( PlayActorConnection.props( self ), name = "connection" )
@@ -81,7 +81,6 @@ class Player( val name: String ) extends EventHandler {
       x = evt.x
       y = evt.y
 
-    case ack: RetryingActorConnection.Ack ⇒ connection ! ack
     case Click( x: Int, y: Int )          ⇒
     case KeyUp( 81 )                      ⇒ self ! PoisonPill
     case KeyDown( 32 | 38 | 87 )          ⇒

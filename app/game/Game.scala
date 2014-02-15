@@ -2,7 +2,6 @@ package game
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.DurationInt
-
 import akka.actor.ActorRef
 import akka.actor.ActorSystem
 import akka.actor.Cancellable
@@ -12,6 +11,10 @@ import akka.util.Timeout.durationToTimeout
 import game.events.Event
 import game.events.EventHandler
 import game.world.Room
+import scala.concurrent.duration._
+import scala.concurrent.Future
+import play.api.libs.iteratee.Iteratee
+import play.api.libs.iteratee.Enumerator
 
 object Game {
   // global values:
@@ -29,7 +32,6 @@ object Game {
 
 sealed class Game extends EventHandler {
   import Game._
-  import scala.concurrent.duration._
 
   // We all share one room for now
   subscribers += context.actorOf( Room.props( "TEMP" ), name = "temp" )
@@ -41,4 +43,5 @@ sealed class Game extends EventHandler {
     case Tick                  ⇒ emit( Tick )
     case AddPlayer( username ) ⇒ emit( NewPlayer( sender, username ) )
   }
+
 }

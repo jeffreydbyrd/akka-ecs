@@ -15,9 +15,8 @@
     var SCREEN_H = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
 
     var DIMENSIONS = {
-//	w : SCREEN_H / 1.1,
-//	h : SCREEN_H / 1.1
-	w : 1000, h:1000
+	w : SCREEN_H / 1.1,
+	h : SCREEN_H / 1.1
     };
 
     var INTERNAL_DIMENSIONS = 50;

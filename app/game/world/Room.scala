@@ -29,9 +29,12 @@ class Room( val id: String ) extends EventHandler {
 
   val simulation = context.actorOf( Simulation.props(), name = "simulation" )
 
-  val floor = new game.world.physics.Rect( "test_fixture", 25, 0, 50, 1 )
-  val testBox = new game.world.physics.Rect( "text_box", 10, 10, 10, 10 )
-  val fixtures = Set( floor, testBox )
+  val floor = new game.world.physics.Rect( "floor", 25, 1, 50, 1 )
+  val leftWall = new game.world.physics.Rect( "left_wall", 1, 25, 1, 50 )
+  val rightWall = new game.world.physics.Rect( "right_wall", 49, 25, 1, 50 )
+  val top = new game.world.physics.Rect( "top", 25, 49, 50, 1 )
+  
+  val fixtures = Set( floor, leftWall, rightWall, top )
 
   val roomBehavior: Receive = {
     case Game.NewPlayer( client, name ) ⇒
