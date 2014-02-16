@@ -41,15 +41,19 @@ object Application extends Controller {
    * to the client. Play will wire everything else together for us.
    *
    * In this case, we ask the game to add a Player with username, and the game sends back an ActorRef, which
-   * our Iteratee[String] forwards all incoming data to. Since we can expect this ActorRef to represent a
-   * `PlayActorConnection`, we can also ask for its Enumerator[String] `out`.
+   * our Iteratee[String] forwards all incoming data to, and an Enumerator.
    */
   def websocket( username: String ) = WebSocket.async[ String ] { implicit request ⇒
-    ( Game.game ? AddPlayer( username ) ).map {
+    ( Game.game ? AddPlayer( username ) ) map {
 
-      case Game.Connected( connection, enumerator ) ⇒
+      case Game.Connected( connection, enumerator ) ⇒ // Success
         val iter = Iteratee.foreach[ String ] { connection ! getCommand( _ ) }
-        ( iter, enumerator )
+        val initMessage = """ {
+          "id":-1, "message":{ "type":"started" }
+        }	
+      	"""
+        val enum = Enumerator[ String ]( initMessage ).andThen( enumerator )
+        ( iter, enum )
 
       case Game.NotConnected( message ) ⇒ // Connection error
         // A finished Iteratee sending EOF
@@ -70,6 +74,7 @@ object Application extends Controller {
     val parsed = Json.parse( json )
     val data = parsed \ "data"
     ( parsed \ "type" ).asOpt[ String ].flatMap {
+      case "started" ⇒ Some( Player.Started )
       case "ack"     ⇒ data.asOpt[ Int ].map( RetryingActorConnection.Ack( _ ) )
       case "keyup"   ⇒ data.asOpt[ Int ].map( KeyUp( _ ) )
       case "keydown" ⇒ data.asOpt[ Int ].map( KeyDown( _ ) )

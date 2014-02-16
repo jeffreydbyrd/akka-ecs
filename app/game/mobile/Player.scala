@@ -21,7 +21,7 @@ object Player {
   def props( name: String ) = Props( classOf[ Player ], name )
 
   // Received Messages:
-  case class Start( room: ActorRef, client: ActorRef )
+  case object Started extends Event
   case class Moved( mobile: ActorRef, x: Float, y: Float ) extends Event
   case class Invalid( s: String ) extends Event
   case class KeyUp( code: Int ) extends Event
@@ -54,8 +54,9 @@ class Player( val name: String ) extends EventHandler {
     case Game.NewPlayer( client, room, enumerator, channel ) ⇒
       connection = context.actorOf( PlayActorConnection.props( self, channel ), name = "connection" )
       client ! Game.Connected( connection, enumerator )
+      subscribers += room
 
-    case Start( room, client ) ⇒
+    case Started ⇒
       val json: JsObject = Json.obj(
         "type" -> "create",
         "id" -> self.path.toString,
@@ -63,8 +64,7 @@ class Player( val name: String ) extends EventHandler {
         "dimensions" -> Json.arr( width, height )
       )
       connection ! RetryingActorConnection.ToClient( json.toString, true )
-      subscribers += room
-      room ! Room.Arrived( self, x, y, width, height )
+      emit( Room.Arrived( self, x, y, width, height ) )
 
     case Room.RoomData( fixtures ) ⇒
       for ( f ← fixtures ) {
