@@ -7,6 +7,8 @@ import akka.actor.ActorSystem
 import akka.actor.Props
 import akka.testkit.TestKit
 import akka.testkit.TestProbe
+import game.Game.NewPlayer
+import game.Game
 
 class PlayerSpec extends TestKit( ActorSystem( "PlayerSpec" ) )
     with FunSuiteLike
@@ -20,13 +22,12 @@ class PlayerSpec extends TestKit( ActorSystem( "PlayerSpec" ) )
   }
 
   test( "Player actor should return its own connection ActorRef when I send Start" ) {
-    val room = TestProbe()
     val client = TestProbe()
+    val room = TestProbe()
     val plr = system.actorOf( Props( classOf[ Player ], "case1" ), "case1-player" )
 
-    room.send( plr, Player.Start( room.ref, client.ref ) )
+    room.send( plr, Game.NewPlayer( room.ref, client.ref, null, null ) )
 
-    client.expectMsgClass( classOf[ StartResponse ] )
-    room.expectMsg( Arrived )
+    client.expectMsgClass( classOf[ Game.Connected ] )
   }
 }
