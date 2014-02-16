@@ -15,6 +15,7 @@ import play.api.libs.json.Json
 import play.api.libs.json.Json.toJsFieldJsValueWrapper
 import play.api.libs.json.JsObject
 import game.world.physics.Fixture
+import play.api.libs.iteratee.Enumerator
 
 object Player {
   def props( name: String ) = Props( classOf[ Player ], name )
@@ -28,8 +29,6 @@ object Player {
   case class Click( x: Int, y: Int ) extends Event
 
   // Sent Messages
-  case class StartResponse( connectionService: ActorRef )
-
   trait MobileBehavior
   case class Walking( mobile: ActorRef, x: Int ) extends MobileBehavior with Event
   case class Standing( mobile: ActorRef ) extends MobileBehavior with Event
@@ -49,11 +48,14 @@ class Player( val name: String ) extends EventHandler {
   var y: Float = 25
 
   /** Represents a RetryingActorConnection */
-  val connection = context.actorOf( PlayActorConnection.props( self ), name = "connection" )
+  var connection: ActorRef = _
 
   val mobileBehavior: Receive = {
+    case Game.NewPlayer( client, room, enumerator, channel ) ⇒
+      connection = context.actorOf( PlayActorConnection.props( self, channel ), name = "connection" )
+      client ! Game.Connected( connection, enumerator )
+
     case Start( room, client ) ⇒
-      client ! StartResponse( connection )
       val json: JsObject = Json.obj(
         "type" -> "create",
         "id" -> self.path.toString,
@@ -81,9 +83,9 @@ class Player( val name: String ) extends EventHandler {
       x = evt.x
       y = evt.y
 
-    case Click( x: Int, y: Int )          ⇒
-    case KeyUp( 81 )                      ⇒ self ! PoisonPill
-    case KeyDown( 32 | 38 | 87 )          ⇒
+    case Click( x: Int, y: Int ) ⇒
+    case KeyUp( 81 )             ⇒ self ! PoisonPill
+    case KeyDown( 32 | 38 | 87 ) ⇒
   }
 
   val standing: Receive = {

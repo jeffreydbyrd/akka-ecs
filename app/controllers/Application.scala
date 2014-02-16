@@ -21,6 +21,9 @@ import play.api.mvc.Controller
 import play.api.mvc.WebSocket
 import game.communications.RetryingActorConnection
 import game.Game
+import play.api.libs.iteratee.Done
+import play.api.libs.iteratee.Input
+import play.api.libs.iteratee.Enumerator
 
 /**
  * Defines a Play controller that serves the client-side engine and handles
@@ -42,11 +45,19 @@ object Application extends Controller {
    * `PlayActorConnection`, we can also ask for its Enumerator[String] `out`.
    */
   def websocket( username: String ) = WebSocket.async[ String ] { implicit request ⇒
-    for {
-      Player.StartResponse( conn ) ← ( Game.game ? AddPlayer( username ) )
-      ReturnEnum( out ) ← conn ? GetEnum
-      in = Iteratee.foreach[ String ] { conn ! getCommand( _ ) }
-    } yield ( in, out )
+    ( Game.game ? AddPlayer( username ) ).map {
+
+      case Game.Connected( connection, enumerator ) ⇒
+        val iter = Iteratee.foreach[ String ] { connection ! getCommand( _ ) }
+        ( iter, enumerator )
+
+      case Game.NotConnected( message ) ⇒ // Connection error
+        // A finished Iteratee sending EOF
+        val iter = Done[ String, Unit ]( (), Input.EOF )
+        // Send an error and close the socket
+        val enum = Enumerator[ String ]( message ).andThen( Enumerator.enumInput( Input.EOF ) )
+        ( iter, enum )
+    }
   }
 
   /**

@@ -33,16 +33,12 @@ class Room( val id: String ) extends EventHandler {
   val leftWall = new game.world.physics.Rect( "left_wall", 1, 25, 1, 50 )
   val rightWall = new game.world.physics.Rect( "right_wall", 49, 25, 1, 50 )
   val top = new game.world.physics.Rect( "top", 25, 49, 50, 1 )
-  
+
   val fixtures = Set( floor, leftWall, rightWall, top )
 
   val roomBehavior: Receive = {
-    case Game.NewPlayer( client, name ) ⇒
-      val plr = context.actorOf( Player.props( name ), name = name )
-      subscribers += plr
-      plr ! Player.Start( self, client )
-
     case arr @ Arrived( mobile, x, y, w, h ) ⇒
+      subscribers += mobile
       simulation ! Simulation.CreateMobile( mobile, x, y, w, h )
       sender ! RoomData( fixtures )
 

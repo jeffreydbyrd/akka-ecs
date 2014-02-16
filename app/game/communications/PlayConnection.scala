@@ -7,7 +7,7 @@ import play.api.libs.iteratee.Concurrent
  * It does, however, define how to send data to the Player
  */
 trait PlayConnection extends ConnectionService {
-  val ( enumerator, channel ) = Concurrent.broadcast[ String ]
+  val channel: play.api.libs.iteratee.Concurrent.Channel[ String ]
 
   override def toClient( s: String ) = channel push s
   override def close = channel.eofAndEnd

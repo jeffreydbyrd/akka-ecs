@@ -5,9 +5,10 @@ import akka.actor.actorRef2Scala
 import game.events.Event
 import play.api.libs.iteratee.Enumerator
 import akka.actor.Props
+import play.api.libs.iteratee.Concurrent.Channel
 
 object PlayActorConnection {
-  def props( player: ActorRef ) = Props( classOf[ PlayActorConnection ], player )
+  def props( player: ActorRef, channel: Channel[ String ] ) = Props( classOf[ PlayActorConnection ], player, channel )
 
   // Received Messages
   case object GetEnum
@@ -22,13 +23,12 @@ object PlayActorConnection {
  * This Enumerator[String] produces the Strings that the Player object is pushing
  * to the Connection.
  */
-class PlayActorConnection( player: ActorRef ) extends PlayConnection with RetryingActorConnection {
+class PlayActorConnection( val player: ActorRef, val channel: Channel[ String ] )
+    extends PlayConnection with RetryingActorConnection {
   import PlayActorConnection._
 
   override def toPlayer( e: Event ) { context.parent ! e }
-  override def receive = super.retrying orElse {
-    case GetEnum ⇒ sender ! ReturnEnum( enumerator )
-  }
+  override def receive = super.retrying
 
   override def postStop {
     toClient( s"""{"id":$count, "message": { "type":"quit", "message":"later!" } } """ )
