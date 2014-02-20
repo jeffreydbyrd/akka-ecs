@@ -42,6 +42,7 @@ class Room( val id: String ) extends EventHandler {
       subscribers += mobile
       simulation ! Simulation.CreateMobile( mobile, x, y, w, h )
       sender ! RoomData( fixtures )
+      emit( arr )
 
     case mb: Player.MobileBehavior ⇒ simulation ! mb
 

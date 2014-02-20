@@ -14,6 +14,7 @@ import game.world.Room
 import game.world.physics.Rect
 import play.api.libs.json.Json
 import play.api.libs.json.Json.toJsFieldJsValueWrapper
+import game.communications.commands.CreateRect
 
 object Player {
   def props( name: String ) = Props( classOf[ Player ], name )
@@ -31,6 +32,7 @@ object Player {
   case class Walking( mobile: ActorRef, x: Int ) extends MobileBehavior with Event
   case class Standing( mobile: ActorRef ) extends MobileBehavior with Event
   case object Quit extends Event
+  case class PlayerData( mobile: ActorRef, dims: Rect )
 }
 
 class Player( val name: String ) extends EventHandler {
@@ -38,7 +40,7 @@ class Player( val name: String ) extends EventHandler {
 
   var speed = 5
   var hops = 5
-  var dims = Rect( name, 5, 25, 1, 2 )
+  var dimensions = Rect( name, 5, 25, 1, 2 )
 
   /** Represents a RetryingActorConnection */
   var connection: ActorRef = _
@@ -49,22 +51,23 @@ class Player( val name: String ) extends EventHandler {
       client ! Game.Connected( connection, enumerator )
       subscribers += room
 
-    case Started ⇒
-      connection ! CreateRect( name, dims )
-      emit( Room.Arrived( self, dims ) )
+    case Room.Arrived( mobile, dims ) ⇒
+      mobile ! PlayerData( self, dimensions )
+      connection ! CreateRect( mobile.path.toString, dims, true )
 
-    case Room.RoomData( fixtures ) ⇒
-      for ( f ← fixtures ) f match {
-        case r: Rect ⇒ connection ! game.communications.commands.CreateRect( r.id, r )
-        case _       ⇒
-      }
+    case Player.PlayerData( mobile, rect ) ⇒
+      connection ! CreateRect( mobile.path.toString, rect, true )
 
-    case evt: Moved if evt.mobile == self ⇒
-      if ( evt.x != dims.x || evt.y != dims.y ) {
-        connection ! game.communications.commands.Move( name, dims.x, dims.y )
-      }
-      dims = Rect( name, evt.x, evt.y, dims.w, dims.h )
+    case Room.RoomData( fixtures ) ⇒ for ( f ← fixtures ) f match {
+      case r: Rect ⇒ connection ! game.communications.commands.CreateRect( r.id, r )
+    }
 
+    case Moved( mob, x, y ) ⇒
+      connection ! game.communications.commands.Move( mob.path.toString, x, y )
+      if ( mob == self )
+        dimensions = Rect( name, x, y, dimensions.w, dimensions.h )
+
+    case Started                 ⇒ emit( Room.Arrived( self, dimensions ) )
     case Click( x: Int, y: Int ) ⇒
     case KeyUp( 81 )             ⇒ self ! PoisonPill
     case KeyDown( 32 | 38 | 87 ) ⇒
