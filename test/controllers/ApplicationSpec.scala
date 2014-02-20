@@ -4,7 +4,7 @@ import org.specs2.mutable.Specification
 import akka.io.BackpressureBuffer.Ack
 import org.scalatest.FunSuite
 import game.mobile.Player
-import game.communications.RetryingActorConnection
+import game.communications.connection.RetryingActorConnection
 
 class ApplicationSpec extends FunSuite {
   import Application._

@@ -16,7 +16,7 @@ import scala.concurrent.Future
 import play.api.libs.iteratee.Iteratee
 import play.api.libs.iteratee.Enumerator
 import game.mobile.Player
-import game.communications.PlayActorConnection
+import game.communications.connection.PlayActorConnection
 import akka.actor.Actor
 import play.api.libs.iteratee.Concurrent.Channel
 

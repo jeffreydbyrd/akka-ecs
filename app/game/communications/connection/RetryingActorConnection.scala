@@ -1,11 +1,11 @@
-package game.communications
+package game.communications.connection
 
 import RetryingConnection.MessageId
 import akka.actor.Actor
 import game.events.Event
+import game.communications.commands.ClientCommand
 
 object RetryingActorConnection {
-  case class ToClient( msg: String, buffer: Boolean = false )
   case class Ack( id: MessageId ) extends Event
 }
 
@@ -23,9 +23,9 @@ trait RetryingActorConnection extends Actor with RetryingConnection {
   def retrying: Receive = {
     case Ack( id ) ⇒ ack( id )
     case e: Event  ⇒ toPlayer( e )
-    case ToClient( json, buff ) ⇒
-      val msg = s""" {"id" : $count, "ack":$buff, "message" : $json} """
-      if ( buff == true ) cache( count, msg )
+    case cc: ClientCommand ⇒
+      val msg = s""" {"id" : $count, "ack":${cc.doCache}, "message" : ${cc.toJson}} """
+      if ( cc.doCache ) cache( count, msg )
       toClient( msg )
       count = count + 1
   }

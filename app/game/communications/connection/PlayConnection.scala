@@ -1,6 +1,4 @@
-package game.communications
-
-import play.api.libs.iteratee.Concurrent
+package game.communications.connection
 
 /**
  * A simple service that uses a Play Channel object to get String data to the client.

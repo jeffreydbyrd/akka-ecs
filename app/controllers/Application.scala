@@ -5,8 +5,6 @@ import akka.actor.actorRef2Scala
 import akka.pattern.ask
 import game.Game.AddPlayer
 import game.Game.timeout
-import game.communications.PlayActorConnection.GetEnum
-import game.communications.PlayActorConnection.ReturnEnum
 import game.events.Event
 import game.mobile.Player
 import game.mobile.Player.Click
@@ -19,7 +17,7 @@ import play.api.libs.json.Json
 import play.api.mvc.Action
 import play.api.mvc.Controller
 import play.api.mvc.WebSocket
-import game.communications.RetryingActorConnection
+import game.communications.connection.RetryingActorConnection
 import game.Game
 import play.api.libs.iteratee.Done
 import play.api.libs.iteratee.Input

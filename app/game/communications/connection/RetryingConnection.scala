@@ -1,8 +1,6 @@
-package game.communications
+package game.communications.connection
 
 import java.nio.BufferOverflowException
-
-import game.events.Event
 
 object RetryingConnection {
   type MessageId = Long

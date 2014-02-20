@@ -1,4 +1,4 @@
-package game.communications
+package game.communications.connection
 
 import akka.actor.ActorRef
 import akka.actor.actorRef2Scala
@@ -18,10 +18,7 @@ object PlayActorConnection {
 }
 
 /**
- * A RetryingActorConnection that implements toPlayer(String) and also receives
- * `GetEnum` messages, to which it responds by returning a Play! Enumerator[String].
- * This Enumerator[String] produces the Strings that the Player object is pushing
- * to the Connection.
+ * A RetryingActorConnection that implements toPlayer(String).
  */
 class PlayActorConnection( val player: ActorRef, val channel: Channel[ String ] )
     extends PlayConnection with RetryingActorConnection {

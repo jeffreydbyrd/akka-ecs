@@ -6,16 +6,14 @@ import akka.actor.Props
 import akka.actor.actorRef2Scala
 import akka.event.LoggingReceive
 import game.Game
-import game.communications.PlayActorConnection
-import game.communications.RetryingActorConnection
+import game.communications.commands.CreateRect
+import game.communications.connection.PlayActorConnection
 import game.events.Event
 import game.events.EventHandler
 import game.world.Room
+import game.world.physics.Rect
 import play.api.libs.json.Json
 import play.api.libs.json.Json.toJsFieldJsValueWrapper
-import play.api.libs.json.JsObject
-import game.world.physics.Fixture
-import play.api.libs.iteratee.Enumerator
 
 object Player {
   def props( name: String ) = Props( classOf[ Player ], name )
@@ -38,14 +36,9 @@ object Player {
 class Player( val name: String ) extends EventHandler {
   import Player._
 
-  val height = 2
-  val width = 1
-
   var speed = 5
   var hops = 5
-
-  var x: Float = 5
-  var y: Float = 25
+  var dims = Rect( name, 5, 25, 1, 2 )
 
   /** Represents a RetryingActorConnection */
   var connection: ActorRef = _
@@ -57,31 +50,20 @@ class Player( val name: String ) extends EventHandler {
       subscribers += room
 
     case Started ⇒
-      val json: JsObject = Json.obj(
-        "type" -> "create",
-        "id" -> self.path.toString,
-        "position" -> Json.arr( x, y ),
-        "dimensions" -> Json.arr( width, height )
-      )
-      connection ! RetryingActorConnection.ToClient( json.toString, true )
-      emit( Room.Arrived( self, x, y, width, height ) )
+      connection ! CreateRect( name, dims )
+      emit( Room.Arrived( self, dims ) )
 
     case Room.RoomData( fixtures ) ⇒
-      for ( f ← fixtures ) {
-        connection ! RetryingActorConnection.ToClient( Fixture.toJson( f ).toString, true )
+      for ( f ← fixtures ) f match {
+        case r: Rect ⇒ connection ! game.communications.commands.CreateRect( r.id, r )
+        case _       ⇒
       }
 
     case evt: Moved if evt.mobile == self ⇒
-      if ( evt.x != x || evt.y != y ) {
-        val json = Json.obj(
-          "type" -> "move",
-          "id" -> self.path.toString,
-          "position" -> Json.arr( evt.x, evt.y )
-        )
-        connection ! RetryingActorConnection.ToClient( json.toString, false )
+      if ( evt.x != dims.x || evt.y != dims.y ) {
+        connection ! game.communications.commands.Move( name, dims.x, dims.y )
       }
-      x = evt.x
-      y = evt.y
+      dims = Rect( name, evt.x, evt.y, dims.w, dims.h )
 
     case Click( x: Int, y: Int ) ⇒
     case KeyUp( 81 )             ⇒ self ! PoisonPill

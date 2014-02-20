@@ -1,7 +1,6 @@
-package game.communications
+package game.communications.connection
 
 import java.io.Closeable
-
 import game.events.Event
 
 /**

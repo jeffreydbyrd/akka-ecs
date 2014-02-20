@@ -9,12 +9,13 @@ import game.events.Event
 import game.events.EventHandler
 import game.mobile.Player
 import game.world.physics.Fixture
+import game.world.physics.Rect
 
 object Room {
   def props( name: String ) = Props( classOf[ Room ], name )
 
   // Received Messages
-  case class Arrived( mobile: ActorRef, x: Float, y: Float, width: Int, height: Int ) extends Event
+  case class Arrived( mobile: ActorRef, dims: Rect ) extends Event
 
   // Sent Messages
   case class RoomData( fixtures: Iterable[ Fixture ] )
@@ -37,7 +38,7 @@ class Room( val id: String ) extends EventHandler {
   val fixtures = Set( floor, leftWall, rightWall, top )
 
   val roomBehavior: Receive = {
-    case arr @ Arrived( mobile, x, y, w, h ) ⇒
+    case arr @ Arrived( mobile, Rect( _, x, y, w, h ) ) ⇒
       subscribers += mobile
       simulation ! Simulation.CreateMobile( mobile, x, y, w, h )
       sender ! RoomData( fixtures )

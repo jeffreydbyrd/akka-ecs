@@ -46,7 +46,7 @@
       },
       "quit" : function(data) {
           conn.close();
-          document.write("<p>" + data.message + "</p");
+          document.write("<p>" + data.message + "</p>");
       },
       "create" : function(data) {
           view.add(data);
