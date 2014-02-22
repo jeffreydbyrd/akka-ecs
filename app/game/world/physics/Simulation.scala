@@ -88,6 +88,10 @@ class Simulation( gx: Int, gy: Int ) extends Actor {
   var mobiles: Map[ ActorRef, Body ] = Map()
 
   override def receive = LoggingReceive {
+    case Player.Quit( mob ) ⇒
+      world.destroyBody( mobiles( mob ) )
+      mobiles -= mob
+
     case CreateBlock( x, y, w, h ) ⇒ createBlock( x, y, w, h )
 
     case CreateMobile( mob, x, y, w, h ) ⇒

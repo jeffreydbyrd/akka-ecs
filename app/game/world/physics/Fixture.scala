@@ -10,13 +10,13 @@ trait Fixture {
   val y: Float
 }
 
-case class Rect( id: String,
+case class Rect( override val id: String,
                  override val x: Float,
                  override val y: Float,
                  val w: Float,
                  val h: Float ) extends Fixture
 
-case class Line( id: String,
+case class Line( override val id: String,
                  override val x: Float,
                  override val y: Float,
                  val len: Float,

@@ -31,7 +31,7 @@ object Player {
   trait MobileBehavior
   case class Walking( mobile: ActorRef, x: Int ) extends MobileBehavior with Event
   case class Standing( mobile: ActorRef ) extends MobileBehavior with Event
-  case object Quit extends Event
+  case class Quit( mob: ActorRef ) extends Event
   case class PlayerData( mobile: ActorRef, dims: Rect )
 }
 
@@ -91,7 +91,7 @@ class Player( val name: String ) extends EventHandler {
 
   override def postStop {
     logger.info( s"terminated." )
-    emit( Quit )
+    emit( Quit( self ) )
   }
 
 }

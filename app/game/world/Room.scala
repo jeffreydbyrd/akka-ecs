@@ -44,6 +44,11 @@ class Room( val id: String ) extends EventHandler {
       sender ! RoomData( fixtures )
       emit( arr )
 
+    case q @ Player.Quit( mob ) ⇒
+      subscribers -= mob
+      context.parent ! q
+      simulation ! q
+
     case mb: Player.MobileBehavior ⇒ simulation ! mb
 
     case Game.Tick ⇒
