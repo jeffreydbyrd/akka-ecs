@@ -80,8 +80,12 @@ class Simulation( gx: Int, gy: Int ) extends Actor {
   def setSpeed( body: Body, speed: Int ) = {
     val vel = body.getLinearVelocity()
     var force: Float = 0
+
     if ( speed == 0 ) force = vel.x * -15
-    else if ( scala.math.abs( vel.x ) < scala.math.abs( speed.toDouble ) ) force = speed * 10
+    else if ( ( scala.math.abs( vel.x ) < scala.math.abs( speed.toDouble ) )
+      || ( vel.x >= 0 && speed < 0 )
+      || ( vel.x <= 0 && speed > 0 ) ) force = speed * 10
+
     body.applyForce( new Vec2( force, 0 ), body.getWorldCenter() )
   }
 
@@ -98,17 +102,14 @@ class Simulation( gx: Int, gy: Int ) extends Actor {
       val body = createMobile( x, y, w, h )
       mobiles += mob -> body
 
-    case Player.Walking( mob, speed ) if mobiles.contains( mob ) ⇒
-      setSpeed( mobiles( mob ), speed )
-
-    case Player.Standing( mob ) if mobiles.contains( mob ) ⇒
-      setSpeed( mobiles( mob ), 0 )
-
     case Step ⇒
       world.step( timestep, velocityIterations, positionIterations )
       for ( ( mob, body ) ← mobiles ) {
         val position = body.getPosition()
         context.parent ! Snapshot( mob, position.x, position.y )
       }
+
+    case Player.Walking( mob, speed ) if mobiles.contains( mob ) ⇒ setSpeed( mobiles( mob ), speed )
+    case Player.Standing( mob ) if mobiles.contains( mob )       ⇒ setSpeed( mobiles( mob ), 0 )
   }
 }
