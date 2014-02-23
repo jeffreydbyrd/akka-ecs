@@ -6,6 +6,7 @@ import game.events.Event
 import play.api.libs.iteratee.Enumerator
 import akka.actor.Props
 import play.api.libs.iteratee.Concurrent.Channel
+import game.communications.commands.PlayerCommand
 
 object PlayActorConnection {
   def props( player: ActorRef, channel: Channel[ String ] ) = Props( classOf[ PlayActorConnection ], player, channel )
@@ -24,7 +25,7 @@ class PlayActorConnection( val player: ActorRef, val channel: Channel[ String ] 
     extends PlayConnection with RetryingActorConnection {
   import PlayActorConnection._
 
-  override def toPlayer( e: Event ) { context.parent ! e }
+  override def toPlayer( pc:PlayerCommand ) { context.parent ! pc }
   override def receive = super.retrying
 
   override def postStop {

@@ -4,9 +4,10 @@ import RetryingConnection.MessageId
 import akka.actor.Actor
 import game.events.Event
 import game.communications.commands.ClientCommand
+import game.communications.commands.PlayerCommand
 
 object RetryingActorConnection {
-  case class Ack( id: MessageId ) extends Event
+  case class Ack( id: MessageId ) extends PlayerCommand
 }
 
 /**
@@ -22,7 +23,7 @@ trait RetryingActorConnection extends Actor with RetryingConnection {
 
   def retrying: Receive = {
     case Ack( id ) ⇒ ack( id )
-    case e: Event  ⇒ toPlayer( e )
+    case pc: PlayerCommand  ⇒ toPlayer( pc )
     case cc: ClientCommand ⇒
       val msg = s""" {"id" : $count, "ack":${cc.doCache}, "message" : ${cc.toJson}} """
       if ( cc.doCache ) cache( count, msg )

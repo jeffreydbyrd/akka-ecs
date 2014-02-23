@@ -63,7 +63,7 @@ sealed class Game extends Actor {
     case AddPlayer( username ) ⇒
       sender ! NotConnected( s""" {"error" : "username '$username' already in use"} """ )
 
-    case Player.Quit( ref ) ⇒ players = players filter { case ( s, ar ) ⇒ ar == ref }
+    case Player.Quit( ref ) ⇒ players = players filterNot { case ( s, ar ) ⇒ ar == ref }
   }
 
 }

@@ -6,26 +6,22 @@ import akka.actor.Props
 import akka.actor.actorRef2Scala
 import akka.event.LoggingReceive
 import game.Game
+import game.communications.commands.Click
 import game.communications.commands.CreateRect
+import game.communications.commands.KeyDown
+import game.communications.commands.KeyUp
+import game.communications.commands.Started
 import game.communications.connection.PlayActorConnection
 import game.events.Event
 import game.events.EventHandler
 import game.world.Room
 import game.world.physics.Rect
-import play.api.libs.json.Json
-import play.api.libs.json.Json.toJsFieldJsValueWrapper
-import game.communications.commands.CreateRect
 
 object Player {
   def props( name: String ) = Props( classOf[ Player ], name )
 
   // Received Messages:
-  case object Started extends Event
   case class Moved( mobile: ActorRef, x: Float, y: Float ) extends Event
-  case class Invalid( s: String ) extends Event
-  case class KeyUp( code: Int ) extends Event
-  case class KeyDown( code: Int ) extends Event
-  case class Click( x: Int, y: Int ) extends Event
 
   // Sent Messages
   trait MobileBehavior
@@ -50,6 +46,7 @@ class Player( val name: String ) extends EventHandler {
       connection = context.actorOf( PlayActorConnection.props( self, channel ), name = "connection" )
       client ! Game.Connected( connection, enumerator )
       subscribers += room
+      logger.info( "Connected" )
 
     case Room.Arrived( mobile, dims ) ⇒
       mobile ! PlayerData( self, dimensions )
@@ -67,7 +64,9 @@ class Player( val name: String ) extends EventHandler {
       if ( mob == self )
         dimensions = Rect( name, x, y, dimensions.w, dimensions.h )
 
-    case Started                 ⇒ emit( Room.Arrived( self, dimensions ) )
+    case Started ⇒
+      logger.info( "received Started" )
+      emit( Room.Arrived( self, dimensions ) )
     case Click( x: Int, y: Int ) ⇒
     case KeyUp( 81 )             ⇒ self ! PoisonPill
     case KeyDown( 32 | 38 | 87 ) ⇒

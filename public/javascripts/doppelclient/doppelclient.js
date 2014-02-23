@@ -34,7 +34,13 @@
       return hash.substring(i);
     }();
 
-    var ADDRESS = "ws://127.0.0.1:9000/test?username=" + USERNAME;
+    var ADDRESS = function() {
+      var href = window.location.href;
+      var addr = href.substring(7, href.indexOf("/#"));
+      return "ws://" + addr + "/test?username=" + USERNAME;
+    }();
+
+    console.log(ADDRESS);
 
     /**
      * The set of functions that the server can execute remotely. Each function
@@ -106,6 +112,7 @@
       };
 
       this.send = function(str) {
+	  console.log("sending: " + str);
           websocket.send(str);
       };
 

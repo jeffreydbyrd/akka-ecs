@@ -1,6 +1,5 @@
 package game.world
 
-import akka.actor.Actor
 import org.jbox2d.collision.shapes.PolygonShape
 import org.jbox2d.common.Vec2
 import org.jbox2d.dynamics.Body
@@ -8,11 +7,14 @@ import org.jbox2d.dynamics.BodyDef
 import org.jbox2d.dynamics.BodyType
 import org.jbox2d.dynamics.FixtureDef
 import org.jbox2d.dynamics.World
-import akka.actor.Props
+
+import akka.actor.Actor
 import akka.actor.ActorRef
+import akka.actor.Props
+import akka.actor.actorRef2Scala
 import akka.event.LoggingReceive
 import game.mobile.Player
-import akka.actor.actorRef2Scala
+import game.util.logging.AkkaLoggingService
 
 object Simulation {
   def props( gx: Int = 0, gy: Int = -9 ) = Props( classOf[ Simulation ], gx, gy )
@@ -34,6 +36,8 @@ object Simulation {
  */
 class Simulation( gx: Int, gy: Int ) extends Actor {
   import Simulation._
+
+  val logger = new AkkaLoggingService( this, context )
 
   val timestep = 1.0f / 60.0f
   val velocityIterations = 6;
@@ -84,7 +88,7 @@ class Simulation( gx: Int, gy: Int ) extends Actor {
     if ( speed == 0 ) force = vel.x * -15
     else if ( ( scala.math.abs( vel.x ) < scala.math.abs( speed.toDouble ) )
       || ( vel.x >= 0 && speed < 0 )
-      || ( vel.x <= 0 && speed > 0 ) ) force = speed * 10
+      || ( vel.x <= 0 && speed > 0 ) ) force = speed * 20
 
     body.applyForce( new Vec2( force, 0 ), body.getWorldCenter() )
   }
