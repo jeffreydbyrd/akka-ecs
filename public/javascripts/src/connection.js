@@ -56,7 +56,7 @@ function Connection(url) {
       console.log("websocket closed");
   };
 
-  var expectedId = 0;
+  var expectedSeq = 0;
 
   /** 
    * evt.data : 
@@ -65,18 +65,18 @@ function Connection(url) {
    *    message: { type: ???, .... } } 
    */
   websocket.onmessage = function(evt) {
-      var data = JSON.parse(evt.data);
-      var msg = data.message;
-      console.log(data);
+    var data = JSON.parse(evt.data);
+    var msg = data.message;
+    console.log(data);
 
-      if (data.id <= expectedId) {
-        self.ack(data.id);
-      }
+    if (data.seq <= expectedSeq) {
+      self.ack(data.seq);
+    }
 
-      if (data.id == expectedId) {
-        COMMANDS[msg.type](msg);
-        expectedId += 1;
-      }
+    if (data.seq == expectedSeq) {
+      COMMANDS[msg.type](msg);
+      if (data.ack) expectedSeq += 1;
+    }
   };
 
   this.ack = function(id) {

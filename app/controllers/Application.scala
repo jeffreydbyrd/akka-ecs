@@ -49,7 +49,7 @@ object Application extends Controller {
       case Game.Connected( connection, enumerator ) ⇒ // Success
         val iter = Iteratee.foreach[ String ] { connection ! getCommand( _ ) }
         val initMessage = """ {
-            "id":0, "message":{ "type":"started" }
+            "seq":0, "ack":true, "message":{ "type":"started" }
           }	
         	"""
         val enum = Enumerator[ String ]( initMessage ).andThen( enumerator )

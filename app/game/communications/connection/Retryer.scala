@@ -21,8 +21,7 @@ class Retryer( msg: String, channel: Channel[ String ] ) extends Actor {
   val retry = context.system.scheduler.schedule( 100 millis, 100 millis, self, Retry )
 
   override def receive = LoggingReceive {
-    case Retry ⇒
-      channel push msg
+    case Retry ⇒ channel push msg
   }
 
 }

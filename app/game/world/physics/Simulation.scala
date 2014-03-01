@@ -96,7 +96,7 @@ class Simulation( gx: Int, gy: Int ) extends Actor {
   var mobiles: Map[ ActorRef, Body ] = Map()
 
   override def receive = LoggingReceive {
-    case Player.Quit( mob ) ⇒
+    case Player.Quit( mob ) if mobiles.contains( mob ) ⇒
       world.destroyBody( mobiles( mob ) )
       mobiles -= mob
 

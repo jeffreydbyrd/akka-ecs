@@ -29,12 +29,12 @@ class PlayActorConnection( val player: ActorRef, val channel: Channel[ String ] 
   import PlayActorConnection._
 
   // start at 1 b/c application sent a message already
-  var count: MessageId = 1
+  var seq: MessageId = 1
   var retryers: Map[ MessageId, ActorRef ] = Map()
 
   def retry( c: MessageId, msg: String ) {
     val prop = Retryer.props( msg, channel )
-    retryers += count -> context.actorOf( prop, "retryer_" + count.toString )
+    retryers += seq -> context.actorOf( prop, "retryer_" + seq.toString )
   }
 
   def send( msg: String ) = channel push msg
@@ -54,14 +54,16 @@ class PlayActorConnection( val player: ActorRef, val channel: Channel[ String ] 
     case Ack( id )         ⇒ ack( id )
     case pc: PlayerCommand ⇒ context.parent ! pc
     case cc: ClientCommand ⇒
-      val msg = s""" {"id" : $count, "ack":${cc.doRetry}, "message" : ${cc.toJson}} """
+      val msg = s""" {"seq" : $seq, "ack":${cc.doRetry}, "message" : ${cc.toJson}} """
       send( msg )
-      if ( cc.doRetry ) retry( count, msg )
-      count += 1
+      if ( cc.doRetry ) {
+        retry( seq, msg )
+        seq += 1
+      }
   }
 
   override def postStop {
-    send( s"""{"id":$count, "message": { "type":"quit", "message":"later!" } } """ )
+    send( s"""{"id":$seq, "message": { "type":"quit", "message":"later!" } } """ )
     channel.eofAndEnd
   }
 }
