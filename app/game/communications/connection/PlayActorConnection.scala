@@ -63,7 +63,7 @@ class PlayActorConnection( val player: ActorRef, val channel: Channel[ String ] 
   }
 
   override def postStop {
-    send( s"""{"id":$seq, "message": { "type":"quit", "message":"later!" } } """ )
+    send( s"""{"seq":$seq, "ack":false, "message": { "type":"quit", "message":"later!" } } """ )
     channel.eofAndEnd
   }
 }

@@ -57,7 +57,7 @@ function convertYPos(y){
 /** data : { type : 'create', id : '...', position : [X, Y], dimensions : [W, H]  } */
 function create(data) {
   requestAnimFrame(function(){
-    var texture = PIXI.Texture.fromImage("/assets/images/Meebo2.png");
+    var texture = PIXI.Texture.fromImage("/assets/images/black.png");
     var sprite = new PIXI.Sprite(texture);
     entities[data.id] = sprite;
 
