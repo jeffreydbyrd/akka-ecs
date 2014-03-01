@@ -1,13 +1,12 @@
 package controllers
 
 import org.scalatest.FunSuite
-
 import Application.getCommand
 import game.communications.commands.Click
 import game.communications.commands.Invalid
 import game.communications.commands.KeyDown
 import game.communications.commands.KeyUp
-import game.communications.connection.RetryingActorConnection
+import game.communications.connection.PlayActorConnection
 
 class ApplicationSpec extends FunSuite {
   import Application._
@@ -23,7 +22,7 @@ class ApplicationSpec extends FunSuite {
   val clk1 = """ {"type" : "click", "data" : {"x" : "STRING"}} """
 
   test( "getCommand should return Ack( 42 ) when json = {type: 'ack', data: 42}" ) {
-    getCommand( ack ) === RetryingActorConnection.Ack( 42 )
+    getCommand( ack ) === PlayActorConnection.Ack( 42 )
   }
 
   test( "getCommand should return KeyUp( 65 ) when json = {type : 'keyup', data : 65}" ) {

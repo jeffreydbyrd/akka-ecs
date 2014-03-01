@@ -52,11 +52,11 @@ class Player( val name: String ) extends EventHandler {
       mobile ! PlayerData( self, dimensions )
       connection ! CreateRect( mobile.path.toString, dims, true )
 
-    case Player.PlayerData( mobile, rect ) ⇒
+    case Player.PlayerData( mobile, rect ) if mobile != self ⇒
       connection ! CreateRect( mobile.path.toString, rect, true )
 
     case Room.RoomData( fixtures ) ⇒ for ( f ← fixtures ) f match {
-      case r: Rect ⇒ connection ! game.communications.commands.CreateRect( r.id, r )
+      case r: Rect ⇒ connection ! game.communications.commands.CreateRect( r.id, r, true )
     }
 
     case Moved( mob, x, y ) ⇒

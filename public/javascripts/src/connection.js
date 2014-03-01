@@ -1,11 +1,3 @@
-/*******************************************************************************
- * The DoppelClient
- * 
- * Depends on kinetic.js. Extracts a `username` from the URL
- * (http://a.b.c.d:80#username=???) and establishes a WebSocket connection with
- * the server using `username`.
- ******************************************************************************/
-
 /***************************************************************************
  * Constants
  **************************************************************************/
@@ -39,33 +31,6 @@ var ADDRESS = function() {
   return "ws://" + addr + "/test?username=" + USERNAME;
 }();
 
-/**
- * The set of functions that the server can execute remotely. Each function
- * takes a `data` object, which can take whatever form the function wants.
- */
-var COMMANDS = {
-  "started": function(data) {
-    // conn.send(JSON.stringify({ type:"started" }));
-  },
-  "quit" : function(data) {
-      // conn.close();
-      // document.write("<p>" + data.message + "</p>");
-  },
-  "create" : function(data) {
-      // view.add(data);
-      // view.draw();
-      // console.log(data);
-  },
-  "move" : function(data) {
-      // view.move(data.id, data.position[0], data.position[1]);
-      // view.draw();
-      // console.log(data);
-  },
-  "delete" : function(data) {
-      // view.remove(data.id);
-  }
-};
-
 /***************************************************************************
  * Prototypes
  **************************************************************************/
@@ -82,7 +47,6 @@ function Connection(url) {
   var self = this;
 
   var websocket = new WebSocket(url);
-  var count = 0;
 
   websocket.onopen = function(evt) {
       console.log("websocket opened");
@@ -92,24 +56,46 @@ function Connection(url) {
       console.log("websocket closed");
   };
 
-  /** evt.data schema === {id : ???, message: { type: ???, .... } } */
-  websocket.onmessage = function(evt) {
-      console.log(evt.data);
-      var msg = JSON.parse(evt.data);
-      var id = msg.id;
-      count = id;
-      var cmd = msg.message;
-      COMMANDS[cmd.type](cmd);
+  var expectedId = 0;
 
-      var ack = JSON.stringify({
-        type : "ack",
-        data : id
-      });
-      websocket.send(ack);
+  /** 
+   * evt.data : 
+   *  { id : ???, 
+   *    ack: true/false, 
+   *    message: { type: ???, .... } } 
+   */
+  websocket.onmessage = function(evt) {
+      var data = JSON.parse(evt.data);
+      var msg = data.message;
+      console.log(data);
+
+      if (data.id <= expectedId) {
+        self.ack(data.id);
+      }
+
+      if (data.id == expectedId) {
+        COMMANDS[msg.type](msg);
+        expectedId += 1;
+      }
   };
 
-  this.send = function(str) {
-    console.log("sending: " + str);
+  this.ack = function(id) {
+    console.log("Sending ACK " + id);
+    var ack = JSON.stringify({
+      type : "ack",
+      data : id
+    });
+    self.send(ack);     
+  }
+
+  this.send = function(data) {
+    var str;
+    if (typeof data === "string") {
+      str = data;
+    } else {
+      str = JSON.stringify(data);
+    }
+
     websocket.send(str);
   };
 
@@ -123,53 +109,30 @@ function Connection(url) {
 * Objects
 ***************************************************************************/
 
-// var conn = new Connection(ADDRESS);
-
-/**************************************************************************
- * Functions
- **************************************************************************/
-
-/* 
- * On the server, (X,Y) positions refer to the center of objects.
- * Given a X position on a 0 to <INTERNAL_DIM> scale, and the width
- * of the object on the screen, we can derive where its left-most
- * position should be on the screen.
- */
-function convertXPos(x, width) {
-  var xpos = x * K;
-  xpos = xpos - (width / 2);
-  return xpos;
-}
-
-/* Same as above but with Y position and height */
-function convertYPos(y, height){
-  var ypos = DIMENSIONS.h - (y * K);
-  ypos = ypos - (height / 2);
-  return ypos;
-}
+var conn = new Connection(ADDRESS);
 
 /***************************************************************************
  * Capture keydown & keyup events and send to the server
  **************************************************************************/
 
-// var onkey = function(evt) {
-//   var cmd = {
-//     type : evt.type,
-//     data : evt.keyCode
-//   };
-//   return conn.send(JSON.stringify(cmd));
-// };
+var onkey = function(evt) {
+  var cmd = {
+    type : evt.type,
+    data : evt.keyCode
+  };
+  return conn.send(JSON.stringify(cmd));
+};
 
-// var body = document.getElementById("body");
-// body.onkeydown = onkey;
-// body.onkeyup = onkey;
+var body = document.getElementById("body");
+body.onkeydown = onkey;
+body.onkeyup = onkey;
 
 /***************************************************************************
  * Send a "quit" signal to the server just before the page unloads
  **************************************************************************/
-// window.onbeforeunload = function() {
-//   onkey({
-//     type : "keydown",
-//     keyCode : 81
-//   });
-// };
+window.onbeforeunload = function() {
+  onkey({
+    type : "keydown",
+    keyCode : 81
+  });
+};
