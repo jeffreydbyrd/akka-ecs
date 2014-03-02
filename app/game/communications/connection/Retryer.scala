@@ -18,7 +18,7 @@ class Retryer( msg: String, channel: Channel[ String ] ) extends Actor {
   import Retryer._
 
   val logger = new AkkaLoggingService( this, context )
-  val retry = context.system.scheduler.schedule( 100 millis, 100 millis, self, Retry )
+  val retry = context.system.scheduler.schedule( 100 millis, 1000 millis, self, Retry )
 
   override def receive = LoggingReceive {
     case Retry ⇒ channel push msg
