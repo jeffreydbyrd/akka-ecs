@@ -1,4 +1,4 @@
-/* Constants */
+// CONSTANTS  //////////////////////////
 
 var USERNAME = function() {
   var hash = window.location.hash;
@@ -18,12 +18,12 @@ var LENGTH = SCREEN_H / 1.1;
 var INTERNAL_DIMENSIONS = 50;
 var K = LENGTH / INTERNAL_DIMENSIONS;
 
-// Make a game object. It renders itself:
-var game = new Game(LENGTH, LENGTH, K);
 
-/* Make and configure our Connetion object */
+// CORE OBJECTS /////////////////////////
+var game = new Game(LENGTH, LENGTH, K);
 var conn = new Connection(ADDRESS);
 
+// Wire them up:
 conn.onReceive("started", function(args) { 
   conn.send({ type:"started" }) 
 });
@@ -46,7 +46,8 @@ conn.onReceive("quit", function(params) {
 
 conn.start();
 
-/* Capture keydown & keyup events and send to the server */
+// Listen to the user:
+// Capture keydown & keyup events and send to the server:
 var onkey = function(evt) {
   var cmd = {
     type : evt.type,
@@ -59,11 +60,3 @@ var body = document.getElementById("body");
 body.onkeydown = onkey;
 body.onkeyup = onkey;
 
-/* Send a "quit" signal to the server just before the page unloads */
-window.onbeforeunload = function() {
- 	var cmd = {
- 		type : "keydown",
- 		data : 81
- 	};
- 	return conn.send(cmd);
-};
