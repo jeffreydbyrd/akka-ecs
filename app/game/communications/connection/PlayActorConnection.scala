@@ -54,7 +54,11 @@ class PlayActorConnection( val player: ActorRef, val channel: Channel[ String ] 
     case Ack( id )         ⇒ ack( id )
     case pc: PlayerCommand ⇒ context.parent ! pc
     case cc: ClientCommand ⇒
-      val msg = s""" {"seq" : $seq, "ack":${cc.doRetry}, "message" : ${cc.toJson}} """
+      val msg = s""" {
+        "seq" : $seq,
+        "ack":${cc.doRetry},
+        "type": "${cc.typ}",
+    	    "message" : ${cc.toJson}} """
       send( msg )
       if ( cc.doRetry ) {
         retry( seq, msg )
@@ -63,7 +67,7 @@ class PlayActorConnection( val player: ActorRef, val channel: Channel[ String ] 
   }
 
   override def postStop {
-    send( s"""{"seq":$seq, "ack":false, "message": { "type":"quit", "message":"later!" } } """ )
+    send( s"""{"seq":$seq, "ack":false, "type":"quit"}""" )
     channel.eofAndEnd
   }
 }
