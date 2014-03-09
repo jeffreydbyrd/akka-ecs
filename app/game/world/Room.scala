@@ -49,7 +49,7 @@ class Room( val id: String ) extends EventHandler {
       context.parent ! q
       simulation ! q
 
-    case mb: Player.MobileBehavior ⇒ simulation ! mb
+    case evt: Player.Walking ⇒ simulation ! evt
 
     case Game.Tick ⇒
       simulation ! Simulation.Step

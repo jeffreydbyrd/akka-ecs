@@ -112,8 +112,7 @@ class Simulation( gx: Int, gy: Int ) extends Actor {
         val position = body.getPosition()
         context.parent ! Snapshot( mob, position.x, position.y )
       }
-
+    
     case Player.Walking( mob, speed ) if mobiles.contains( mob ) ⇒ setSpeed( mobiles( mob ), speed )
-    case Player.Standing( mob ) if mobiles.contains( mob )       ⇒ setSpeed( mobiles( mob ), 0 )
   }
 }
