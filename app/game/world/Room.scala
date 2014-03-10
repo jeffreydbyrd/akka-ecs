@@ -28,7 +28,7 @@ object Room {
 class Room( val id: String ) extends EventHandler {
   import Room._
 
-  val simulation = context.actorOf( Simulation.props(), name = "simulation" )
+  val simulation = context.actorOf( Simulation.props(0, -20), name = "simulation" )
 
   val floor = new game.world.physics.Rect( "floor", 25, 1, 50, 1 )
   val leftWall = new game.world.physics.Rect( "left_wall", 1, 25, 1, 50 )
@@ -49,7 +49,7 @@ class Room( val id: String ) extends EventHandler {
       context.parent ! q
       simulation ! q
 
-    case evt: Player.Walking ⇒ simulation ! evt
+    case evt: Player.MoveAttempt ⇒ simulation ! evt
 
     case Game.Tick ⇒
       simulation ! Simulation.Step

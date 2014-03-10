@@ -20,7 +20,9 @@ object Player {
   case class Moved( mobile: ActorRef, x: Float, y: Float ) extends Event
 
   // Sent Messages
-  case class Walking( mobile: ActorRef, x: Int ) extends Event
+  trait MoveAttempt extends Event
+  case class WalkAttempt( mobile: ActorRef, x: Int ) extends MoveAttempt
+  case class JumpAttempt( mobile: ActorRef, f: Int ) extends MoveAttempt
   case class Quit( mob: ActorRef ) extends Event
   case class PlayerData( mobile: ActorRef, dims: Rect )
 }
@@ -29,7 +31,7 @@ class Player( val name: String ) extends EventHandler {
   import Player._
 
   var speed = 5
-  var hops = 5
+  var hops = 10
   var dimensions = Rect( name, 5, 25, 1, 2 )
 
   var connection: ActorRef = _
@@ -63,15 +65,15 @@ class Player( val name: String ) extends EventHandler {
 
     case game.communications.commands.Quit ⇒ self ! PoisonPill
     case Click( x: Int, y: Int )           ⇒
-    case Jump                              ⇒
+    case Jump                              ⇒ emit( JumpAttempt( self, hops ) )
   }
 
-  def moving( s: Int, goLeft: Boolean, goRight: Boolean ): Receive = ({
-    case Game.Tick            ⇒ emit( Walking( self, s ) )
-    case GoLeft if !goLeft    ⇒ context become (moving( s - speed, true, goRight ))
-    case StopLeft if goLeft   ⇒ context become (moving( s + speed, false, goRight ))
-    case GoRight if !goRight  ⇒ context become (moving( s + speed, goLeft, true ))
-    case StopRight if goRight ⇒ context become (moving( s - speed, goLeft, false ))
+  def moving( s: Int, goLeft: Boolean, goRight: Boolean ): Receive = ( {
+    case Game.Tick            ⇒ emit( WalkAttempt( self, s ) )
+    case GoLeft if !goLeft    ⇒ context become ( moving( s - speed, true, goRight ) )
+    case StopLeft if goLeft   ⇒ context become ( moving( s + speed, false, goRight ) )
+    case GoRight if !goRight  ⇒ context become ( moving( s + speed, goLeft, true ) )
+    case StopRight if goRight ⇒ context become ( moving( s - speed, goLeft, false ) )
   }: Receive ) orElse coreBehavior orElse eventHandler
 
   override def receive: Receive = moving( 0, false, false )

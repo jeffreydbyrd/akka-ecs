@@ -17,7 +17,7 @@ import game.mobile.Player
 import game.util.logging.AkkaLoggingService
 
 object Simulation {
-  def props( gx: Int = 0, gy: Int = -9 ) = Props( classOf[ Simulation ], gx, gy )
+  def props( gx: Int, gy: Int ) = Props( classOf[ Simulation ], gx, gy )
 
   // Received Messages
   case object Step
@@ -93,6 +93,11 @@ class Simulation( gx: Int, gy: Int ) extends Actor {
     body.applyForce( new Vec2( force, 0 ), body.getWorldCenter() )
   }
 
+  def jump( body: Body, force: Int ) = {
+    val impulse = body.getMass() * force
+    body.applyLinearImpulse( new Vec2( 0, impulse ), body.getWorldCenter() )
+  }
+
   var mobiles: Map[ ActorRef, Body ] = Map()
 
   override def receive = LoggingReceive {
@@ -112,7 +117,8 @@ class Simulation( gx: Int, gy: Int ) extends Actor {
         val position = body.getPosition()
         context.parent ! Snapshot( mob, position.x, position.y )
       }
-    
-    case Player.Walking( mob, speed ) if mobiles.contains( mob ) ⇒ setSpeed( mobiles( mob ), speed )
+
+    case Player.WalkAttempt( mob, speed ) if mobiles.contains( mob ) ⇒ setSpeed( mobiles( mob ), speed )
+    case Player.JumpAttempt( mob, force ) if mobiles.contains( mob ) ⇒ jump( mobiles( mob ), force )
   }
 }
