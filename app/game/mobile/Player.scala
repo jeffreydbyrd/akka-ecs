@@ -51,7 +51,7 @@ class Player( val name: String ) extends EventHandler {
       connection ! CreateRect( mobile.path.toString, rect, true )
 
     case Room.RoomData( fixtures ) ⇒ for ( f ← fixtures ) f match {
-      case r: Rect ⇒ connection ! game.communications.commands.CreateRect( r.id, r, true )
+      case r: Rect ⇒ connection ! CreateRect( r.id, r, true )
     }
 
     case Moved( mob, x, y ) ⇒
@@ -68,13 +68,14 @@ class Player( val name: String ) extends EventHandler {
     case Jump                              ⇒ emit( JumpAttempt( self, hops ) )
   }
 
-  def moving( s: Int, goLeft: Boolean, goRight: Boolean ): Receive = ( {
-    case Game.Tick            ⇒ emit( WalkAttempt( self, s ) )
-    case GoLeft if !goLeft    ⇒ context become ( moving( s - speed, true, goRight ) )
-    case StopLeft if goLeft   ⇒ context become ( moving( s + speed, false, goRight ) )
-    case GoRight if !goRight  ⇒ context become ( moving( s + speed, goLeft, true ) )
-    case StopRight if goRight ⇒ context become ( moving( s - speed, goLeft, false ) )
-  }: Receive ) orElse coreBehavior orElse eventHandler
+  def moving( s: Int, goingLeft: Boolean, goingRight: Boolean ): Receive =
+    coreBehavior orElse eventHandler orElse {
+      case Game.Tick               ⇒ emit( WalkAttempt( self, s ) )
+      case GoLeft if !goingLeft    ⇒ context become ( moving( s - speed, true, goingRight ) )
+      case StopLeft if goingLeft   ⇒ context become ( moving( s + speed, false, goingRight ) )
+      case GoRight if !goingRight  ⇒ context become ( moving( s + speed, goingLeft, true ) )
+      case StopRight if goingRight ⇒ context become ( moving( s - speed, goingLeft, false ) )
+    }
 
   override def receive: Receive = moving( 0, false, false )
 
