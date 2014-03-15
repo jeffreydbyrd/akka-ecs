@@ -7,7 +7,6 @@ import org.jbox2d.dynamics.BodyDef
 import org.jbox2d.dynamics.BodyType
 import org.jbox2d.dynamics.FixtureDef
 import org.jbox2d.dynamics.World
-
 import akka.actor.Actor
 import akka.actor.ActorRef
 import akka.actor.Props
@@ -15,9 +14,11 @@ import akka.actor.actorRef2Scala
 import akka.event.LoggingReceive
 import game.mobile.Player
 import game.util.logging.AkkaLoggingService
+import game.world.physics.Mobile
+import game.world.physics.MobileContactListener
 
 object Simulation {
-  def props( gx: Int = 0, gy: Int = -9 ) = Props( classOf[ Simulation ], gx, gy )
+  def props( gx: Int, gy: Int ) = Props( classOf[ Simulation ], gx, gy )
 
   // Received Messages
   case object Step
@@ -38,14 +39,17 @@ class Simulation( gx: Int, gy: Int ) extends Actor {
   import Simulation._
 
   val logger = new AkkaLoggingService( this, context )
+  val jumpImpulse = -0.5 * gy
+  val mobileMass = 2
 
   val timestep = 1.0f / 60.0f
-  val velocityIterations = 6;
-  val positionIterations = 2;
+  val velocityIterations = 6
+  val positionIterations = 2
 
   // create a box2d world
   val world = new World( new Vec2( gx, gy ) )
   world.setAllowSleep( true )
+  world.setContactListener( new MobileContactListener )
 
   def createBlock( x: Float, y: Float, w: Float, h: Float ): Body = {
     val bodyDef = new BodyDef
@@ -75,6 +79,7 @@ class Simulation( gx: Int, gy: Int ) extends Actor {
     val fixtureDef = new FixtureDef
     fixtureDef.shape = blockShape
     fixtureDef.friction = 0
+    fixtureDef.density = mobileMass
 
     val body: Body = world.createBody( mobileBodyDef )
     body.createFixture( fixtureDef )
@@ -93,27 +98,33 @@ class Simulation( gx: Int, gy: Int ) extends Actor {
     body.applyForce( new Vec2( force, 0 ), body.getWorldCenter() )
   }
 
-  var mobiles: Map[ ActorRef, Body ] = Map()
+  def jump( body: Body, force: Double ) = {
+    val impulse = body.getMass() * force
+    body.applyLinearImpulse( new Vec2( 0, impulse.toFloat ), body.getWorldCenter() )
+  }
+
+  var mobiles: Map[ ActorRef, Mobile ] = Map()
 
   override def receive = LoggingReceive {
     case Player.Quit( mob ) if mobiles.contains( mob ) ⇒
-      world.destroyBody( mobiles( mob ) )
+      world.destroyBody( mobiles( mob ).body )
       mobiles -= mob
 
     case CreateBlock( x, y, w, h ) ⇒ createBlock( x, y, w, h )
 
     case CreateMobile( mob, x, y, w, h ) ⇒
       val body = createMobile( x, y, w, h )
-      mobiles += mob -> body
+      mobiles += mob -> new Mobile( body )
 
     case Step ⇒
       world.step( timestep, velocityIterations, positionIterations )
-      for ( ( mob, body ) ← mobiles ) {
-        val position = body.getPosition()
-        context.parent ! Snapshot( mob, position.x, position.y )
+      for ( ( ref, mob ) ← mobiles ) {
+        val position = mob.body.getPosition()
+        context.parent ! Snapshot( ref, position.x, position.y )
       }
 
-    case Player.Walking( mob, speed ) if mobiles.contains( mob ) ⇒ setSpeed( mobiles( mob ), speed )
-    case Player.Standing( mob ) if mobiles.contains( mob )       ⇒ setSpeed( mobiles( mob ), 0 )
+    case Player.WalkAttempt( mob, speed ) if mobiles.contains( mob ) ⇒ setSpeed( mobiles( mob ).body, speed )
+    case Player.JumpAttempt( mob, force ) if mobiles.contains( mob ) && mobiles( mob ).floorsTouched > 0 ⇒
+      jump( mobiles( mob ).body, jumpImpulse )
   }
 }

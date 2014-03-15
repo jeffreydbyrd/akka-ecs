@@ -6,11 +6,7 @@ import akka.actor.Props
 import akka.actor.actorRef2Scala
 import akka.event.LoggingReceive
 import game.Game
-import game.communications.commands.Click
-import game.communications.commands.CreateRect
-import game.communications.commands.KeyDown
-import game.communications.commands.KeyUp
-import game.communications.commands.Started
+import game.communications.commands._
 import game.communications.connection.PlayActorConnection
 import game.events.Event
 import game.events.EventHandler
@@ -24,9 +20,9 @@ object Player {
   case class Moved( mobile: ActorRef, x: Float, y: Float ) extends Event
 
   // Sent Messages
-  trait MobileBehavior
-  case class Walking( mobile: ActorRef, x: Int ) extends MobileBehavior with Event
-  case class Standing( mobile: ActorRef ) extends MobileBehavior with Event
+  trait MoveAttempt extends Event
+  case class WalkAttempt( mobile: ActorRef, x: Int ) extends MoveAttempt
+  case class JumpAttempt( mobile: ActorRef, f: Int ) extends MoveAttempt
   case class Quit( mob: ActorRef ) extends Event
   case class PlayerData( mobile: ActorRef, dims: Rect )
 }
@@ -35,13 +31,12 @@ class Player( val name: String ) extends EventHandler {
   import Player._
 
   var speed = 5
-  var hops = 5
+  var hops = 10
   var dimensions = Rect( name, 5, 25, 1, 2 )
 
-  /** Represents a RetryingActorConnection */
   var connection: ActorRef = _
 
-  val mobileBehavior: Receive = {
+  val coreBehavior: Receive = {
     case Game.NewPlayer( client, room, enumerator, channel ) ⇒
       connection = context.actorOf( PlayActorConnection.props( self, channel ), name = "connection" )
       client ! Game.Connected( connection, enumerator )
@@ -56,7 +51,7 @@ class Player( val name: String ) extends EventHandler {
       connection ! CreateRect( mobile.path.toString, rect, true )
 
     case Room.RoomData( fixtures ) ⇒ for ( f ← fixtures ) f match {
-      case r: Rect ⇒ connection ! game.communications.commands.CreateRect( r.id, r, true )
+      case r: Rect ⇒ connection ! CreateRect( r.id, r, true )
     }
 
     case Moved( mob, x, y ) ⇒
@@ -67,26 +62,22 @@ class Player( val name: String ) extends EventHandler {
     case Started ⇒
       logger.info( "received Started" )
       emit( Room.Arrived( self, dimensions ) )
-    case Click( x: Int, y: Int ) ⇒
-    case KeyUp( 81 )             ⇒ self ! PoisonPill
-    case KeyDown( 32 | 38 | 87 ) ⇒
+
+    case game.communications.commands.Quit ⇒ self ! PoisonPill
+    case Click( x: Int, y: Int )           ⇒
+    case Jump                              ⇒ emit( JumpAttempt( self, hops ) )
   }
 
-  val standing: Receive = {
-    case KeyDown( 65 | 37 ) ⇒ context become movingBehavior( -speed )
-    case KeyDown( 68 | 39 ) ⇒ context become movingBehavior( speed )
-    case Game.Tick          ⇒ emit( Standing( self ) )
-  }
+  def moving( s: Int, goingLeft: Boolean, goingRight: Boolean ): Receive =
+    coreBehavior orElse eventHandler orElse {
+      case Game.Tick               ⇒ emit( WalkAttempt( self, s ) )
+      case GoLeft if !goingLeft    ⇒ context become ( moving( s - speed, true, goingRight ) )
+      case StopLeft if goingLeft   ⇒ context become ( moving( s + speed, false, goingRight ) )
+      case GoRight if !goingRight  ⇒ context become ( moving( s + speed, goingLeft, true ) )
+      case StopRight if goingRight ⇒ context become ( moving( s - speed, goingLeft, false ) )
+    }
 
-  def moving( speed: Int ): Receive = {
-    case KeyUp( 65 | 68 | 37 | 39 ) ⇒ context become standingBehavior
-    case Game.Tick                  ⇒ emit( Walking( self, speed ) )
-  }
-
-  private def standingBehavior = LoggingReceive { standing orElse mobileBehavior orElse eventHandler }
-  private def movingBehavior( speed: Int ) = LoggingReceive { moving( speed ) orElse mobileBehavior orElse eventHandler }
-
-  override def receive: Receive = standingBehavior
+  override def receive: Receive = moving( 0, false, false )
 
   override def postStop {
     logger.info( s"terminated." )
