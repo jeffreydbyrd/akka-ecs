@@ -1,16 +1,17 @@
 package game.communications.connection
 
-import akka.actor.ActorRef
-import akka.actor.actorRef2Scala
-import game.events.Event
-import play.api.libs.iteratee.Enumerator
-import akka.actor.Props
-import play.api.libs.iteratee.Concurrent.Channel
-import game.communications.commands.PlayerCommand
 import akka.actor.Actor
+import akka.actor.ActorRef
 import akka.actor.PoisonPill
-import game.communications.commands.ClientCommand
+import akka.actor.Props
+import akka.actor.actorRef2Scala
 import akka.event.LoggingReceive
+import game.communications.commands.ClientCommand
+import game.communications.commands.PlayerCommand
+import game.communications.commands.PlayerQuit
+import game.communications.commands.PlayerStarted
+import play.api.libs.iteratee.Concurrent.Channel
+import play.api.libs.iteratee.Enumerator
 
 object PlayActorConnection {
   type MessageId = Long
@@ -28,16 +29,26 @@ object PlayActorConnection {
 class PlayActorConnection( val player: ActorRef, val channel: Channel[ String ] ) extends Actor {
   import PlayActorConnection._
 
-  // start at 1 b/c application sent a message already
-  var seq: MessageId = 1
+  var seq: MessageId = 0
   var retryers: Map[ MessageId, ActorRef ] = Map()
 
-  def retry( c: MessageId, msg: String ) {
+  def retry( msg: String ) {
     val prop = Retryer.props( msg, channel )
     retryers += seq -> context.actorOf( prop, "retryer_" + seq.toString )
   }
 
-  def send( msg: String ) = channel push msg
+  def send( cc: ClientCommand ) = {
+    val msg = s""" {
+        "seq" : $seq,
+        "ack":${cc.doRetry},
+        "type": "${cc.typ}",
+    	    "message" : ${cc.toJson}} """
+    channel push msg
+    if ( cc.doRetry ) {
+      retry( msg )
+      seq += 1
+    }
+  }
 
   /**
    * For a given MessageId, this kills its associated `helper` Actor
@@ -53,21 +64,15 @@ class PlayActorConnection( val player: ActorRef, val channel: Channel[ String ] 
   override def receive = LoggingReceive {
     case Ack( id )         ⇒ ack( id )
     case pc: PlayerCommand ⇒ context.parent ! pc
-    case cc: ClientCommand ⇒
-      val msg = s""" {
-        "seq" : $seq,
-        "ack":${cc.doRetry},
-        "type": "${cc.typ}",
-    	    "message" : ${cc.toJson}} """
-      send( msg )
-      if ( cc.doRetry ) {
-        retry( seq, msg )
-        seq += 1
-      }
+    case cc: ClientCommand ⇒ send( cc )
+  }
+
+  override def preStart {
+    send( PlayerStarted )
   }
 
   override def postStop {
-    send( s"""{"seq":$seq, "ack":false, "type":"quit"}""" )
+    send( PlayerQuit )
     channel.eofAndEnd
   }
 }

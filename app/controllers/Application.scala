@@ -12,7 +12,6 @@ import game.communications.commands.Invalid
 import game.communications.commands.KeyDown
 import game.communications.commands.KeyUp
 import game.communications.commands.PlayerCommand
-import game.communications.commands.Started
 import game.util.logging.PlayLoggingService
 import play.api.libs.iteratee.Done
 import play.api.libs.iteratee.Enumerator
@@ -23,6 +22,7 @@ import play.api.mvc.Action
 import play.api.mvc.Controller
 import play.api.mvc.WebSocket
 import game.communications.connection.PlayActorConnection
+import game.communications.commands.ClientStarted
 
 /**
  * Defines a Play controller that serves the client-side engine and handles
@@ -48,9 +48,7 @@ object Application extends Controller {
 
       case Game.Connected( connection, enumerator ) ⇒ // Success
         val iter = Iteratee.foreach[ String ] { connection ! getCommand( _ ) }
-        val initMessage = """{ "seq":0, "ack":true, "type":"started" }"""
-        val enum = Enumerator[ String ]( initMessage ).andThen( enumerator )
-        ( iter, enum )
+        ( iter, enumerator )
 
       case Game.NotConnected( message ) ⇒ // Connection error
         // A finished Iteratee sending EOF
@@ -71,7 +69,7 @@ object Application extends Controller {
     val parsed = Json.parse( json )
     val data = parsed \ "data"
     ( parsed \ "type" ).asOpt[ String ].flatMap {
-      case "started" ⇒ Some( Started )
+      case "started" ⇒ Some( ClientStarted )
       case "ack"     ⇒ data.asOpt[ Int ].map( PlayActorConnection.Ack( _ ) )
       case "keyup"   ⇒ data.asOpt[ Int ].map( KeyUp( _ ) )
       case "keydown" ⇒ data.asOpt[ Int ].map( KeyDown( _ ) )

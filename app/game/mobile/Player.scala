@@ -59,13 +59,13 @@ class Player( val name: String ) extends EventHandler {
       if ( mob == self )
         dimensions = Rect( name, x, y, dimensions.w, dimensions.h )
 
-    case Started ⇒
+    case ClientStarted ⇒
       logger.info( "received Started" )
       emit( Room.Arrived( self, dimensions ) )
 
-    case game.communications.commands.Quit ⇒ self ! PoisonPill
-    case Click( x: Int, y: Int )           ⇒
-    case Jump                              ⇒ emit( JumpAttempt( self, hops ) )
+    case ClientQuit              ⇒ self ! PoisonPill
+    case Click( x: Int, y: Int ) ⇒
+    case Jump                    ⇒ emit( JumpAttempt( self, hops ) )
   }
 
   def moving( s: Int, goingLeft: Boolean, goingRight: Boolean ): Receive =
