@@ -21,12 +21,12 @@ class PlayerSpec extends TestKit( ActorSystem( "PlayerSpec" ) )
     system.shutdown()
   }
 
-  test( "Player actor should return its own connection ActorRef when I send Start" ) {
+  test( "When I send NewPlayer, the Player actor should reply with Connected" ) {
     val client = TestProbe()
     val room = TestProbe()
+    val ( enumerator, channel ) = play.api.libs.iteratee.Concurrent.broadcast[ String ]
     val plr = system.actorOf( Props( classOf[ Player ], "case1" ), "case1-player" )
-
-    room.send( plr, Game.NewPlayer( room.ref, client.ref, null, null ) )
+    room.send( plr, Game.NewPlayer( client.ref, room.ref, enumerator, channel ) )
 
     client.expectMsgClass( classOf[ Game.Connected ] )
   }
