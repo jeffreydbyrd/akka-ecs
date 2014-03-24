@@ -11,14 +11,13 @@ trait ClientCommand {
 case object PlayerStarted extends ClientCommand {
   override val typ = "started"
   override val doRetry = true
-
-  override val toJson = """{ "seq":0, "ack":true, "type":"started" }"""
+  override val toJson = null;
 }
 
 case object PlayerQuit extends ClientCommand {
   override val typ = "quit"
   override val doRetry = false
-  override val toJson = """{"seq":$seq, "ack":false, "type":"quit"}"""
+  override val toJson = null;
 }
 
 case class CreateRect( val id: CmdId,

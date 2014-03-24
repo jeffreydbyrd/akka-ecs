@@ -1,28 +1,21 @@
 package controllers
 
-import scala.Int.int2long
 import scala.concurrent.ExecutionContext.Implicits.global
+
 import akka.actor.actorRef2Scala
 import akka.pattern.ask
 import game.Game
 import game.Game.AddPlayer
 import game.Game.timeout
-import game.communications.commands.Click
-import game.communications.commands.Invalid
-import game.communications.commands.KeyDown
-import game.communications.commands.KeyUp
 import game.communications.commands.PlayerCommand
 import game.util.logging.PlayLoggingService
 import play.api.libs.iteratee.Done
 import play.api.libs.iteratee.Enumerator
 import play.api.libs.iteratee.Input
 import play.api.libs.iteratee.Iteratee
-import play.api.libs.json.Json
 import play.api.mvc.Action
 import play.api.mvc.Controller
 import play.api.mvc.WebSocket
-import game.communications.connection.PlayActorConnection
-import game.communications.commands.ClientStarted
 
 /**
  * Defines a Play controller that serves the client-side engine and handles
@@ -47,7 +40,7 @@ object Application extends Controller {
     ( Game.game ? AddPlayer( username ) ) map {
 
       case Game.Connected( connection, enumerator ) ⇒ // Success
-        val iter = Iteratee.foreach[ String ] { connection ! getCommand( _ ) }
+        val iter = Iteratee.foreach[ String ] { connection ! PlayerCommand.getCommand( _ ) }
         ( iter, enumerator )
 
       case Game.NotConnected( message ) ⇒ // Connection error
@@ -56,29 +49,6 @@ object Application extends Controller {
         // Send an error and close the socket
         val enum = Enumerator[ String ]( message ).andThen( Enumerator.enumInput( Input.EOF ) )
         ( iter, enum )
-    }
-  }
-
-  /**
-   * Creates a PlayerCommand based on the contents of 'json'. The schema of the content is
-   * simply : { type: ..., data: ... }.
-   * There are only a few types of commands a client can send: keydown, keyup, click, and ack.
-   * Depending on the type, 'data' will be wrapped in the appropriate Event object.
-   */
-  def getCommand( json: String ): PlayerCommand = {
-    val parsed = Json.parse( json )
-    val data = parsed \ "data"
-    ( parsed \ "type" ).asOpt[ String ].flatMap {
-      case "started" ⇒ Some( ClientStarted )
-      case "ack"     ⇒ data.asOpt[ Int ].map( PlayActorConnection.Ack( _ ) )
-      case "keyup"   ⇒ data.asOpt[ Int ].map( KeyUp( _ ) )
-      case "keydown" ⇒ data.asOpt[ Int ].map( KeyDown( _ ) )
-      case "click" ⇒ for {
-        x ← ( data \ "x" ).asOpt[ Int ]
-        y ← ( data \ "y" ).asOpt[ Int ]
-      } yield Click( x, y )
-    } getOrElse {
-      Invalid( json )
     }
   }
 }
