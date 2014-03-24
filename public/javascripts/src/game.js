@@ -1,4 +1,6 @@
 function Game(canvasWidth, canvasHeight, k) {
+  var self = this;
+
   var stage = new PIXI.Stage(0x66FF99);
   var renderer = PIXI.autoDetectRenderer(canvasWidth, canvasHeight);
   document.body.appendChild(renderer.view);
@@ -42,5 +44,26 @@ function Game(canvasWidth, canvasHeight, k) {
     entities[id].position.x = convertXPos(x);
     entities[id].position.y = convertYPos(y);
     attemptRender();
+  };
+
+  this.bindTo = function(conn) {
+    conn.onReceive("started", function(args) { 
+      conn.send({ type:"started" }) 
+    });
+
+    conn.onReceive("create", function(params) {
+      self.create( params.id, params.position[0], params.position[1],
+                  params.dimensions[0], params.dimensions[1] );
+    });
+
+    conn.onReceive("move", function(params) {
+      self.move(params.id, params.position[0], params.position[1])
+    });
+
+    conn.onReceive("quit", function(params) {
+      conn.close();
+      document.write("<p>" + params.message + "</p>");
+    });
+
   };
 }

@@ -29,23 +29,20 @@ function Connection(url) {
   var expectedSeq = 0;
 
   function receive(data) {
-    console.log("Received : " + data);
     var data = JSON.parse(data);
     var params = data.message;
-    console.log(data);
 
     if (data.seq <= expectedSeq) {
       ack(data.seq);
     }
 
     if (data.seq == expectedSeq) {
-      callbacks[params.type](params);
+      callbacks[data.type](params);
       if (data.ack) expectedSeq += 1;
     }
   }
 
   function ack(id) {
-    console.log("Sending ACK " + id);
     var ack = {
       type : "ack",
       data : id
