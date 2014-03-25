@@ -1,12 +1,3 @@
-function contains(a, obj) {
-  for (var i = 0; i < a.length; i++) {
-    if (a[i] === obj) {
-      return true;
-    }
-  }
-  return false;
-}
-
 function InputListener(keybindings) {
 	var self = this;
 	var connection;
@@ -19,9 +10,7 @@ function InputListener(keybindings) {
     if (contains(needsReleased, type)) {
       type = "GO_" + type;
     }
-    var msg = {'type': type};
-    console.log(msg);
-    self.connection.send(msg);
+    self.connection.send({'type': type});
   }
 
   function keyUp(evt) {

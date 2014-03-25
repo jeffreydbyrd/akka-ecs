@@ -10,6 +10,7 @@ import game.events.EventHandler
 import game.mobile.Player
 import game.world.physics.Fixture
 import game.world.physics.Rect
+import game.world.physics.Simulation
 
 object Room {
   def props( name: String ) = Props( classOf[ Room ], name )
@@ -28,7 +29,7 @@ object Room {
 class Room( val id: String ) extends EventHandler {
   import Room._
 
-  val simulation = context.actorOf( Simulation.props(0, -25), name = "simulation" )
+  val simulation = context.actorOf( Simulation.props( 0, -25 ), name = "simulation" )
 
   val floor = new game.world.physics.Rect( "floor", 25, 1, 50, 1 )
   val leftWall = new game.world.physics.Rect( "left_wall", 1, 25, 1, 50 )
@@ -55,7 +56,7 @@ class Room( val id: String ) extends EventHandler {
       simulation ! Simulation.Step
       emit( Game.Tick )
 
-    case Simulation.Snapshot( mob, x, y ) ⇒ emit( Player.Moved( mob, x, y ) )
+    case snap: Simulation.Snapshot ⇒ subscribers.foreach( _ ! snap )
   }
 
   override def preStart() = {

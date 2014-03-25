@@ -8,18 +8,25 @@ function Connection(url) {
   var socket;
   var callbacks = {};
 
+  this.isClosed = true;
+
   this.onReceive = function(type, f) { callbacks[type] = f };
 
   this.start = function() {
     socket = new WebSocket(url);
+    this.isClosed = false;
     socket.onopen = function(evt) { console.log("websocket opened") };
     socket.onclose = function() { console.log("websocket closed") };
     socket.onmessage = function(evt) { receive(evt.data) };
   };
 
-  this.close = function() { socket.close() };
+  this.close = function() { socket.close(); this.isClosed = true; };
 
   this.send = function(data) {
+    if (this.isClosed) {
+      return;
+    }
+    
     if (typeof data === "string")
       socket.send(data);
     else

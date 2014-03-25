@@ -56,13 +56,15 @@ function Game(canvasWidth, canvasHeight, k) {
                   params.dimensions[0], params.dimensions[1] );
     });
 
-    conn.onReceive("move", function(params) {
-      self.move(params.id, params.position[0], params.position[1])
+    conn.onReceive("update_positions", function(params) {
+      for(id in params) {
+        self.move(id, params[id][0], params[id][1]);
+      }
     });
 
     conn.onReceive("quit", function(params) {
       conn.close();
-      document.write("<p>" + params.message + "</p>");
+      document.write("<p>later!</p>");
     });
 
   };

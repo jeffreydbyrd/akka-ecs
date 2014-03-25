@@ -1,4 +1,4 @@
-package game.world
+package game.world.physics
 
 import org.jbox2d.collision.shapes.PolygonShape
 import org.jbox2d.common.Vec2
@@ -7,6 +7,7 @@ import org.jbox2d.dynamics.BodyDef
 import org.jbox2d.dynamics.BodyType
 import org.jbox2d.dynamics.FixtureDef
 import org.jbox2d.dynamics.World
+
 import akka.actor.Actor
 import akka.actor.ActorRef
 import akka.actor.Props
@@ -14,8 +15,6 @@ import akka.actor.actorRef2Scala
 import akka.event.LoggingReceive
 import game.mobile.Player
 import game.util.logging.AkkaLoggingService
-import game.world.physics.Mobile
-import game.world.physics.MobileContactListener
 
 object Simulation {
   def props( gx: Int, gy: Int ) = Props( classOf[ Simulation ], gx, gy )
@@ -27,7 +26,7 @@ object Simulation {
   case class Checkup( mobile: ActorRef )
 
   // Sent Messages
-  case class Snapshot( mobile: ActorRef, x: Float, y: Float )
+  case class Snapshot( positions: Map[ ActorRef, ( Float, Float ) ] )
 }
 
 /**
@@ -118,12 +117,15 @@ class Simulation( gx: Int, gy: Int ) extends Actor {
 
     case Step ⇒
       world.step( timestep, velocityIterations, positionIterations )
+      var positions: Map[ ActorRef, ( Float, Float ) ] = Map()
       for ( ( ref, mob ) ← mobiles ) {
-        val position = mob.body.getPosition()
-        context.parent ! Snapshot( ref, position.x, position.y )
+        val pos = mob.body.getPosition()
+        positions += ref -> ( pos.x, pos.y )
       }
+      context.parent ! Snapshot( positions )
 
-    case Player.WalkAttempt( mob, speed ) if mobiles.contains( mob ) ⇒ setSpeed( mobiles( mob ).body, speed )
+    case Player.WalkAttempt( mob, speed ) if mobiles.contains( mob ) ⇒
+      setSpeed( mobiles( mob ).body, speed )
     case Player.JumpAttempt( mob, force ) if mobiles.contains( mob ) && mobiles( mob ).floorsTouched > 0 ⇒
       jump( mobiles( mob ).body, jumpImpulse )
   }

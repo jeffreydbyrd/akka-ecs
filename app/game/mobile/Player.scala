@@ -12,12 +12,10 @@ import game.events.Event
 import game.events.EventHandler
 import game.world.Room
 import game.world.physics.Rect
+import game.world.physics.Simulation
 
 object Player {
   def props( name: String ) = Props( classOf[ Player ], name )
-
-  // Received Messages:
-  case class Moved( mobile: ActorRef, x: Float, y: Float ) extends Event
 
   // Sent Messages
   trait MoveAttempt extends Event
@@ -54,10 +52,9 @@ class Player( val name: String ) extends EventHandler {
       case r: Rect ⇒ connection ! CreateRect( r.id, r, true )
     }
 
-    case Moved( mob, x, y ) ⇒
-      connection ! game.communications.commands.Move( mob.path.toString, x, y )
-      if ( mob == self )
-        dimensions = Rect( name, x, y, dimensions.w, dimensions.h )
+    case Simulation.Snapshot( positions ) ⇒
+      val ps = positions.map { case ( ref, pos ) ⇒ ref.path.toString -> pos }
+      connection ! game.communications.commands.UpdatePositions( ps )
 
     case ClientStarted ⇒
       logger.info( "received Started" )
