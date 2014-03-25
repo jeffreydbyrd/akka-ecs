@@ -19,7 +19,9 @@ function InputListener(keybindings) {
     if (contains(needsReleased, type)) {
       type = "GO_" + type;
     }
-    self.connection.send({'type': type});
+    var msg = {'type': type};
+    console.log(msg);
+    self.connection.send(msg);
   }
 
   function keyUp(evt) {

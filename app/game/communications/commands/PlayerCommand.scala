@@ -22,6 +22,7 @@ object PlayerCommand {
         val x = ( data \ "x" ).as[ Int ]
         val y = ( data \ "y" ).as[ Int ]
         Click( x, y )
+      case s ⇒ Invalid( s )
     }
   }
 }

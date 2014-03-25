@@ -1,14 +1,14 @@
 function Commands() {
-  var jump = "JUMP";
-  var left = "LEFT";
-  var right = "RIGHT";
-  var quit = "QUIT";
+  this.jump = "JUMP";
+  this.left = "LEFT";
+  this.right = "RIGHT";
+  this.quit = "QUIT";
 
   this.keyBindings = {
-    32:jump, 38:jump, 87:jump,
-    65:left, 37:left,
-    68:right, 39:right,
-    81:quit
+    32:this.jump, 38:this.jump, 87:this.jump,
+    65:this.left, 37:this.left,
+    68:this.right, 39:this.right,
+    81:this.quit
   };
 }
 
