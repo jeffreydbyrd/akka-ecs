@@ -1,24 +1,22 @@
-var USERNAME = function() {
+var username = function() {
   var hash = window.location.hash;
   var i = hash.indexOf("username=") + 9
   return hash.substring(i);
 }();
 
-var ADDRESS = function() {
+var address = function() {
   var href = window.location.href;
   var addr = href.substring(7, href.indexOf("/#"));
-  return "ws://" + addr + "/test?username=" + USERNAME;
+  return "ws://" + addr + "/test?username=" + username;
 }();
 
-var SCREEN_H = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
-var LENGTH = SCREEN_H / 1.1;
+var internal_dimensions = 50;
+var length = UTIL.screen_h / 1.1;
+var k = length / internal_dimensions;
 
-var INTERNAL_DIMENSIONS = 50;
-var K = LENGTH / INTERNAL_DIMENSIONS;
-
-var game = new Game(LENGTH, LENGTH, K);
+var game = new Game(length, length, k);
 var listener = new InputListener(COMMANDS.keyBindings);
-var conn = new Connection(ADDRESS);
+var conn = new Connection(address);
 
 game.bindTo(conn);
 listener.bindTo(conn);

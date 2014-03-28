@@ -26,7 +26,7 @@ function Connection(url) {
     if (this.isClosed) {
       return;
     }
-    
+
     if (typeof data === "string")
       socket.send(data);
     else
@@ -54,6 +54,6 @@ function Connection(url) {
       type : "ack",
       data : id
     };
-    self.send(ack);     
+    self.send(ack);
   }
 }

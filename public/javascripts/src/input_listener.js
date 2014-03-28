@@ -7,7 +7,7 @@ function InputListener(keybindings) {
 
   function keyDown(evt) {
     var type = keybindings[evt.keyCode];
-    if (contains(needsReleased, type)) {
+    if (UTIL.contains(needsReleased, type)) {
       type = "GO_" + type;
     }
     self.connection.send({'type': type});
@@ -15,7 +15,7 @@ function InputListener(keybindings) {
 
   function keyUp(evt) {
     var type = keybindings[evt.keyCode];
-    if (contains(needsReleased, type)) {
+    if (UTIL.contains(needsReleased, type)) {
       self.connection.send({'type': "STOP_"+type});
     }
   }

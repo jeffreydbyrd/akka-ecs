@@ -1,4 +1,8 @@
-function contains(arr, obj) {
+var UTIL = {}
+
+UTIL.screen_h = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
+
+UTIL.contains = function(arr, obj) {
   for (var i = 0; i < arr.length; i++) {
     if (arr[i] === obj) {
       return true;
@@ -17,7 +21,7 @@ function contains(arr, obj) {
  *
  * NOTE: when referencing 'this', know that the owner of 'f' is 'window'
  */
-function map(f) {
+UTIL.map = function(f) {
 	var arrs = [];
 	for (i in arguments) {
 		if (i > 0) {
@@ -41,7 +45,7 @@ function map(f) {
 	return loop([], arrs);
 }
 
-function exists(arr, p) {
+UTIL.exists = function(arr, p) {
 	for (i in arr) {
 		if (p(arr[i])) {
 			return true;
@@ -50,7 +54,7 @@ function exists(arr, p) {
 	return false;
 }
 
-function filter(arr, p) {
+UTIL.filter = function(arr, p) {
 	var builder = [];
 	for (i in arr) {
 		if (p(arr[i])) {
@@ -60,7 +64,7 @@ function filter(arr, p) {
 	return builder;
 }
 
-function reduce(arr, f) {
+UTIL.reduce = function(arr, f) {
   if (arr.length == 0) {
     throw new TypeError("Reduce of empty array with no initial value");
   }

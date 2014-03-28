@@ -1,5 +1,6 @@
 package game.world.physics
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import org.jbox2d.collision.shapes.PolygonShape
 import org.jbox2d.common.Vec2
 import org.jbox2d.dynamics.Body
@@ -7,7 +8,6 @@ import org.jbox2d.dynamics.BodyDef
 import org.jbox2d.dynamics.BodyType
 import org.jbox2d.dynamics.FixtureDef
 import org.jbox2d.dynamics.World
-
 import akka.actor.Actor
 import akka.actor.ActorRef
 import akka.actor.Props
@@ -15,12 +15,15 @@ import akka.actor.actorRef2Scala
 import akka.event.LoggingReceive
 import game.mobile.Player
 import game.util.logging.AkkaLoggingService
+import game.Game
+import scala.concurrent.duration._
 
 object Simulation {
   def props( gx: Int, gy: Int ) = Props( classOf[ Simulation ], gx, gy )
 
   // Received Messages
   case object Step
+  case object EmitSnapshot
   case class CreateBlock( x: Float, y: Float, w: Float, h: Float )
   case class CreateMobile( mobile: ActorRef, x: Float, y: Float, w: Float, h: Float )
   case class Checkup( mobile: ActorRef )
@@ -30,17 +33,19 @@ object Simulation {
 }
 
 /**
- * A 2D physics simulation, generally used to represent a World's or Room's physics.
- * Gravity represents real world gravity value (m/s^2). So gx defaults to 0, and
- * gy defaults to -9.
+ * An actor used to simulate a 2D Room's physics
  */
 class Simulation( gx: Int, gy: Int ) extends Actor {
   import Simulation._
 
   val logger = new AkkaLoggingService( this, context )
+  val snapshotTimer =
+    Game.system.scheduler.schedule( 100 milliseconds, 50 milliseconds, self, EmitSnapshot )
+
   val jumpImpulse = -0.5 * gy
   val mobileMass = 2
 
+  // Not really sure what these are for... all the tutorials use these values
   val timestep = 1.0f / 60.0f
   val velocityIterations = 6
   val positionIterations = 2
@@ -115,8 +120,9 @@ class Simulation( gx: Int, gy: Int ) extends Actor {
       val body = createMobile( x, y, w, h )
       mobiles += mob -> new Mobile( body )
 
-    case Step ⇒
-      world.step( timestep, velocityIterations, positionIterations )
+    case Step ⇒ world.step( timestep, velocityIterations, positionIterations )
+
+    case EmitSnapshot ⇒
       var positions: Map[ ActorRef, ( Float, Float ) ] = Map()
       for ( ( ref, mob ) ← mobiles ) {
         val pos = mob.body.getPosition()
@@ -126,6 +132,7 @@ class Simulation( gx: Int, gy: Int ) extends Actor {
 
     case Player.WalkAttempt( mob, speed ) if mobiles.contains( mob ) ⇒
       setSpeed( mobiles( mob ).body, speed )
+
     case Player.JumpAttempt( mob, force ) if mobiles.contains( mob ) && mobiles( mob ).floorsTouched > 0 ⇒
       jump( mobiles( mob ).body, jumpImpulse )
   }

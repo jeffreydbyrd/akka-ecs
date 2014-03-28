@@ -1,7 +1,6 @@
 package game
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration.DurationInt
 import akka.actor.ActorRef
 import akka.actor.ActorSystem
 import akka.actor.Cancellable
