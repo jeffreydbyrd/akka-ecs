@@ -7,7 +7,7 @@ import akka.pattern.ask
 import game.Game
 import game.Game.AddPlayer
 import game.Game.timeout
-import game.communications.commands.PlayerCommand
+import game.communications.commands.ServerCommand
 import game.util.logging.PlayLoggingService
 import play.api.libs.iteratee.Done
 import play.api.libs.iteratee.Enumerator
@@ -40,7 +40,7 @@ object Application extends Controller {
     ( Game.game ? AddPlayer( username ) ) map {
 
       case Game.Connected( connection, enumerator ) ⇒ // Success
-        val iter = Iteratee.foreach[ String ] { connection ! PlayerCommand.getCommand( _ ) }
+        val iter = Iteratee.foreach[ String ] { connection ! ServerCommand.getCommand( _ ) }
         ( iter, enumerator )
 
       case Game.NotConnected( message ) ⇒ // Connection error

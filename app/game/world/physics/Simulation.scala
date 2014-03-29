@@ -13,7 +13,7 @@ import akka.actor.ActorRef
 import akka.actor.Props
 import akka.actor.actorRef2Scala
 import akka.event.LoggingReceive
-import game.mobile.Player
+import game.mobile.ClientProxy
 import game.util.logging.AkkaLoggingService
 import game.Game
 import scala.concurrent.duration._
@@ -33,7 +33,7 @@ object Simulation {
 }
 
 /**
- * An actor used to simulate a 2D Room's physics
+ * An actor that simulates a 2D Room's physics
  */
 class Simulation( gx: Int, gy: Int ) extends Actor {
   import Simulation._
@@ -110,7 +110,7 @@ class Simulation( gx: Int, gy: Int ) extends Actor {
   var mobiles: Map[ ActorRef, Mobile ] = Map()
 
   override def receive = LoggingReceive {
-    case Player.Quit( mob ) if mobiles.contains( mob ) ⇒
+    case ClientProxy.Quit( mob ) if mobiles.contains( mob ) ⇒
       world.destroyBody( mobiles( mob ).body )
       mobiles -= mob
 
@@ -130,10 +130,10 @@ class Simulation( gx: Int, gy: Int ) extends Actor {
       }
       context.parent ! Snapshot( positions )
 
-    case Player.WalkAttempt( mob, speed ) if mobiles.contains( mob ) ⇒
+    case ClientProxy.WalkAttempt( mob, speed ) if mobiles.contains( mob ) ⇒
       setSpeed( mobiles( mob ).body, speed )
 
-    case Player.JumpAttempt( mob, force ) if mobiles.contains( mob ) && mobiles( mob ).floorsTouched > 0 ⇒
+    case ClientProxy.JumpAttempt( mob ) if mobiles.contains( mob ) && mobiles( mob ).floorsTouched > 0 ⇒
       jump( mobiles( mob ).body, jumpImpulse )
   }
 }

@@ -7,9 +7,9 @@ import akka.actor.Props
 import akka.actor.actorRef2Scala
 import akka.event.LoggingReceive
 import game.communications.commands.ClientCommand
-import game.communications.commands.PlayerCommand
-import game.communications.commands.PlayerQuit
-import game.communications.commands.PlayerStarted
+import game.communications.commands.ServerCommand
+import game.communications.commands.ServerQuit
+import game.communications.commands.ServerReady
 import play.api.libs.iteratee.Concurrent.Channel
 import play.api.libs.iteratee.Enumerator
 
@@ -20,7 +20,7 @@ object PlayActorConnection {
 
   // Received Messages
   case object GetEnum
-  case class Ack( id: MessageId ) extends PlayerCommand
+  case class Ack( id: MessageId ) extends ServerCommand
 
   // Sent Messages
   case class ReturnEnum( enum: Enumerator[ String ] )
@@ -63,16 +63,16 @@ class PlayActorConnection( val player: ActorRef, val channel: Channel[ String ] 
 
   override def receive = LoggingReceive {
     case Ack( id )         ⇒ ack( id )
-    case pc: PlayerCommand ⇒ context.parent ! pc
+    case pc: ServerCommand ⇒ context.parent ! pc
     case cc: ClientCommand ⇒ send( cc )
   }
 
-  override def preStart {
-    send( PlayerStarted )
+  override def preStart = {
+    send( ServerReady )
   }
 
   override def postStop {
-    send( PlayerQuit )
+    send( ServerQuit )
     channel.eofAndEnd
   }
 }

@@ -5,28 +5,23 @@ import akka.actor.Props
 import akka.actor.actorRef2Scala
 import akka.event.LoggingReceive
 import game.Game
-import game.events.Event
-import game.events.EventHandler
-import game.mobile.Player
+import game.mobile.ClientProxy
 import game.world.physics.Fixture
 import game.world.physics.Rect
 import game.world.physics.Simulation
+import akka.actor.Actor
 
 object Room {
   def props( name: String ) = Props( classOf[ Room ], name )
 
   // Received Messages
-  case class Arrived( mobile: ActorRef, dims: Rect ) extends Event
+  case class Arrived( mobile: ActorRef, dims: Rect )
 
   // Sent Messages
   case class RoomData( fixtures: Iterable[ Fixture ] )
 }
 
-/**
- * An ActorEventHandler that mediates almost all Events that propagate through the world.
- * Every Room in existence shares the same 4 Surfaces to form a box that contains mobiles.
- */
-class Room( val id: String ) extends EventHandler {
+class Room( val id: String ) extends Actor {
   import Room._
 
   val simulation = context.actorOf( Simulation.props( 0, -25 ), name = "simulation" )
@@ -37,35 +32,31 @@ class Room( val id: String ) extends EventHandler {
   val top = new game.world.physics.Rect( "top", 25, 49, 50, 1 )
 
   val fixtures = Set( floor, leftWall, rightWall, top )
+  var proxies: Set[ ActorRef ] = Set()
 
-  val roomBehavior: Receive = {
+  def receive: Receive = LoggingReceive {
     case arr @ Arrived( mobile, Rect( _, x, y, w, h ) ) ⇒
-      subscribers += mobile
+      proxies += mobile
       simulation ! Simulation.CreateMobile( mobile, x, y, w, h )
-      sender ! RoomData( fixtures )
-      emit( arr )
+      mobile ! RoomData( fixtures )
+      for ( p ← proxies ) p ! arr
 
-    case q @ Player.Quit( mob ) ⇒
-      subscribers -= mob
+    case q @ ClientProxy.Quit( mob ) ⇒
+      proxies -= mob
       context.parent ! q
       simulation ! q
 
-    case evt: Player.MoveAttempt ⇒ simulation ! evt
+    case evt: ClientProxy.MoveAttempt ⇒ simulation ! evt
 
     case Game.Tick ⇒
       simulation ! Simulation.Step
-      emit( Game.Tick )
+      for ( p ← proxies ) p ! Game.Tick
 
-    case snap: Simulation.Snapshot ⇒ subscribers.foreach( _ ! snap )
+    case snap: Simulation.Snapshot ⇒ for ( p ← proxies ) p ! snap
   }
 
   override def preStart() = {
     for ( f ← fixtures )
       simulation ! Simulation.CreateBlock( f.x, f.y, f.w, f.h )
   }
-
-  override def receive = LoggingReceive {
-    eventHandler orElse roomBehavior
-  }
-
 }

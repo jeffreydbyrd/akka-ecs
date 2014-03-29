@@ -4,7 +4,7 @@ import org.scalatest.FunSuite
 import game.communications.connection.PlayActorConnection
 
 class PlayerCommandSpec extends FunSuite {
-  import PlayerCommand._
+  import ServerCommand._
 
   val ack = """ {"type" : "ack" , "data" : 42} """
   val left = """{"type" : "GO_LEFT" }"""

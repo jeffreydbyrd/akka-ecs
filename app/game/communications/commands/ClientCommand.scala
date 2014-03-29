@@ -3,19 +3,22 @@ package game.communications.commands
 import game.world.physics.Rect
 import play.api.libs.json.Json
 
+/**
+ * A Command that goes to the Client (ie. the browser)
+ */
 trait ClientCommand {
   val typ: String
   val doRetry: Boolean
   def toJson: String
 }
 
-case object PlayerStarted extends ClientCommand {
+case object ServerReady extends ClientCommand {
   override val typ = "started"
   override val doRetry = true
   override val toJson = null;
 }
 
-case object PlayerQuit extends ClientCommand {
+case object ServerQuit extends ClientCommand {
   override val typ = "quit"
   override val doRetry = false
   override val toJson = null;

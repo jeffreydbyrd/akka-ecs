@@ -5,8 +5,11 @@ import scala.Int.int2long
 import game.communications.connection.PlayActorConnection
 import play.api.libs.json.Json
 
-object PlayerCommand {
-  def getCommand( json: String ): PlayerCommand = {
+/**
+ * A ServerCommand is a command that goes to the Server. Generally directed to a ClientProxy actor
+ */
+object ServerCommand {
+  def getCommand( json: String ): ServerCommand = {
     val parsed = Json.parse( json )
     val data = parsed \ "data"
     ( parsed \ "type" ).as[ String ] match {
@@ -27,14 +30,14 @@ object PlayerCommand {
   }
 }
 
-trait PlayerCommand
+trait ServerCommand
 
-case object ClientStarted extends PlayerCommand
-case object ClientQuit extends PlayerCommand
-case class Click( x: Int, y: Int ) extends PlayerCommand
-case object Jump extends PlayerCommand
-case object GoLeft extends PlayerCommand
-case object GoRight extends PlayerCommand
-case object StopLeft extends PlayerCommand
-case object StopRight extends PlayerCommand
-case class Invalid( s: String ) extends PlayerCommand
+case object ClientStarted extends ServerCommand
+case object ClientQuit extends ServerCommand
+case class Click( x: Int, y: Int ) extends ServerCommand
+case object Jump extends ServerCommand
+case object GoLeft extends ServerCommand
+case object GoRight extends ServerCommand
+case object StopLeft extends ServerCommand
+case object StopRight extends ServerCommand
+case class Invalid( s: String ) extends ServerCommand
