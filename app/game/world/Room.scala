@@ -46,7 +46,7 @@ class Room( val id: String ) extends Actor {
       context.parent ! q
       simulation ! q
 
-    case evt: ClientProxy.MoveAttempt ⇒ simulation ! evt
+    case evt: ClientProxy.Move ⇒ simulation ! evt
 
     case Game.Tick ⇒
       simulation ! Simulation.Step

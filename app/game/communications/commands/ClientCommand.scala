@@ -24,7 +24,7 @@ case object ServerQuit extends ClientCommand {
   override val toJson = null;
 }
 
-case class CreateRect( val id: EntityId,
+case class CreateRect( val id: String,
                        val r: Rect,
                        override val doRetry: Boolean = false )
     extends ClientCommand {
@@ -38,7 +38,7 @@ case class CreateRect( val id: EntityId,
   }"""
 }
 
-case class CreateLine( val id: EntityId,
+case class CreateLine( val id: String,
                        override val doRetry: Boolean = false )
     extends ClientCommand {
 
@@ -47,7 +47,7 @@ case class CreateLine( val id: EntityId,
   override val toJson = ""
 }
 
-case class UpdatePositions( positions: Map[ EntityId, ( Float, Float ) ],
+case class UpdatePositions( positions: Map[ String, ( Float, Float ) ],
                             override val doRetry: Boolean = false ) extends ClientCommand {
   override val typ = "update_positions";
 
@@ -59,7 +59,7 @@ case class UpdatePositions( positions: Map[ EntityId, ( Float, Float ) ],
   override val toJson = json.toString
 }
 
-case class Move( id: EntityId,
+case class Move( id: String,
                  x: Float,
                  y: Float,
                  override val doRetry: Boolean = false ) extends ClientCommand {

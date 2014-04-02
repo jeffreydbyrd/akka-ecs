@@ -130,10 +130,10 @@ class Simulation( gx: Int, gy: Int ) extends Actor {
       }
       context.parent ! Snapshot( positions )
 
-    case ClientProxy.WalkAttempt( mob, speed ) if mobiles.contains( mob ) ⇒
-      setSpeed( mobiles( mob ).body, speed )
+//    case ClientProxy.WalkAttempt( mob, speed ) if mobiles.contains( mob ) ⇒
+//      setSpeed( mobiles( mob ).body, speed )
 
-    case ClientProxy.JumpAttempt( mob ) if mobiles.contains( mob ) && mobiles( mob ).floorsTouched > 0 ⇒
-      jump( mobiles( mob ).body, jumpImpulse )
+//    case ClientProxy.JumpAttempt( mob ) if mobiles.contains( mob ) && mobiles( mob ).floorsTouched > 0 ⇒
+//      jump( mobiles( mob ).body, jumpImpulse )
   }
 }

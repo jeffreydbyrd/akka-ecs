@@ -14,20 +14,20 @@ import game.world.physics.Simulation
 import akka.actor.Actor
 import play.api.libs.iteratee.Enumerator
 import play.api.libs.iteratee.Concurrent.Channel
+import game.world.physics.Fixture
+import game.Game.Connect
 
 object ClientProxy {
-  def props( name: String,
-             client: ActorRef,
-             room: ActorRef ) =
-    Props( classOf[ ClientProxy ], name, client, room )
+  def props( game: ActorRef, inputSync: ActorRef ) = Props( classOf[ ClientProxy ], game, inputSync )
 
   // Sent Messages
   trait Command
-  trait MoveAttempt extends Command
-  case object GoLeft extends MoveAttempt
-  case object GoRight extends MoveAttempt
-  case class WalkAttempt( mobile: ActorRef, x: Int ) extends MoveAttempt
-  case class JumpAttempt( mobile: ActorRef ) extends MoveAttempt
+  trait Direction
+  case object Left extends Direction
+  case object Right extends Direction
+  case class Move( mobile: ActorRef, dir: Direction ) extends Command
+  case class Halt( mobile: ActorRef, dir: Direction ) extends Command
+  case object Jump extends Command
   case class Quit( mob: ActorRef )
   case class PlayerData( mobile: ActorRef, dims: Rect )
 }
@@ -37,15 +37,12 @@ object ClientProxy {
  * state about its character. It merely provides commands and consumes updates that it delivers
  * to the real Client. The ClientProxy attaches to a Room
  */
-class ClientProxy( val name: String,
-                   val _client: ActorRef,
-                   var room: ActorRef ) extends Actor {
+class ClientProxy( val game: ActorRef, val inputComponent: ActorRef ) extends Actor {
   import ClientProxy._
 
-  var dimensions = Rect( name, 5, 25, 1, 2 )
   var connection: ActorRef = _
 
-  def updateRoomData( fixtures: Iterable[ game.world.physics.Fixture ] ) =
+  def updateRoomData( fixtures: Iterable[ Fixture ] ) =
     for ( f ← fixtures ) f match {
       case r: Rect ⇒ connection ! CreateRect( r.id, r, true )
     }
@@ -58,21 +55,19 @@ class ClientProxy( val name: String,
     connection ! UpdatePositions( ps )
   }
 
-  override val receive: Receive = {
-    case ClientStarted ⇒ room ! Room.Arrived( self, dimensions )
-    case ClientProxy.PlayerData( mobile, rect ) if mobile != self ⇒ createMobile( mobile, rect )
-    case Room.RoomData( fixtures ) ⇒ updateRoomData( fixtures )
-    case Simulation.Snapshot( positions ) ⇒ updateMobilePositions( positions )
-    case Jump ⇒ room ! JumpAttempt( self )
-    case ClientQuit ⇒ self ! PoisonPill
-  }
-
-  override def postStop = room ! Quit( self )
-
-  override def preStart = {
+  def connectTo( playController: ActorRef ) = {
     val ( enumerator, channel ) = play.api.libs.iteratee.Concurrent.broadcast[ String ]
     this.connection =
       context.actorOf( PlayActorConnection.props( self, channel ), name = "connection" )
-    _client ! Game.Connected( connection, enumerator )
+    game ! ( playController, inputComponent, Game.Connected( connection, enumerator ) )
+  }
+
+  override val receive: Receive = {
+    case Connect( playController ) ⇒ connectTo( playController )
+    case ClientStarted ⇒
+    case Simulation.Snapshot( positions ) ⇒ updateMobilePositions( positions )
+    case ClientProxy.PlayerData( mobile, rect ) if mobile != self ⇒ createMobile( mobile, rect )
+    case Room.RoomData( fixtures ) ⇒ updateRoomData( fixtures )
+    case ClientQuit ⇒ self ! PoisonPill
   }
 }
