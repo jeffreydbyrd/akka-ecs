@@ -13,9 +13,9 @@ import akka.actor.ActorRef
 import akka.actor.Props
 import akka.actor.actorRef2Scala
 import akka.event.LoggingReceive
-import game.mobile.ClientProxy
+import game.communications.proxies.ClientProxy
 import game.util.logging.AkkaLoggingService
-import game.Game
+import game.core.Game
 import scala.concurrent.duration._
 
 object Simulation {

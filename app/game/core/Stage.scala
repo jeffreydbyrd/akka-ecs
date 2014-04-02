@@ -6,6 +6,8 @@ import akka.actor.Props
 import game.components.ComponentType
 import game.components.InputComponent
 import game.entity.EntityId
+import game.systems.EchoSystem
+import game.entity.Entity
 
 object Stage {
   def props = Props( classOf[ Stage ] )
@@ -14,11 +16,12 @@ object Stage {
 }
 
 class Stage extends Actor {
-  private var components: Set[ ( ComponentType, ActorRef ) ] = Set()
+  private var entities: Set[ Entity ] = Set()
+  private val echoSystem: ActorRef = context.actorOf( EchoSystem.props )
 
   override val receive = manageComponents
   val manageComponents: Receive = {
-    case component: ( ComponentType, ActorRef ) ⇒ components += component
+    case ent: Entity ⇒ entities += ent
   }
 
 }

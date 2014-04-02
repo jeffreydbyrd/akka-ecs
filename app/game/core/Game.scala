@@ -1,24 +1,21 @@
-package game
+package game.core
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import akka.actor.ActorRef
 import akka.actor.ActorSystem
-import akka.actor.Cancellable
 import akka.actor.Props
 import akka.event.LoggingReceive
 import akka.util.Timeout.durationToTimeout
-import game.world.Room
 import scala.concurrent.duration._
-import scala.concurrent.Future
-import play.api.libs.iteratee.Iteratee
 import play.api.libs.iteratee.Enumerator
-import game.mobile.ClientProxy
-import game.communications.connection.PlayActorConnection
 import akka.actor.Actor
-import play.api.libs.iteratee.Concurrent.Channel
 import game.core.Stage
 import game.components.InputComponent
 import game.entity.EntityId
+import game.components.ComponentType
+import akka.actor.actorRef2Scala
+import game.communications.proxies.ClientProxy
+import game.entity.Entity
 
 object Game {
   // global values:
@@ -47,8 +44,8 @@ sealed class Game extends Actor {
   val ticker =
     system.scheduler.schedule( 100 milliseconds, 20 milliseconds, self, Tick )
 
-  override def receive = manageEntities( 0 )
-  def manageEntities( count: Int ): Receive = LoggingReceive {
+  override def receive = managePlayers( 0 )
+  def managePlayers( count: Int ): Receive = LoggingReceive {
     case Tick ⇒ stage ! Tick
 
     case AddPlayer( username ) if !clients.contains( username ) ⇒
@@ -59,15 +56,17 @@ sealed class Game extends Actor {
       val proxy = context.actorOf( ClientProxy.props( self, inputComp ), name = username )
       clients += username -> proxy
       proxy ! Connect( sender )
-      context become manageEntities( count + 1 )
+      context become managePlayers( count + 1 )
 
     case AddPlayer( username ) ⇒
       sender ! NotConnected( s""" {"error" : "username '$username' already in use"} """ )
 
     case ( play: ActorRef, inputComp: ActorRef, conn: Connected ) ⇒
       play ! conn
-      stage ! ( ???, sender )
-      stage ! ( InputComponent.Input, inputComp )
+      stage ! new Entity(
+        EntityId( count ),
+        Map( ComponentType.Client -> sender, ComponentType.Input -> inputComp )
+      )
 
     case ClientProxy.Quit( ref ) ⇒ clients = clients filterNot { case ( s, ar ) ⇒ ar == ref }
   }

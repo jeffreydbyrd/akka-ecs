@@ -4,8 +4,8 @@ import akka.actor.ActorRef
 import akka.actor.Props
 import akka.actor.actorRef2Scala
 import akka.event.LoggingReceive
-import game.Game
-import game.mobile.ClientProxy
+import game.core.Game
+import game.communications.proxies.ClientProxy
 import game.world.physics.Fixture
 import game.world.physics.Rect
 import game.world.physics.Simulation

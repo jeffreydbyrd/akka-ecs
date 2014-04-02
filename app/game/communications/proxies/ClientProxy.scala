@@ -1,24 +1,25 @@
-package game.mobile
+package game.communications.proxies
 
+import akka.actor.Actor
 import akka.actor.ActorRef
 import akka.actor.PoisonPill
 import akka.actor.Props
 import akka.actor.actorRef2Scala
-import akka.event.LoggingReceive
-import game.Game
-import game.communications.commands._
+import game.communications.commands.ClientQuit
+import game.communications.commands.ClientStarted
+import game.communications.commands.CreateRect
+import game.communications.commands.UpdatePositions
 import game.communications.connection.PlayActorConnection
+import game.core.Game
+import game.core.Game.Connect
 import game.world.Room
+import game.world.physics.Fixture
 import game.world.physics.Rect
 import game.world.physics.Simulation
-import akka.actor.Actor
-import play.api.libs.iteratee.Enumerator
-import play.api.libs.iteratee.Concurrent.Channel
-import game.world.physics.Fixture
-import game.Game.Connect
+import game.communications.commands.ServerCommand
 
 object ClientProxy {
-  def props( game: ActorRef, inputSync: ActorRef ) = Props( classOf[ ClientProxy ], game, inputSync )
+  def props( game: ActorRef, inputComp: ActorRef ) = Props( classOf[ ClientProxy ], game, inputComp )
 
   // Sent Messages
   trait Command
@@ -65,6 +66,7 @@ class ClientProxy( val game: ActorRef, val inputComponent: ActorRef ) extends Ac
   override val receive: Receive = {
     case Connect( playController ) ⇒ connectTo( playController )
     case ClientStarted ⇒
+    case cmd: ServerCommand ⇒ inputComponent ! cmd
     case Simulation.Snapshot( positions ) ⇒ updateMobilePositions( positions )
     case ClientProxy.PlayerData( mobile, rect ) if mobile != self ⇒ createMobile( mobile, rect )
     case Room.RoomData( fixtures ) ⇒ updateRoomData( fixtures )

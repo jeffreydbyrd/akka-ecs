@@ -36,6 +36,7 @@ case object ClientStarted extends ServerCommand
 case object ClientQuit extends ServerCommand
 case class Click( x: Int, y: Int ) extends ServerCommand
 case object Jump extends ServerCommand
+case object StopJump extends ServerCommand
 case object GoLeft extends ServerCommand
 case object GoRight extends ServerCommand
 case object StopLeft extends ServerCommand

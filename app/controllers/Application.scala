@@ -4,9 +4,9 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 import akka.actor.actorRef2Scala
 import akka.pattern.ask
-import game.Game
-import game.Game.AddPlayer
-import game.Game.timeout
+import game.core.Game
+import game.core.Game.AddPlayer
+import game.core.Game.timeout
 import game.communications.commands.ServerCommand
 import game.util.logging.PlayLoggingService
 import play.api.libs.iteratee.Done
