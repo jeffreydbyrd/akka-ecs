@@ -5,7 +5,7 @@ import game.entity.Entity
 
 object System {
   // Received
-  case class UpdateComponents( ents: List[ Entity ] )
+  case class UpdateComponents( ents: Set[ Entity ] )
 
   // Sent
 

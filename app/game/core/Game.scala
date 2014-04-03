@@ -1,21 +1,21 @@
 package game.core
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration.DurationInt
+import akka.actor.Actor
 import akka.actor.ActorRef
 import akka.actor.ActorSystem
 import akka.actor.Props
+import akka.actor.actorRef2Scala
 import akka.event.LoggingReceive
+import akka.pattern.ask
 import akka.util.Timeout.durationToTimeout
-import scala.concurrent.duration._
-import play.api.libs.iteratee.Enumerator
-import akka.actor.Actor
-import game.core.Stage
+import game.communications.proxies.ClientProxy
 import game.components.InputComponent
 import game.entity.EntityId
-import game.components.ComponentType
-import akka.actor.actorRef2Scala
-import game.communications.proxies.ClientProxy
-import game.entity.Entity
+import game.entity.PlayerEntity
+import play.api.libs.iteratee.Enumerator
+import akka.actor.Terminated
 
 object Game {
   // global values:
@@ -27,7 +27,7 @@ object Game {
   case class AddPlayer( name: String )
 
   // Sent messages
-  case class Connect( playController: ActorRef )
+  case object Connect
   case class Connected( connection: ActorRef, enum: Enumerator[ String ] )
   case class NotConnected( message: String )
   case object Tick
@@ -36,39 +36,37 @@ object Game {
 sealed class Game extends Actor {
   import Game._
 
-  // We all share one room for now
-  val stage = context.actorOf( Stage.props, name = "STAGE" )
+  val stage = context.actorOf( Stage.props, name = "stage" )
 
   var clients: Map[ String, ActorRef ] = Map()
 
   val ticker =
-    system.scheduler.schedule( 100 milliseconds, 20 milliseconds, self, Tick )
+    system.scheduler.schedule( 100 milliseconds, 2000 milliseconds, stage, Tick )
+
+  def createClientProxy( username: String, count: Int ) = {
+    context become managePlayers( count + 1 )
+    val inputComp = context.actorOf( InputComponent.props, s"InputComponent_${count.toString}" )
+    val proxy = context.actorOf( ClientProxy.props( inputComp ), username )
+    context.watch( proxy )
+    clients += username -> proxy
+    val playController = sender // outer ref to sender b/c it will change
+    ( proxy ? Connect ) map {
+      case conn: Connected ⇒
+        playController ! conn
+        stage ! Stage.Add( new PlayerEntity( EntityId( count ), inputComp, proxy ) )
+    }
+  }
 
   override def receive = managePlayers( 0 )
   def managePlayers( count: Int ): Receive = LoggingReceive {
-    case Tick ⇒ stage ! Tick
-
     case AddPlayer( username ) if !clients.contains( username ) ⇒
-      val inputComp = context.actorOf(
-        InputComponent.props( EntityId( count ) ),
-        name = s"InputComponent_${count.toString}"
-      )
-      val proxy = context.actorOf( ClientProxy.props( self, inputComp ), name = username )
-      clients += username -> proxy
-      proxy ! Connect( sender )
-      context become managePlayers( count + 1 )
+      createClientProxy( username, count )
 
     case AddPlayer( username ) ⇒
       sender ! NotConnected( s""" {"error" : "username '$username' already in use"} """ )
 
-    case ( play: ActorRef, inputComp: ActorRef, conn: Connected ) ⇒
-      play ! conn
-      stage ! new Entity(
-        EntityId( count ),
-        Map( ComponentType.Client -> sender, ComponentType.Input -> inputComp )
-      )
-
-    case ClientProxy.Quit( ref ) ⇒ clients = clients filterNot { case ( s, ar ) ⇒ ar == ref }
+    case Terminated( ref ) ⇒
+      clients = clients filterNot { case ( s, ar ) ⇒ ar == ref }
   }
 
 }

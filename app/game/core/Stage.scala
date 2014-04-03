@@ -1,27 +1,45 @@
 package game.core
 
+import Game.Tick
 import akka.actor.Actor
-import akka.actor.ActorRef
 import akka.actor.Props
-import game.components.ComponentType
-import game.components.InputComponent
-import game.entity.EntityId
-import game.systems.EchoSystem
 import game.entity.Entity
+import akka.event.LoggingReceive
+import game.systems.EchoSystem
+import akka.actor.ActorRef
+import game.systems.QuitSystem
 
 object Stage {
-  def props = Props( classOf[ Stage ] )
+  val props = Props( classOf[ Stage ] )
 
-  // received messages
+  // Received:
+  case class Add( e: Entity )
+  case class Rem( e: Entity )
 }
 
 class Stage extends Actor {
-  private var entities: Set[ Entity ] = Set()
-  private val echoSystem: ActorRef = context.actorOf( EchoSystem.props )
+  import Game.Tick
+  import Stage._
 
-  override val receive = manageComponents
-  val manageComponents: Receive = {
-    case ent: Entity ⇒ entities += ent
+  private var entities: Set[ Entity ] = Set()
+  private var systems: Set[ ActorRef ] = Set(
+    context.actorOf( QuitSystem.props, "quit_system" )
+  )
+
+  def updateEntities() =
+    for ( sys ← systems )
+      sys ! game.systems.System.UpdateComponents( entities )
+
+  override def receive = LoggingReceive {
+    case Add( ent ) ⇒
+      entities += ent
+      updateEntities()
+
+    case Rem( ent ) ⇒
+      entities -= ent
+      updateEntities()
+
+    case Tick ⇒ for ( sys ← systems ) sys ! Tick
   }
 
 }

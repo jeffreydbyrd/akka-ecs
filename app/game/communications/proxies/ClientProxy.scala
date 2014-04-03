@@ -17,20 +17,10 @@ import game.world.physics.Fixture
 import game.world.physics.Rect
 import game.world.physics.Simulation
 import game.communications.commands.ServerCommand
+import akka.event.LoggingReceive
 
 object ClientProxy {
-  def props( game: ActorRef, inputComp: ActorRef ) = Props( classOf[ ClientProxy ], game, inputComp )
-
-  // Sent Messages
-  trait Command
-  trait Direction
-  case object Left extends Direction
-  case object Right extends Direction
-  case class Move( mobile: ActorRef, dir: Direction ) extends Command
-  case class Halt( mobile: ActorRef, dir: Direction ) extends Command
-  case object Jump extends Command
-  case class Quit( mob: ActorRef )
-  case class PlayerData( mobile: ActorRef, dims: Rect )
+  def props( inputComp: ActorRef ) = Props( classOf[ ClientProxy ], inputComp )
 }
 
 /**
@@ -38,7 +28,7 @@ object ClientProxy {
  * state about its character. It merely provides commands and consumes updates that it delivers
  * to the real Client. The ClientProxy attaches to a Room
  */
-class ClientProxy( val game: ActorRef, val inputComponent: ActorRef ) extends Actor {
+class ClientProxy( val inputComponent: ActorRef ) extends Actor {
   import ClientProxy._
 
   var connection: ActorRef = _
@@ -56,20 +46,16 @@ class ClientProxy( val game: ActorRef, val inputComponent: ActorRef ) extends Ac
     connection ! UpdatePositions( ps )
   }
 
-  def connectTo( playController: ActorRef ) = {
+  def connect() = {
     val ( enumerator, channel ) = play.api.libs.iteratee.Concurrent.broadcast[ String ]
     this.connection =
-      context.actorOf( PlayActorConnection.props( self, channel ), name = "connection" )
-    game ! ( playController, inputComponent, Game.Connected( connection, enumerator ) )
+      context.actorOf( PlayActorConnection.props( inputComponent, channel ), name = "connection" )
+    sender ! Game.Connected( connection, enumerator )
   }
 
-  override val receive: Receive = {
-    case Connect( playController ) ⇒ connectTo( playController )
-    case ClientStarted ⇒
-    case cmd: ServerCommand ⇒ inputComponent ! cmd
+  override val receive: Receive = LoggingReceive {
+    case Connect                          ⇒ connect()
     case Simulation.Snapshot( positions ) ⇒ updateMobilePositions( positions )
-    case ClientProxy.PlayerData( mobile, rect ) if mobile != self ⇒ createMobile( mobile, rect )
-    case Room.RoomData( fixtures ) ⇒ updateRoomData( fixtures )
-    case ClientQuit ⇒ self ! PoisonPill
   }
+
 }

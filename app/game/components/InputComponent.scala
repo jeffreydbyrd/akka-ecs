@@ -10,12 +10,22 @@ import game.communications.commands.GoLeft
 import game.communications.commands.StopLeft
 import game.communications.commands.StopRight
 import game.communications.commands.GoRight
+import game.communications.commands.ClientQuit
 import akka.actor.ActorRef
+import akka.event.LoggingReceive
 
 object InputComponent {
-  def props( id: EntityId ) = Props( classOf[ InputComponent ], id )
+  val props = Props( classOf[ InputComponent ] )
 
+  // Received
   case object RequestSnapshot
+
+  // Sent
+  case class Snapshot(
+    val left: Boolean,
+    val right: Boolean,
+    val jump: Boolean,
+    val quit: Boolean )
 }
 
 class InputComponent extends Component {
@@ -24,15 +34,18 @@ class InputComponent extends Component {
   var left = false;
   var right = false;
   var jump = false;
+  var quit = false;
 
-  override def receive = {
-    case RequestSnapshot ⇒ ( left, right, jump )
+  override def receive = LoggingReceive {
+    case Jump       ⇒ jump = true
+    case StopJump   ⇒ jump = false
+    case GoLeft     ⇒ left = true
+    case GoRight    ⇒ right = true
+    case StopLeft   ⇒ left = false
+    case StopRight  ⇒ right = false
+    case ClientQuit ⇒ quit = true
 
-    case Jump            ⇒ jump = true
-    case StopJump        ⇒ jump = false
-    case GoLeft          ⇒ left = true
-    case GoRight         ⇒ right = true
-    case StopLeft        ⇒ left = false
-    case StopRight       ⇒ right = false
+    case RequestSnapshot ⇒
+      sender ! Snapshot( left, right, jump, quit )
   }
 }

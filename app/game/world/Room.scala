@@ -41,12 +41,12 @@ class Room( val id: String ) extends Actor {
       mobile ! RoomData( fixtures )
       for ( p ← proxies ) p ! arr
 
-    case q @ ClientProxy.Quit( mob ) ⇒
-      proxies -= mob
-      context.parent ! q
-      simulation ! q
+//    case q @ ClientProxy.Quit( mob ) ⇒
+//      proxies -= mob
+//      context.parent ! q
+//      simulation ! q
 
-    case evt: ClientProxy.Move ⇒ simulation ! evt
+//    case evt: ClientProxy.Move ⇒ simulation ! evt
 
     case Game.Tick ⇒
       simulation ! Simulation.Step

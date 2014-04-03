@@ -26,7 +26,7 @@ object PlayActorConnection {
   case class ReturnEnum( enum: Enumerator[ String ] )
 }
 
-class PlayActorConnection( val player: ActorRef, val channel: Channel[ String ] ) extends Actor {
+class PlayActorConnection( val server: ActorRef, val channel: Channel[ String ] ) extends Actor {
   import PlayActorConnection._
 
   var seq: MessageId = 0
@@ -63,7 +63,7 @@ class PlayActorConnection( val player: ActorRef, val channel: Channel[ String ] 
 
   override def receive = LoggingReceive {
     case Ack( id )         ⇒ ack( id )
-    case pc: ServerCommand ⇒ context.parent ! pc
+    case pc: ServerCommand ⇒ server ! pc
     case cc: ClientCommand ⇒ send( cc )
   }
 

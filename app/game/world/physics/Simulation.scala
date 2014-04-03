@@ -110,9 +110,9 @@ class Simulation( gx: Int, gy: Int ) extends Actor {
   var mobiles: Map[ ActorRef, Mobile ] = Map()
 
   override def receive = LoggingReceive {
-    case ClientProxy.Quit( mob ) if mobiles.contains( mob ) ⇒
-      world.destroyBody( mobiles( mob ).body )
-      mobiles -= mob
+//    case ClientProxy.Quit( mob ) if mobiles.contains( mob ) ⇒
+//      world.destroyBody( mobiles( mob ).body )
+//      mobiles -= mob
 
     case CreateBlock( x, y, w, h ) ⇒ createBlock( x, y, w, h )
 
