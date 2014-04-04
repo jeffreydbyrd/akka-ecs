@@ -13,12 +13,13 @@ import akka.actor.PoisonPill
 import game.entity.EntityId
 import game.entity.Entity
 import game.core.Stage
+import game.entity.PlayerEntity
 
 object QuitSystem {
-  def props = Props( classOf[ QuitSystem ] )
+  def props( stage: ActorRef ) = Props( classOf[ QuitSystem ], stage )
 }
 
-class QuitSystem extends System {
+class QuitSystem( val stage: ActorRef ) extends System {
   import game.core.Game.Tick
   import game.core.Game.timeout
   import ComponentType._
@@ -41,13 +42,13 @@ class QuitSystem extends System {
         Some( client ) = e.components.get( Client )
       } yield QuitNode( e, input, client )
 
+    // If an input says it's `quitting`, kill all its components and tell the Stage  
     case Tick ⇒ for ( n ← nodes )
       ( n.inputComponent ? RequestSnapshot ) foreach {
         case snap @ Snapshot( _, _, _, quitting ) ⇒
           println( snap )
           if ( quitting ) {
-            n.clientComponent ! PoisonPill
-            context.parent ! Stage.Rem( n.ent )
+            stage ! Stage.Rem( n.ent )
             for ( ( _, comp ) ← n.ent.components ) comp ! PoisonPill
           }
       }

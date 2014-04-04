@@ -23,7 +23,7 @@ class Stage extends Actor {
 
   private var entities: Set[ Entity ] = Set()
   private var systems: Set[ ActorRef ] = Set(
-    context.actorOf( QuitSystem.props, "quit_system" )
+    context.actorOf( QuitSystem.props( self ), "quit_system" )
   )
 
   def updateEntities() =
