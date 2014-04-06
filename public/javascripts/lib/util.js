@@ -1,6 +1,16 @@
 var UTIL = {}
 
-UTIL.screen_h = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
+UTIL.screenh = function(){
+  return window.innerHeight ||
+    document.documentElement.clientHeight ||
+    document.body.clientHeight;
+}
+
+UTIL.screenw = function() {
+  return window.innerWidth ||
+    document.documentElement.clientWidth ||
+    document.body.clientWidth;
+}
 
 UTIL.contains = function(arr, obj) {
   for (var i = 0; i < arr.length; i++) {

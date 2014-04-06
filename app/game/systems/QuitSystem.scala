@@ -33,7 +33,7 @@ class QuitSystem( val stage: ActorRef ) extends System {
   var nodes: Set[ QuitNode ] = Set()
   val requiredComponents = List(
     ComponentType.Input, // reads from  
-    ComponentType.Client // writes to
+    ComponentType.Observer // writes to
   )
 
   override def receive = LoggingReceive {
@@ -42,7 +42,7 @@ class QuitSystem( val stage: ActorRef ) extends System {
       nodes = for {
         e ← entities if e.hasComponents( requiredComponents )
         input = e.components( ComponentType.Input )
-        output = e.components( ComponentType.Client )
+        output = e.components( ComponentType.Observer )
       } yield QuitNode( e, input, output )
 
     // If an input says it's `quitting`, kill all its components and tell the Stage  

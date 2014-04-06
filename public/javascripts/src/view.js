@@ -1,38 +1,51 @@
-function Game(canvasWidth, canvasHeight, k) {
+function View(canvasX, canvasY, kx, ky) {
   var self = this;
 
   var stage = new PIXI.Stage(0x66FF99);
-  var renderer = PIXI.autoDetectRenderer(canvasWidth, canvasHeight);
+  var renderer = PIXI.autoDetectRenderer(canvasX, canvasY);
   document.body.appendChild(renderer.view);
 
   // map unique IDs to sprites (eg. {'biff' : ..., 'wall' : ...})
   var entities = {};
 
-  self.renderStage = function() {
+  // Game loop:
+  requestAnimFrame( animate );
+  function animate() {
+    requestAnimFrame( animate );
     renderer.render(stage);
   }
 
-  function convertXPos(x) { return x * k }
-  function convertYPos(y){ return canvasHeight - (y * k) }
+  window.onresize = function(event) {
+    console.log(event);
+  }
+
+  function convertXPos(x) { return x * kx }
+  function convertYPos(y){ return canvasY - (y * ky) }
 
   self.create = function(id, x, y, w, h) {
     var texture = PIXI.Texture.fromImage("/assets/images/black.png");
-    var sprite = new PIXI.Sprite(texture);
-    entities[id] = sprite;
 
+    var sprite = new PIXI.Sprite(texture);
     sprite.anchor.x = 0.5;
     sprite.anchor.y = 0.5;
     sprite.position.x = convertXPos(x);
     sprite.position.y = convertYPos(y);
-    sprite.width = w * k;
-    sprite.height = h * k;
-
+    sprite.width = w * kx;
+    sprite.height = h * ky;
     stage.addChild(sprite);
+
+    entities[id] = {
+      'sprite':sprite,
+      'x':x, 'y':y,
+      'w':w, 'h':h
+    };
   };
 
   self.move = function(id, x, y) {
-    self.entities[id].position.x = convertXPos(x);
-    self.entities[id].position.y = convertYPos(y);
+    entities[id].x = x;
+    entities[id].y = y;
+    entities[id].sprite.position.x = convertXPos(x);
+    entities[id].sprite.position.y = convertYPos(y);
   };
 
   self.bindTo = function(conn) {

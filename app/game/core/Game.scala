@@ -19,6 +19,7 @@ import akka.actor.Terminated
 import game.communications.connection.PlayActorConnection
 import scala.concurrent.Future
 import game.components.io.ObserverComponent
+import game.components.physics.PhysicalComponent
 
 object Game {
   // global values:
@@ -53,8 +54,10 @@ sealed class Game extends Actor {
       context.actorOf( PlayActorConnection.props( input, channel ), s"Conn_${count.toString}" )
     val output =
       context.actorOf( ObserverComponent.props( connection ), s"OutputComponent_${count.toString}" )
+    val dimensions =
+      context.actorOf( PhysicalComponent.props( 10, 10, 1, 2 ), s"PhysicalComponent_${count.toString}" )
     sender ! Connected( connection, enumerator )
-    stage ! Stage.Add( new PlayerEntity( input, output ) )
+    stage ! Stage.Add( new PlayerEntity( input, output, dimensions ) )
     clients += username -> connection
     context.watch( connection )
   }

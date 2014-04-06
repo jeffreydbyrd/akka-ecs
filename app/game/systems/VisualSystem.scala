@@ -8,7 +8,7 @@ import akka.actor.actorRef2Scala
 import akka.event.LoggingReceive
 import akka.pattern.{ ask, pipe }
 import game.components.Component
-import game.components.ComponentType.Client
+import game.components.ComponentType.Observer
 import game.components.ComponentType.Physical
 import game.components.physics.PhysicalComponent.Snapshot
 import game.core.Game.Tick
@@ -26,7 +26,7 @@ object VisualSystem {
 
 class VisualSystem extends Actor {
   import ComponentType.Physical
-  import ComponentType.Client
+  import ComponentType.Observer
   import PhysicalComponent.Snapshot
   import Game.Tick
   import Game.timeout
@@ -41,7 +41,7 @@ class VisualSystem extends Actor {
       var newVisuals: Set[ OutputNode ] = Set()
       for ( e ← ents ) {
         e.components.get( Physical ) foreach { newVisuals += OutputNode( e.id, _ ) }
-        e.components.get( Client ) foreach { newClients += _ }
+        e.components.get( Observer ) foreach { newClients += _ }
       }
       clients = newClients
       visuals = newVisuals
