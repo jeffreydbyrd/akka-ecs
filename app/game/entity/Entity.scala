@@ -6,4 +6,7 @@ import game.components.ComponentType
 trait Entity {
   val id: EntityId
   val components: Map[ ComponentType, ActorRef ]
+
+  def hasComponents( types: Iterable[ ComponentType ] ): Boolean =
+    types.forall( components.contains )
 }

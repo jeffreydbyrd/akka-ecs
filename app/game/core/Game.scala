@@ -11,11 +11,14 @@ import akka.event.LoggingReceive
 import akka.pattern.ask
 import akka.util.Timeout.durationToTimeout
 import game.communications.proxies.ClientProxy
-import game.components.InputComponent
+import game.components.io.InputComponent
 import game.entity.EntityId
 import game.entity.PlayerEntity
 import play.api.libs.iteratee.Enumerator
 import akka.actor.Terminated
+import game.communications.connection.PlayActorConnection
+import scala.concurrent.Future
+import game.components.io.ObserverComponent
 
 object Game {
   // global values:
@@ -41,32 +44,32 @@ sealed class Game extends Actor {
   var clients: Map[ String, ActorRef ] = Map()
 
   val ticker =
-    system.scheduler.schedule( 100 milliseconds, 2000 milliseconds, stage, Tick )
+    system.scheduler.schedule( 10000 milliseconds, 5000 milliseconds, stage, Tick )
 
   def createClientProxy( username: String, count: Int ) = {
-    context become managePlayers( count + 1 )
-    val inputComp = context.actorOf( InputComponent.props, s"InputComponent_${count.toString}" )
-    val proxy = context.actorOf( ClientProxy.props( inputComp ), username )
-    context.watch( proxy )
-    clients += username -> proxy
-    val playController = sender // outer ref to sender b/c it will change
-    ( proxy ? Connect ) map {
-      case conn: Connected ⇒
-        playController ! conn
-        stage ! Stage.Add( new PlayerEntity( EntityId( count ), inputComp, proxy ) )
-    }
+    val ( enumerator, channel ) = play.api.libs.iteratee.Concurrent.broadcast[ String ]
+    val input = context.actorOf( InputComponent.props, s"InputComponent_${count.toString}" )
+    val connection =
+      context.actorOf( PlayActorConnection.props( input, channel ), s"Conn_${count.toString}" )
+    val output =
+      context.actorOf( ObserverComponent.props( connection ), s"OutputComponent_${count.toString}" )
+    sender ! Connected( connection, enumerator )
+    stage ! Stage.Add( new PlayerEntity( input, output ) )
+    clients += username -> connection
+    context.watch( connection )
   }
 
   override def receive = managePlayers( 0 )
   def managePlayers( count: Int ): Receive = LoggingReceive {
     case AddPlayer( username ) if !clients.contains( username ) ⇒
+      context become managePlayers( count + 1 )
       createClientProxy( username, count )
 
     case AddPlayer( username ) ⇒
       sender ! NotConnected( s""" {"error" : "username '$username' already in use"} """ )
 
-    case Terminated( ref ) ⇒
-      clients = clients filterNot { case ( s, ar ) ⇒ ar == ref }
+    case Terminated( connection ) ⇒
+      clients = clients.filterNot { case ( usrName, actRef ) ⇒ actRef == connection }
   }
 
 }

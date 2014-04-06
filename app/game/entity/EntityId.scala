@@ -1,3 +1,5 @@
 package game.entity
 
-case class EntityId( val seq: Int )
+case class EntityId( str: String ) {
+  override def toString = str
+}

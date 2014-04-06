@@ -39,6 +39,8 @@ function Connection(url) {
     var data = JSON.parse(data);
     var params = data.message;
 
+    console.log(data);
+
     if (data.seq <= expectedSeq) {
       ack(data.seq);
     }

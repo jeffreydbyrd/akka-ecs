@@ -1,24 +1,20 @@
-package game.components
+package game.components.io
 
-import game.entity.EntityId
 import akka.actor.Props
-import scala.collection.immutable.Queue
-import game.communications.commands.ServerCommand
+import akka.actor.actorRef2Scala
+import akka.event.LoggingReceive
+import game.communications.commands.ClientQuit
+import game.communications.commands.GoLeft
+import game.communications.commands.GoRight
 import game.communications.commands.Jump
 import game.communications.commands.StopJump
-import game.communications.commands.GoLeft
 import game.communications.commands.StopLeft
 import game.communications.commands.StopRight
-import game.communications.commands.GoRight
-import game.communications.commands.ClientQuit
-import akka.actor.ActorRef
-import akka.event.LoggingReceive
+import game.components.Component
+import game.components.Component.RequestSnapshot
 
 object InputComponent {
   val props = Props( classOf[ InputComponent ] )
-
-  // Received
-  case object RequestSnapshot
 
   // Sent
   case class Snapshot(
@@ -29,6 +25,7 @@ object InputComponent {
 }
 
 class InputComponent extends Component {
+  import Component._
   import InputComponent._
 
   var left = false;

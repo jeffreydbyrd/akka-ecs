@@ -1,14 +1,16 @@
 package game.entity
 
-import akka.actor.ActorRef
+import game.components.Component
 import game.components.ComponentType
+import game.components.io.InputComponent
+import game.components.io.ObserverComponent
+import akka.actor.ActorRef
 
-class PlayerEntity( override val id: EntityId,
-                    inputComp: ActorRef,
-                    clientComp: ActorRef ) extends Entity {
-  override val components: Map[ ComponentType, ActorRef ] =
-    Map(
-      ComponentType.Input -> inputComp,
-      ComponentType.Client -> clientComp
-    )
+class PlayerEntity( inputComponent: ActorRef, clientComponent: ActorRef ) extends Entity {
+  override val id: EntityId = EntityId( inputComponent.path.toString )
+
+  override val components: Map[ ComponentType, ActorRef ] = Map(
+    ComponentType.Input -> inputComponent,
+    ComponentType.Client -> clientComponent
+  )
 }
