@@ -23,6 +23,7 @@ listener.bindTo(conn);
 
 conn.start();
 
+// Game loop:
 requestAnimFrame( animate );
 function animate() {
   requestAnimFrame( animate );

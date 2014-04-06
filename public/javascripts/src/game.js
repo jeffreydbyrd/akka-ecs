@@ -1,15 +1,15 @@
 function Game(canvasWidth, canvasHeight, k) {
   var self = this;
 
-  self.stage = new PIXI.Stage(0x66FF99);
-  self.renderer = PIXI.autoDetectRenderer(canvasWidth, canvasHeight);
-  document.body.appendChild(self.renderer.view);
+  var stage = new PIXI.Stage(0x66FF99);
+  var renderer = PIXI.autoDetectRenderer(canvasWidth, canvasHeight);
+  document.body.appendChild(renderer.view);
 
   // map unique IDs to sprites (eg. {'biff' : ..., 'wall' : ...})
-  self.entities = {};
+  var entities = {};
 
   self.renderStage = function() {
-    self.renderer.render(self.stage);
+    renderer.render(stage);
   }
 
   function convertXPos(x) { return x * k }
@@ -18,7 +18,7 @@ function Game(canvasWidth, canvasHeight, k) {
   self.create = function(id, x, y, w, h) {
     var texture = PIXI.Texture.fromImage("/assets/images/black.png");
     var sprite = new PIXI.Sprite(texture);
-    self.entities[id] = sprite;
+    entities[id] = sprite;
 
     sprite.anchor.x = 0.5;
     sprite.anchor.y = 0.5;
@@ -27,7 +27,7 @@ function Game(canvasWidth, canvasHeight, k) {
     sprite.width = w * k;
     sprite.height = h * k;
 
-    self.stage.addChild(sprite);
+    stage.addChild(sprite);
   };
 
   self.move = function(id, x, y) {
