@@ -8,18 +8,8 @@ function Game(canvasWidth, canvasHeight, k) {
   // map unique IDs to sprites (eg. {'biff' : ..., 'wall' : ...})
   self.entities = {};
 
-  self.rendering = false;
   self.renderStage = function() {
-    self.rendering = false;
     self.renderer.render(self.stage);
-  }
-
-  self.attemptRender = function() {
-    console.log(self.rendering)
-    if (!self.rendering) {
-      requestAnimFrame(self.renderStage);
-      self.rendering = true;
-    }
   }
 
   function convertXPos(x) { return x * k }
@@ -38,13 +28,11 @@ function Game(canvasWidth, canvasHeight, k) {
     sprite.height = h * k;
 
     self.stage.addChild(sprite);
-    self.attemptRender();
   };
 
   self.move = function(id, x, y) {
     self.entities[id].position.x = convertXPos(x);
     self.entities[id].position.y = convertYPos(y);
-    self.attemptRender();
   };
 
   self.bindTo = function(conn) {
@@ -53,10 +41,8 @@ function Game(canvasWidth, canvasHeight, k) {
     });
 
     conn.onReceive("create", function(params) {
-      console.log(self);
       self.create( params.id, params.position[0], params.position[1],
                    params.dimensions[0], params.dimensions[1] );
-      self.attemptRender();
     });
 
     conn.onReceive("update_positions", function(params) {

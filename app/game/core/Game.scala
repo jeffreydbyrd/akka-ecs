@@ -44,7 +44,7 @@ sealed class Game extends Actor {
   var clients: Map[ String, ActorRef ] = Map()
 
   val ticker =
-    system.scheduler.schedule( 10000 milliseconds, 5000 milliseconds, stage, Tick )
+    system.scheduler.schedule( 1000 milliseconds, 5000 milliseconds, stage, Tick )
 
   def createClientProxy( username: String, count: Int ) = {
     val ( enumerator, channel ) = play.api.libs.iteratee.Concurrent.broadcast[ String ]

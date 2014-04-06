@@ -22,3 +22,9 @@ game.bindTo(conn);
 listener.bindTo(conn);
 
 conn.start();
+
+requestAnimFrame( animate );
+function animate() {
+  requestAnimFrame( animate );
+  game.renderStage();
+}

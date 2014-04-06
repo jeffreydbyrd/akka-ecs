@@ -26,9 +26,9 @@ class Stage extends Actor {
 
   private var entities: Set[ Entity ] = Set(
     new StructureEntity( context.actorOf( PhysicalComponent.props( 25, 1, 50, 1 ), "floor" ) ),
-    new StructureEntity( context.actorOf( PhysicalComponent.props( 1, 25, 1, 50 ), "left_wall" ) )
-    //new StructureEntity( context.actorOf( PhysicalComponent.props( 49, 25, 1, 50 ), "right_wall" ) ),
-    //new StructureEntity( context.actorOf( PhysicalComponent.props( 25, 49, 50, 1 ), "top" ) )
+    new StructureEntity( context.actorOf( PhysicalComponent.props( 1, 25, 1, 50 ), "left_wall" ) ),
+    new StructureEntity( context.actorOf( PhysicalComponent.props( 49, 25, 1, 50 ), "right_wall" ) ),
+    new StructureEntity( context.actorOf( PhysicalComponent.props( 25, 49, 50, 1 ), "top" ) )
   )
 
   private var systems: Set[ ActorRef ] = Set(
