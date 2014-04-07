@@ -19,7 +19,8 @@ import akka.actor.Terminated
 import game.communications.connection.PlayActorConnection
 import scala.concurrent.Future
 import game.components.io.ObserverComponent
-import game.components.physics.PhysicalComponent
+import game.components.physics.PositionComponent
+import game.components.physics.VelocityComponent
 
 object Game {
   // global values:
@@ -34,37 +35,36 @@ object Game {
   case object Connect
   case class Connected( connection: ActorRef, enum: Enumerator[ String ] )
   case class NotConnected( message: String )
-  case object Tick
 }
 
 sealed class Game extends Actor {
   import Game._
 
-  val stage = context.actorOf( Stage.props, name = "stage" )
+  val engine = context.actorOf( Engine.props, name = "engine" )
 
-  var clients: Map[ String, ActorRef ] = Map()
-
-  val ticker =
-    system.scheduler.schedule( 1000 milliseconds, 5000 milliseconds, stage, Tick )
+  var connections: Map[ String, ActorRef ] = Map()
 
   def createClientProxy( username: String, count: Int ) = {
     val ( enumerator, channel ) = play.api.libs.iteratee.Concurrent.broadcast[ String ]
-    val input = context.actorOf( InputComponent.props, s"InputComponent_${count.toString}" )
+    val input = context.actorOf( InputComponent.props, s"InputComponent_$count" )
     val connection =
-      context.actorOf( PlayActorConnection.props( input, channel ), s"Conn_${count.toString}" )
+      context.actorOf( PlayActorConnection.props( input, channel ), s"Conn_$count" )
     val output =
-      context.actorOf( ObserverComponent.props( connection ), s"OutputComponent_${count.toString}" )
+      context.actorOf( ObserverComponent.props( connection ), s"ObserverComponent_$count" )
     val dimensions =
-      context.actorOf( PhysicalComponent.props( 10, 10, 1, 2 ), s"PhysicalComponent_${count.toString}" )
+      context.actorOf( PositionComponent.props( 10, 10, 1, 2 ), s"PosComponent_$count" )
+    val velocity =
+      context.actorOf( VelocityComponent.props( 0, 0 ), s"VelComponent_$count" )
     sender ! Connected( connection, enumerator )
-    stage ! Stage.Add( new PlayerEntity( input, output, dimensions ) )
-    clients += username -> connection
+    engine ! Engine.NewPlayer( new PlayerEntity( input, output, dimensions, velocity ) )
+    connections += username -> connection
     context.watch( connection )
   }
 
   override def receive = managePlayers( 0 )
+  
   def managePlayers( count: Int ): Receive = LoggingReceive {
-    case AddPlayer( username ) if !clients.contains( username ) ⇒
+    case AddPlayer( username ) if !connections.contains( username ) ⇒
       context become managePlayers( count + 1 )
       createClientProxy( username, count )
 
@@ -72,7 +72,7 @@ sealed class Game extends Actor {
       sender ! NotConnected( s""" {"error" : "username '$username' already in use"} """ )
 
     case Terminated( connection ) ⇒
-      clients = clients.filterNot { case ( usrName, actRef ) ⇒ actRef == connection }
+      connections = connections.filterNot { case ( usrName, actRef ) ⇒ actRef == connection }
   }
 
 }

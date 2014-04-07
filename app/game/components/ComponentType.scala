@@ -5,5 +5,6 @@ trait ComponentType
 object ComponentType {
   case object Input extends ComponentType
   case object Observer extends ComponentType
-  case object Physical extends ComponentType
+  case object Position extends ComponentType
+  case object Velocity extends ComponentType
 }

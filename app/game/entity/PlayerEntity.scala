@@ -8,12 +8,14 @@ import akka.actor.ActorRef
 
 class PlayerEntity( inputComponent: ActorRef,
                     observerComponent: ActorRef,
-                    physicalComponent:ActorRef) extends Entity {
+                    physicalComponent: ActorRef,
+                    velocityComponent: ActorRef ) extends Entity {
   override val id: EntityId = EntityId( inputComponent.path.toString )
 
   override val components: Map[ ComponentType, ActorRef ] = Map(
     ComponentType.Input -> inputComponent,
     ComponentType.Observer -> observerComponent,
-    ComponentType.Physical -> physicalComponent
+    ComponentType.Position -> physicalComponent,
+    ComponentType.Velocity -> velocityComponent
   )
 }

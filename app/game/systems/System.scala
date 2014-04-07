@@ -5,7 +5,7 @@ import game.entity.Entity
 
 object System {
   // Received
-  case class UpdateComponents( ents: Set[ Entity ] )
+  case class UpdateEntities( version:Long, ents: Set[ Entity ] )
 }
 
 trait System extends Actor

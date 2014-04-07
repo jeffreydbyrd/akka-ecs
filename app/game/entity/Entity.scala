@@ -9,4 +9,6 @@ trait Entity {
 
   def hasComponents( types: Iterable[ ComponentType ] ): Boolean =
     types.forall( components.contains )
+
+  def apply( typ: ComponentType ): ActorRef = components( typ )
 }

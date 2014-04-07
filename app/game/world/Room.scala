@@ -48,9 +48,9 @@ class Room( val id: String ) extends Actor {
 
 //    case evt: ClientProxy.Move ⇒ simulation ! evt
 
-    case Game.Tick ⇒
-      simulation ! Simulation.Step
-      for ( p ← proxies ) p ! Game.Tick
+//    case Game.Tick ⇒
+//      simulation ! Simulation.Step
+//      for ( p ← proxies ) p ! Game.Tick
 
     case snap: Simulation.Snapshot ⇒ for ( p ← proxies ) p ! snap
   }

@@ -6,9 +6,9 @@ import akka.actor.actorRef2Scala
 import akka.event.LoggingReceive
 import game.components.Component.RequestSnapshot
 
-object PhysicalComponent {
+object PositionComponent {
   def props( x: Float, y: Float, w: Float, h: Float ) =
-    Props( classOf[ PhysicalComponent ], x, y, w, h )
+    Props( classOf[PositionComponent], x, y, w, h )
 
   // Received
   case class Update( x: Float, y: Float, w: Float, h: Float )
@@ -17,11 +17,9 @@ object PhysicalComponent {
   case class Snapshot( pos: Position, shape: Rect )
 }
 
-class PhysicalComponent( x: Float,
-                         y: Float,
-                         w: Float,
-                         h: Float ) extends Actor {
-  import PhysicalComponent._
+class PositionComponent( x: Float, y: Float,
+                         w: Float, h: Float ) extends Actor {
+  import PositionComponent._
   import game.components.Component._
 
   var position = Position( x, y )
@@ -29,8 +27,8 @@ class PhysicalComponent( x: Float,
 
   override def receive = LoggingReceive {
     case Update( x, y, w, h ) ⇒
-      this.position = Position( x, y )
-      this.shape = Rect( w, h )
+      PositionComponent.this.position = Position( x, y )
+      PositionComponent.this.shape = Rect( w, h )
 
     case RequestSnapshot ⇒ sender ! Snapshot( position, shape )
   }
