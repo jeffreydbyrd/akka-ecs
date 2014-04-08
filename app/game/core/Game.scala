@@ -19,8 +19,8 @@ import akka.actor.Terminated
 import game.communications.connection.PlayActorConnection
 import scala.concurrent.Future
 import game.components.io.ObserverComponent
-import game.components.physics.PositionComponent
-import game.components.physics.VelocityComponent
+import game.components.physics.DimensionComponent
+import game.components.physics.MobileComponent
 
 object Game {
   // global values:
@@ -52,9 +52,9 @@ sealed class Game extends Actor {
     val output =
       context.actorOf( ObserverComponent.props( connection ), s"ObserverComponent_$count" )
     val dimensions =
-      context.actorOf( PositionComponent.props( 10, 10, 1, 2 ), s"PosComponent_$count" )
+      context.actorOf( DimensionComponent.props( 10, 10, 1, 2 ), s"PosComponent_$count" )
     val velocity =
-      context.actorOf( VelocityComponent.props( 0, 0 ), s"VelComponent_$count" )
+      context.actorOf( MobileComponent.props( 0, 0 ), s"VelComponent_$count" )
     sender ! Connected( connection, enumerator )
     engine ! Engine.NewPlayer( new PlayerEntity( input, output, dimensions, velocity ) )
     connections += username -> connection

@@ -8,6 +8,6 @@ class StructureEntity( physicalComponent: ActorRef ) extends Entity {
   override val id = EntityId( physicalComponent.path.toString )
   
   override val components: Map[ ComponentType, ActorRef ] = Map(
-    ComponentType.Position -> physicalComponent
+    ComponentType.Dimension -> physicalComponent
   )
 }

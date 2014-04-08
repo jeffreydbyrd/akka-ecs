@@ -2,19 +2,19 @@ package game.core
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.DurationInt
-
 import akka.actor.Actor
 import akka.actor.ActorRef
 import akka.actor.PoisonPill
 import akka.actor.Props
 import akka.actor.actorRef2Scala
 import akka.event.LoggingReceive
-import game.components.physics.PositionComponent
+import game.components.physics.DimensionComponent
 import game.entity.Entity
 import game.entity.StructureEntity
 import game.systems.QuitSystem
 import game.systems.System
 import game.systems.VisualSystem
+import game.systems.physics.PhysicsSystem
 
 object Engine {
   val props = Props( classOf[ Engine ] )
@@ -38,7 +38,8 @@ class Engine extends Actor {
 
   private var systems: Set[ ActorRef ] = Set(
     context.actorOf( QuitSystem.props( self ), "quit_system" ),
-    context.actorOf( VisualSystem.props, "visual_system" )
+    context.actorOf( VisualSystem.props, "visual_system" ),
+    context.actorOf( PhysicsSystem.props( 0, -10 ), "physics_system" )
   )
 
   def updateEntities( v: Long, ents: Set[ Entity ] ) = for ( sys ← systems ) {
@@ -61,7 +62,7 @@ class Engine extends Actor {
 
   override def preStart() = {
     var walls: Set[ Entity ] = Set(
-      new StructureEntity( context.actorOf( PositionComponent.props( 25, 1, 50, 1 ), "floor" ) )
+      new StructureEntity( context.actorOf( DimensionComponent.props( 25, 1, 50, 1 ), "floor" ) )
     //    new StructureEntity( context.actorOf( PositionComponent.props( 1, 25, 1, 50 ), "left_wall" ) ),
     //    new StructureEntity( context.actorOf( PositionComponent.props( 49, 25, 1, 50 ), "right_wall" ) ),
     //    new StructureEntity( context.actorOf( PositionComponent.props( 25, 49, 50, 1 ), "top" ) )

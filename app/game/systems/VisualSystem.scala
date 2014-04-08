@@ -10,9 +10,9 @@ import akka.pattern.ask
 import akka.pattern.pipe
 import game.components.Component
 import game.components.ComponentType.Observer
-import game.components.ComponentType.Position
+import game.components.ComponentType.Dimension
 import game.components.io.ObserverComponent
-import game.components.physics.PositionComponent.Snapshot
+import game.components.physics.DimensionComponent.Snapshot
 import game.core.Engine.Tick
 import game.core.Game.timeout
 import game.entity.Entity
@@ -34,7 +34,7 @@ class VisualSystem extends Actor {
       var newClients: Set[ Entity ] = Set()
       var newVisuals: Set[ Entity ] = Set()
       for ( e ← ents ) {
-        if ( e.components.contains( Position ) ) newVisuals += e
+        if ( e.components.contains( Dimension ) ) newVisuals += e
         if ( e.components.contains( Observer ) ) newClients += e
       }
       clients = newClients
@@ -42,7 +42,7 @@ class VisualSystem extends Actor {
 
     case Tick ⇒ // Send current Snapshot of the room to each client
       val setOfFutures: Set[ Future[ ( EntityId, Snapshot ) ] ] =
-        visuals.map( v ⇒ ( v( Position ) ? Component.RequestSnapshot ).map {
+        visuals.map( v ⇒ ( v( Dimension ) ? Component.RequestSnapshot ).map {
           case snap: Snapshot ⇒ ( v.id, snap )
         } )
 
