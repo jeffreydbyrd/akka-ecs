@@ -52,7 +52,7 @@ class Engine extends Actor {
 
   val logger = new AkkaLoggingService( this, context )
   val ticker =
-    system.scheduler.schedule( 5000 milliseconds, 5000 milliseconds, self, Tick )
+    system.scheduler.schedule( 20 milliseconds, 20 milliseconds, self, Tick )
 
   private var systems: Set[ ActorRef ] = Set(
     context.actorOf( QuitSystem.props( self ), "quit_system" ),
@@ -114,14 +114,6 @@ class Engine extends Actor {
 
     case Terminated( conn ) ⇒
       connections = connections.filterNot { case ( usrName, actRef ) ⇒ actRef == conn }
-  }
-
-  override def preStart() = {
-    var walls: Set[ Entity ] = Set(
-      new StructureEntity( context.actorOf( DimensionComponent.props( 25, 1, 50, 1 ), "floor" ) )
-    )
-    logger.info( "Starting" )
-    self ! Add( 0, walls )
   }
 
 }

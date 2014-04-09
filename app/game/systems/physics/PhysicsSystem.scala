@@ -80,9 +80,9 @@ class PhysicsSystem( gx: Int, gy: Int ) extends System {
         }
 
         val addStructs: Set[ StructData ] =
-          Await.result( getStructData( newStructs -- structures ), 15 millis )
+          Await.result( getStructData( newStructs -- structures ), 500 millis )
         val addMobiles: Set[ MobileData ] =
-          Await.result( getMobileData( newMobiles -- mobiles ), 15 millis )
+          Await.result( getMobileData( newMobiles -- mobiles ), 500 millis )
 
         for ( sd ← addStructs ) simulation.add( sd )
         for ( md ← addMobiles ) b2Mobiles += md.e -> simulation.add( md )
