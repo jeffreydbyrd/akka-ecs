@@ -7,7 +7,8 @@ function InputListener(keybindings) {
 
   function keyDown(evt) {
     var type = keybindings[evt.keyCode];
-    self.connection.send({'type': type});
+		if (type != null && type != undefined)
+      self.connection.send({'type': type});
   }
 
   function keyUp(evt) {
