@@ -28,8 +28,8 @@ import akka.actor.Terminated
 object Engine {
   implicit val timeout: akka.util.Timeout = 1 second
   val system: ActorSystem = akka.actor.ActorSystem( "Doppelsystem" )
-  val engine: ActorRef = system.actorOf( Props[ Game ], name = "engine" )
   val props = Props( classOf[ Engine ] )
+  val engine: ActorRef = system.actorOf( props, name = "engine" )
 
   // Received:
   case class AddPlayer( name: String )
@@ -52,7 +52,7 @@ class Engine extends Actor {
 
   val logger = new AkkaLoggingService( this, context )
   val ticker =
-    Game.system.scheduler.schedule( 5000 milliseconds, 5000 milliseconds, self, Tick )
+    system.scheduler.schedule( 5000 milliseconds, 5000 milliseconds, self, Tick )
 
   private var systems: Set[ ActorRef ] = Set(
     context.actorOf( QuitSystem.props( self ), "quit_system" ),
@@ -87,14 +87,21 @@ class Engine extends Actor {
     new PlayerEntity( input, output, dimensions, velocity )
   }
 
-  override def receive = manage( 0, Set() )
+  var walls: Set[ Entity ] = Set(
+    new StructureEntity( context.actorOf( DimensionComponent.props( 25, 1, 50, 1 ), "floor" ) )
+  )
+
+  override def receive = manage( 0, walls )
 
   def manage( version: Long, entities: Set[ Entity ] ): Receive = LoggingReceive {
     case Tick                 ⇒ for ( sys ← systems ) sys ! Tick
+
     case Add( `version`, es ) ⇒ updateEntities( version + 1, entities ++ es )
+
     case Rem( `version`, es ) ⇒
       updateEntities( version + 1, entities -- es )
       for ( e ← es; ( _, comp ) ← e.components ) comp ! PoisonPill
+
     case op: EntityOp if op.v < version ⇒
       sender ! System.UpdateEntities( version, entities )
 

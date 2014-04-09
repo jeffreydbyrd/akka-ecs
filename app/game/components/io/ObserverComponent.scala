@@ -24,7 +24,7 @@ class ObserverComponent( val connection: ActorRef ) extends Component {
   var snapshots: Map[ EntityId, DimensionComponent.Snapshot ] = Map()
 
   override def receive = LoggingReceive {
-    case up @ Update( snaps ) ⇒
+    case Update( snaps ) ⇒
       for ( ( id, snap ) ← snaps if !snapshots.contains( id ) )
         connection ! ClientCommand.CreateRect( id.toString, snap.pos, snap.shape )
 

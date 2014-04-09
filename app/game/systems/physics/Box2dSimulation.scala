@@ -8,10 +8,8 @@ import org.jbox2d.dynamics.BodyDef
 import org.jbox2d.dynamics.Body
 import org.jbox2d.dynamics.World
 import org.jbox2d.common.Vec2
-import game.world.physics.MobileContactListener
 import org.jbox2d.dynamics.BodyType
 import game.components.physics.Position
-import game.world.physics.Simulation
 import scala.math.abs
 import game.systems.physics.PhysicsSystem.MobileData
 import game.systems.physics.PhysicsSystem.StructData
@@ -21,29 +19,24 @@ import game.entity.Entity
 class Box2dSimulation( gx: Int, gy: Int ) {
 
   // Not really sure what these are for... all the tutorials use these values
-  val timestep = 1.0f / 50.0f
-  val velocityIterations = 6
-  val positionIterations = 2
+  private val timestep = 1.0f / 50.0f
+  private val velocityIterations = 6
+  private val positionIterations = 2
 
   // create a box2d world
-  val world = new World( new Vec2( gx, gy ) )
+  private val world = new World( new Vec2( gx, gy ) )
   world.setAllowSleep( true )
-  //world.setContactListener( new MobileContactListener )
 
-  var mobiles: Map[ Entity, Box2dMobile ] = Map()
-  var structs: Set[ Body ] = Set()
+  def add( sd: StructData ): Body = sd match {
+    case StructData( ent, p, Rect( w, h ) ) ⇒
+      createStructure( p.x, p.y, w, h )
+  }
 
-  def add( data: Set[ PhysicsSystem.Data ] ) =
-    data.foreach {
-      case MobileData( ent, p, Rect( w, h ), speed, hops ) ⇒
-        val body = createMobile( p.x, p.y, w, h )
-        mobiles += ent -> new Box2dMobile( speed, hops, body )
-
-      case StructData( ent, p, Rect( w, h ) ) ⇒
-        structs += createStructure( p.x, p.y, w, h )
-    }
-
-  def remove( data: Set[ PhysicsSystem.Data ] ) = { /*TODO*/ }
+  def add( md: MobileData ): Box2dMobile = md match {
+    case MobileData( ent, p, Rect( w, h ), speed, hops ) ⇒
+      val body = createMobile( p.x, p.y, w, h )
+      new Box2dMobile( speed, hops, body )
+  }
 
   def step() = {
     world.step( timestep, velocityIterations, positionIterations )

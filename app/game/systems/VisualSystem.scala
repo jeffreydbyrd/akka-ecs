@@ -14,7 +14,7 @@ import game.components.ComponentType.Dimension
 import game.components.io.ObserverComponent
 import game.components.physics.DimensionComponent.Snapshot
 import game.core.Engine.Tick
-import game.core.Game.timeout
+import game.core.Engine.timeout
 import game.entity.Entity
 import game.entity.EntityId
 
@@ -23,33 +23,29 @@ object VisualSystem {
 }
 
 class VisualSystem extends Actor {
+  override def receive = manage( 0, Set(), Set() )
 
-  var version: Long = 0
-  var clients: Set[ Entity ] = Set()
-  var visuals: Set[ Entity ] = Set()
+  def manage( version: Long, clients: Set[ Entity ], visuals: Set[ Entity ] ): Receive =
+    LoggingReceive {
+      case System.UpdateEntities( v, ents ) if v > version ⇒
+        var newClients: Set[ Entity ] = Set()
+        var newVisuals: Set[ Entity ] = Set()
+        for ( e ← ents ) {
+          if ( e.components.contains( Dimension ) ) newVisuals += e
+          if ( e.components.contains( Observer ) ) newClients += e
+        }
+        context.become( manage( v, newClients, newVisuals ) )
 
-  override def receive = LoggingReceive {
-    case System.UpdateEntities( v, ents ) if v > version ⇒
-      version = v
-      var newClients: Set[ Entity ] = Set()
-      var newVisuals: Set[ Entity ] = Set()
-      for ( e ← ents ) {
-        if ( e.components.contains( Dimension ) ) newVisuals += e
-        if ( e.components.contains( Observer ) ) newClients += e
-      }
-      clients = newClients
-      visuals = newVisuals
+      case Tick ⇒ // Send current Snapshot of the room to each client
+        val setOfFutures: Set[ Future[ ( EntityId, Snapshot ) ] ] =
+          visuals.map( v ⇒ ( v( Dimension ) ? Component.RequestSnapshot ).map {
+            case snap: Snapshot ⇒ ( v.id, snap )
+          } )
 
-    case Tick ⇒ // Send current Snapshot of the room to each client
-      val setOfFutures: Set[ Future[ ( EntityId, Snapshot ) ] ] =
-        visuals.map( v ⇒ ( v( Dimension ) ? Component.RequestSnapshot ).map {
-          case snap: Snapshot ⇒ ( v.id, snap )
-        } )
+        // that's some sexy code
+        val futureSet: Future[ ObserverComponent.Update ] =
+          Future.sequence( setOfFutures ).map { ObserverComponent.Update( _ ) }
 
-      // that's some sexy code
-      val futureSet: Future[ ObserverComponent.Update ] =
-        Future.sequence( setOfFutures ).map { ObserverComponent.Update( _ ) }
-
-      for ( c ← clients ) futureSet.pipeTo( c( Observer ) )
-  }
+        for ( c ← clients ) futureSet.pipeTo( c( Observer ) )
+    }
 }

@@ -1,12 +1,8 @@
 package controllers
 
 import scala.concurrent.ExecutionContext.Implicits.global
-
 import akka.actor.actorRef2Scala
 import akka.pattern.ask
-import game.core.Game
-import game.core.Game.AddPlayer
-import game.core.Game.timeout
 import game.communications.commands.ServerCommand
 import game.util.logging.PlayLoggingService
 import play.api.libs.iteratee.Done
@@ -16,6 +12,9 @@ import play.api.libs.iteratee.Iteratee
 import play.api.mvc.Action
 import play.api.mvc.Controller
 import play.api.mvc.WebSocket
+import game.core.Engine
+import game.core.Engine.AddPlayer
+import game.core.Engine.timeout
 
 /**
  * Defines a Play controller that serves the client-side engine and handles
@@ -37,13 +36,13 @@ object Application extends Controller {
    */
   def websocket( username: String ) = WebSocket.async[ String ] { implicit request ⇒
     logger.info( s"$username requested WebSocket connection" )
-    ( Game.game ? AddPlayer( username ) ) map {
+    ( Engine.engine ? AddPlayer( username ) ) map {
 
-      case Game.Connected( connection, enumerator ) ⇒ // Success
+      case Engine.Connected( connection, enumerator ) ⇒ // Success
         val iter = Iteratee.foreach[ String ] { connection ! ServerCommand.getCommand( _ ) }
         ( iter, enumerator )
 
-      case Game.NotConnected( message ) ⇒ // Connection error
+      case Engine.NotConnected( message ) ⇒ // Connection error
         // A finished Iteratee sending EOF
         val iter = Done[ String, Unit ]( (), Input.EOF )
         // Send an error and close the socket
