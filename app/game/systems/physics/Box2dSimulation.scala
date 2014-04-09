@@ -16,11 +16,12 @@ import scala.math.abs
 import game.systems.physics.PhysicsSystem.MobileData
 import game.systems.physics.PhysicsSystem.StructData
 import game.components.physics.Rect
+import game.entity.Entity
 
 class Box2dSimulation( gx: Int, gy: Int ) {
 
   // Not really sure what these are for... all the tutorials use these values
-  val timestep = 1.0f / 60.0f
+  val timestep = 1.0f / 50.0f
   val velocityIterations = 6
   val positionIterations = 2
 
@@ -29,14 +30,14 @@ class Box2dSimulation( gx: Int, gy: Int ) {
   world.setAllowSleep( true )
   //world.setContactListener( new MobileContactListener )
 
-  var mobiles: Set[ Box2dMobile ] = Set()
+  var mobiles: Map[ Entity, Box2dMobile ] = Map()
   var structs: Set[ Body ] = Set()
 
   def add( data: Set[ PhysicsSystem.Data ] ) =
     data.foreach {
       case MobileData( ent, p, Rect( w, h ), speed, hops ) ⇒
         val body = createMobile( p.x, p.y, w, h )
-        mobiles += new Box2dMobile( ent, speed, hops, body )
+        mobiles += ent -> new Box2dMobile( speed, hops, body )
 
       case StructData( ent, p, Rect( w, h ) ) ⇒
         structs += createStructure( p.x, p.y, w, h )

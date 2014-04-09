@@ -24,15 +24,20 @@ class ObserverComponent( val connection: ActorRef ) extends Component {
   var snapshots: Map[ EntityId, DimensionComponent.Snapshot ] = Map()
 
   override def receive = LoggingReceive {
-    case Update( snaps ) ⇒
-      for ( ( id, snap ) ← snaps )
-        if ( snap.pos != snapshots( id ).pos )
-          connection ! ClientCommand.Move( id.toString, snap.pos.x, snap.pos.y )
-
-      for ( ( id, snap ) ← snaps -- snapshots.toSet ) {
-        snapshots += id -> snap
+    case up @ Update( snaps ) ⇒
+      for ( ( id, snap ) ← snaps if !snapshots.contains( id ) )
         connection ! ClientCommand.CreateRect( id.toString, snap.pos, snap.shape )
-      }
+
+      val movements =
+        for {
+          ( id, snap ) ← snaps
+          if snapshots.contains( id ) && snap.pos != snapshots( id ).pos
+        } yield id.toString -> ( snap.pos.x, snap.pos.y )
+
+      if ( movements.nonEmpty )
+        connection ! ClientCommand.UpdatePositions( movements.toMap )
+
+      snapshots = snaps.toMap
   }
 
   override def postStop = {

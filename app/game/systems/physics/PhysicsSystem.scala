@@ -19,6 +19,7 @@ import game.systems.System
 import game.systems.System.UpdateEntities
 import game.components.physics.MobileComponent
 import akka.event.LoggingReceive
+import game.components.io.InputComponent
 
 object PhysicsSystem {
   import game.components.physics.Shape
@@ -29,6 +30,8 @@ object PhysicsSystem {
   trait Data
   case class MobileData( e: Entity, p: Position, s: Shape, speed: Float, hops: Float ) extends Data
   case class StructData( e: Entity, p: Position, s: Shape ) extends Data
+
+  sealed case class ApplyInputs( e: Entity, snapshot: InputComponent.Snapshot )
 
   sealed case class Update(
     v: Long,
@@ -92,12 +95,26 @@ class PhysicsSystem( gx: Int, gy: Int ) extends System {
       simulation.add( add )
       simulation.remove( rem )
 
+    case ApplyInputs( e, snapshot ) ⇒
+      for ( b2Mobile ← simulation.mobiles.get( e ) ) {
+        if ( !(snapshot.left ^ snapshot.right) ) b2Mobile.setSpeed( 0 )
+        else if ( snapshot.left ) b2Mobile.setSpeed( -b2Mobile.speed )
+        else if ( snapshot.right ) b2Mobile.setSpeed( b2Mobile.speed )
+      }
+
     case Tick ⇒
+      for {
+        e ← mobiles
+        snap ← ( e( Input ) ? RequestSnapshot ).mapTo[ InputComponent.Snapshot ]
+      } {
+        self ! ApplyInputs( e, snap )
+      }
+
       simulation.step()
-      simulation.mobiles.foreach { m ⇒
-        val x = m.body.getPosition.x
-        val y = m.body.getPosition.y
-        m.entity( Dimension ) ! DimensionComponent.UpdatePosition( x, y )
+      for ( ( e, b2mMobile ) ← simulation.mobiles ) {
+        val x = b2mMobile.body.getPosition.x
+        val y = b2mMobile.body.getPosition.y
+        e( Dimension ) ! DimensionComponent.UpdatePosition( x, y )
       }
   }
 }

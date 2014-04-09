@@ -46,23 +46,23 @@ sealed class Game extends Actor {
 
   def createClientProxy( username: String, count: Int ) = {
     val ( enumerator, channel ) = play.api.libs.iteratee.Concurrent.broadcast[ String ]
-    val input = context.actorOf( InputComponent.props, s"InputComponent_$count" )
+    val input = context.actorOf( InputComponent.props, s"input$count" )
     val connection =
-      context.actorOf( PlayActorConnection.props( input, channel ), s"Conn_$count" )
+      context.actorOf( PlayActorConnection.props( input, channel ), s"conn$count" )
     val output =
-      context.actorOf( ObserverComponent.props( connection ), s"ObserverComponent_$count" )
+      context.actorOf( ObserverComponent.props( connection ), s"observer$count" )
     val dimensions =
-      context.actorOf( DimensionComponent.props( 10, 10, 1, 2 ), s"PosComponent_$count" )
+      context.actorOf( DimensionComponent.props( 10, 10, 1, 2 ), s"dimensions$count" )
     val velocity =
-      context.actorOf( MobileComponent.props( 0, 0 ), s"VelComponent_$count" )
+      context.actorOf( MobileComponent.props( 5, 0 ), s"mobile$count" )
     sender ! Connected( connection, enumerator )
-    engine ! Engine.NewPlayer( new PlayerEntity( input, output, dimensions, velocity ) )
+    //engine ! Engine.NewPlayer( new PlayerEntity( input, output, dimensions, velocity ) )
     connections += username -> connection
     context.watch( connection )
   }
 
   override def receive = managePlayers( 0 )
-  
+
   def managePlayers( count: Int ): Receive = LoggingReceive {
     case AddPlayer( username ) if !connections.contains( username ) ⇒
       context become managePlayers( count + 1 )

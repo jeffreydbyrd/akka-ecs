@@ -7,12 +7,11 @@ import scala.math.abs
 import org.jbox2d.common.Vec2
 
 class Box2dMobile(
-    var entity: Entity,
     var speed: Float,
     var hops: Float,
     val body: Body ) {
 
-  def setSpeed( speed: Int ) = {
+  def setSpeed( speed: Float ) = {
     val vel = body.getLinearVelocity()
     var force: Float = 0
 
