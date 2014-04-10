@@ -14,6 +14,7 @@ import game.components.ComponentType.Dimension
 import game.components.io.ObserverComponent
 import game.components.physics.DimensionComponent.Snapshot
 import game.core.Engine.Tick
+import game.core.Engine.TickAck
 import game.core.Engine.timeout
 import game.entity.Entity
 import game.entity.EntityId
@@ -47,5 +48,7 @@ class VisualSystem extends Actor {
           Future.sequence( setOfFutures ).map { ObserverComponent.Update( _ ) }
 
         for ( c ← clients ) futureSet.pipeTo( c( Observer ) )
+        
+        sender ! TickAck
     }
 }

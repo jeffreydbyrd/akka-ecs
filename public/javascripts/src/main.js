@@ -16,7 +16,7 @@ var canvasx = UTIL.screenw() / 1.03;
 var ky = canvasy / internal_dimensions;
 var kx = canvasx / internal_dimensions;
 
-var view = new View(canvasy, canvasy, kx, ky);
+var view = new View(canvasy, canvasy, ky, ky);
 var listener = new InputListener(COMMANDS.keyBindings);
 var conn = new Connection(address);
 

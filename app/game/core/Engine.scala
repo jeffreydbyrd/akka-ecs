@@ -1,29 +1,34 @@
 package game.core
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
+
 import akka.actor.Actor
 import akka.actor.ActorRef
+import akka.actor.ActorSystem
 import akka.actor.PoisonPill
 import akka.actor.Props
+import akka.actor.Terminated
 import akka.actor.actorRef2Scala
 import akka.event.LoggingReceive
+import akka.pattern.ask
+import akka.util.Timeout.durationToTimeout
+import game.communications.connection.PlayActorConnection
+import game.components.io.InputComponent
+import game.components.io.ObserverComponent
 import game.components.physics.DimensionComponent
+import game.components.physics.MobileComponent
+import game.core.Engine.TickAck
 import game.entity.Entity
+import game.entity.PlayerEntity
 import game.entity.StructureEntity
 import game.systems.QuitSystem
 import game.systems.System
 import game.systems.VisualSystem
 import game.systems.physics.PhysicsSystem
 import game.util.logging.AkkaLoggingService
-import game.components.io.InputComponent
-import game.communications.connection.PlayActorConnection
-import game.components.io.ObserverComponent
-import game.components.physics.MobileComponent
 import play.api.libs.iteratee.Enumerator
-import game.entity.PlayerEntity
-import akka.actor.ActorSystem
-import akka.actor.Terminated
 
 object Engine {
   implicit val timeout: akka.util.Timeout = 1 second
@@ -39,9 +44,10 @@ object Engine {
   }
   case class Add( val v: Long, val es: Set[ Entity ] ) extends EntityOp
   case class Rem( val v: Long, val es: Set[ Entity ] ) extends EntityOp
-  case object Tick
+  case object TickAck
 
   // sent:
+  case object Tick
   case object Connect
   case class Connected( connection: ActorRef, enum: Enumerator[ String ] )
   case class NotConnected( message: String )
@@ -51,8 +57,6 @@ class Engine extends Actor {
   import Engine._
 
   val logger = new AkkaLoggingService( this, context )
-  val ticker =
-    system.scheduler.schedule( 20 milliseconds, 20 milliseconds, self, Tick )
 
   private var systems: Set[ ActorRef ] = Set(
     context.actorOf( QuitSystem.props( self ), "quit_system" ),
@@ -93,8 +97,14 @@ class Engine extends Actor {
 
   override def receive = manage( 0, walls )
 
+  var ready = true
   def manage( version: Long, entities: Set[ Entity ] ): Receive = LoggingReceive {
-    case Tick                 ⇒ for ( sys ← systems ) sys ! Tick
+    case Tick if !ready ⇒ ready = true
+    case Tick ⇒
+      ready = false
+      val futureAcks = for { sys ← systems } yield sys ? Tick
+      Future.sequence( futureAcks ).foreach( _ ⇒ self ! Tick )
+      system.scheduler.scheduleOnce( 20 millis, self, Tick )
 
     case Add( `version`, es ) ⇒ updateEntities( version + 1, entities ++ es )
 
@@ -114,6 +124,10 @@ class Engine extends Actor {
 
     case Terminated( conn ) ⇒
       connections = connections.filterNot { case ( usrName, actRef ) ⇒ actRef == conn }
+  }
+
+  override def preStart() {
+    self ! Tick
   }
 
 }

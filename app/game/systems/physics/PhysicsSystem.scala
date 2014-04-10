@@ -1,28 +1,29 @@
 package game.systems.physics
 
+import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import scala.concurrent.duration.DurationInt
 import akka.actor.Props
+import akka.actor.actorRef2Scala
+import akka.event.LoggingReceive
 import akka.pattern.ask
-import akka.pattern.pipe
 import game.components.Component.RequestSnapshot
 import game.components.ComponentType.Dimension
 import game.components.ComponentType.Input
 import game.components.ComponentType.Mobility
+import game.components.io.InputComponent.Snapshot
 import game.components.physics.DimensionComponent
+import game.components.physics.MobileComponent
 import game.components.physics.Position
 import game.components.physics.Shape
 import game.core.Engine.Tick
+import game.core.Engine.TickAck
 import game.core.Engine.timeout
 import game.entity.Entity
 import game.systems.System
 import game.systems.System.UpdateEntities
-import game.components.physics.MobileComponent
-import akka.event.LoggingReceive
 import game.components.io.InputComponent
-import scala.concurrent.Await
-import scala.concurrent.duration._
-import org.jbox2d.dynamics.Body
 
 object PhysicsSystem {
   import game.components.physics.Shape
@@ -33,28 +34,21 @@ object PhysicsSystem {
   trait Data
   case class MobileData( e: Entity, p: Position, s: Shape, speed: Float, hops: Float ) extends Data
   case class StructData( e: Entity, p: Position, s: Shape )
-  sealed case class ApplyInputs( e: Entity, snapshot: InputComponent.Snapshot )
 
-  def getStructData( structs: Set[ Entity ] ): Future[ Set[ StructData ] ] = {
-    val setOfFutures =
-      structs.map { e ⇒
-        ( e( Dimension ) ? RequestSnapshot ).map {
-          case s: DimensionComponent.Snapshot ⇒ StructData( e, s.pos, s.shape )
-        }
+  def getStructData( structs: Set[ Entity ] ): Set[ Future[ StructData ] ] =
+    structs.map { e ⇒
+      ( e( Dimension ) ? RequestSnapshot ).map {
+        case s: DimensionComponent.Snapshot ⇒ StructData( e, s.pos, s.shape )
       }
-    Future.sequence( setOfFutures )
-  }
+    }
 
-  def getMobileData( mobs: Set[ Entity ] ): Future[ Set[ MobileData ] ] = {
-    val setOfFutures =
-      mobs.map( e ⇒ {
-        val fDim = ( e( Dimension ) ? RequestSnapshot ).mapTo[ DimensionComponent.Snapshot ]
-        val fMob = ( e( Mobility ) ? RequestSnapshot ).mapTo[ MobileComponent.Snapshot ]
-        for ( dim ← fDim; mob ← fMob )
-          yield MobileData( e, dim.pos, dim.shape, mob.speed, mob.hops )
-      } )
-    Future.sequence( setOfFutures )
-  }
+  def getMobileData( mobs: Set[ Entity ] ): Set[ Future[ MobileData ] ] =
+    mobs.map( e ⇒ {
+      val fDim = ( e( Dimension ) ? RequestSnapshot ).mapTo[ DimensionComponent.Snapshot ]
+      val fMob = ( e( Mobility ) ? RequestSnapshot ).mapTo[ MobileComponent.Snapshot ]
+      for ( dim ← fDim; mob ← fMob )
+        yield MobileData( e, dim.pos, dim.shape, mob.speed, mob.hops )
+    } )
 }
 
 class PhysicsSystem( gx: Int, gy: Int ) extends System {
@@ -79,36 +73,44 @@ class PhysicsSystem( gx: Int, gy: Int ) extends System {
             newStructs += e
         }
 
-        val addStructs: Set[ StructData ] =
-          Await.result( getStructData( newStructs -- structures ), 500 millis )
-        val addMobiles: Set[ MobileData ] =
-          Await.result( getMobileData( newMobiles -- mobiles ), 500 millis )
+        val addStructs: Set[ Future[ StructData ] ] = getStructData( newStructs -- structures )
+        val addMobiles: Set[ Future[ MobileData ] ] = getMobileData( newMobiles -- mobiles )
 
-        for ( sd ← addStructs ) simulation.add( sd )
-        for ( md ← addMobiles ) b2Mobiles += md.e -> simulation.add( md )
+        for ( futureStruct ← addStructs )
+          simulation.add( Await.result( futureStruct, 1000 millis ) )
+
+        for ( futureMobile ← addMobiles ) {
+          val data = Await.result( futureMobile, 1000 millis )
+          b2Mobiles += data.e -> simulation.add( data )
+        }
 
         context.become( manage( v, newStructs, newMobiles ) )
 
-      case ApplyInputs( e, snapshot ) ⇒
-        for ( b2Mobile ← b2Mobiles.get( e ) ) {
-          if ( !( snapshot.left ^ snapshot.right ) ) b2Mobile.setSpeed( 0 )
-          else if ( snapshot.left ) b2Mobile.setSpeed( -b2Mobile.speed )
-          else if ( snapshot.right ) b2Mobile.setSpeed( b2Mobile.speed )
-        }
-
       case Tick ⇒
-        for {
-          e ← mobiles
-          snap ← ( e( Input ) ? RequestSnapshot ).mapTo[ InputComponent.Snapshot ]
-        } {
-          self ! ApplyInputs( e, snap )
+        import InputComponent.Snapshot
+        
+        // Get inputs and apply them
+        val futureSnaps: Set[ ( Entity, Future[ Snapshot ] ) ] =
+          for ( e ← mobiles )
+            yield ( e, ( e( Input ) ? RequestSnapshot ).mapTo[ Snapshot ] )
+
+        for ( ( e, fs ) ← futureSnaps ) {
+          val snap = Await.result( fs, 1000 millis )
+          val b2Mobile = b2Mobiles( e )
+          if ( !( snap.left ^ snap.right ) ) b2Mobile.setSpeed( 0 )
+          else if ( snap.left ) b2Mobile.setSpeed( -b2Mobile.speed )
+          else if ( snap.right ) b2Mobile.setSpeed( b2Mobile.speed )
         }
 
         simulation.step()
+
+        // Update the components with new positions
         for ( ( e, b2Mob ) ← b2Mobiles ) {
           val x = b2Mob.body.getPosition.x
           val y = b2Mob.body.getPosition.y
           e( Dimension ) ! DimensionComponent.UpdatePosition( x, y )
         }
+        
+        sender ! TickAck
     }
 }

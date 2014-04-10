@@ -14,6 +14,7 @@ import game.components.ComponentType.Observer
 import game.components.io.InputComponent.Snapshot
 import game.core.Engine
 import game.core.Engine.Tick
+import game.core.Engine.TickAck
 import game.core.Engine.timeout
 import game.entity.Entity
 
@@ -47,5 +48,7 @@ class QuitSystem( val engine: ActorRef ) extends System {
         futureSet.foreach { set ⇒
           if ( set.nonEmpty ) engine ! Engine.Rem( version, set )
         }
+        
+        sender ! TickAck
     }
 }
