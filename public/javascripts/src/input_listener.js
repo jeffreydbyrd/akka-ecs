@@ -3,14 +3,12 @@ function InputListener(keybindings) {
 	var connection;
 
 	// For some keys, we need to know when the user releases it:
-  var needsReleased = [COMMANDS.left, COMMANDS.right];
+  var needsReleased = [COMMANDS.left, COMMANDS.right, COMMANDS.jump];
 
   function keyDown(evt) {
     var type = keybindings[evt.keyCode];
-    if (UTIL.contains(needsReleased, type)) {
-      type = "GO_" + type;
-    }
-    self.connection.send({'type': type});
+		if (type != null && type != undefined)
+      self.connection.send({'type': type});
   }
 
   function keyUp(evt) {

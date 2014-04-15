@@ -15,11 +15,12 @@ object ServerCommand {
     ( parsed \ "type" ).as[ String ] match {
       case "started"    ⇒ ClientStarted
       case "ack"        ⇒ PlayActorConnection.Ack( data.as[ Int ] )
-      case "GO_LEFT"    ⇒ GoLeft
-      case "GO_RIGHT"   ⇒ GoRight
+      case "LEFT"       ⇒ GoLeft
+      case "RIGHT"      ⇒ GoRight
+      case "JUMP"       ⇒ Jump
       case "STOP_LEFT"  ⇒ StopLeft
       case "STOP_RIGHT" ⇒ StopRight
-      case "JUMP"       ⇒ Jump
+      case "STOP_JUMP"  ⇒ StopJump
       case "QUIT"       ⇒ ClientQuit
       case "click" ⇒
         val x = ( data \ "x" ).as[ Int ]
@@ -38,6 +39,7 @@ case class Click( x: Int, y: Int ) extends ServerCommand
 case object Jump extends ServerCommand
 case object GoLeft extends ServerCommand
 case object GoRight extends ServerCommand
+case object StopJump extends ServerCommand
 case object StopLeft extends ServerCommand
 case object StopRight extends ServerCommand
 case class Invalid( s: String ) extends ServerCommand

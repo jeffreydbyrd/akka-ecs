@@ -11,14 +11,15 @@ var address = function() {
 }();
 
 var internal_dimensions = 50;
-var length = UTIL.screen_h / 1.1;
-var k = length / internal_dimensions;
+var canvasy = UTIL.screenh() / 1.03;
+var canvasx = UTIL.screenw() / 1.03;
+var ky = canvasy / internal_dimensions;
+var kx = canvasx / internal_dimensions;
 
-var game = new Game(length, length, k);
+var view = new View(canvasy, canvasy, ky, ky);
 var listener = new InputListener(COMMANDS.keyBindings);
 var conn = new Connection(address);
 
-game.bindTo(conn);
+view.bindTo(conn);
 listener.bindTo(conn);
-
 conn.start();

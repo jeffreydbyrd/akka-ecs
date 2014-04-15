@@ -17,7 +17,7 @@ function Connection(url) {
     this.isClosed = false;
     socket.onopen = function(evt) { console.log("websocket opened") };
     socket.onclose = function() { console.log("websocket closed") };
-    socket.onmessage = function(evt) { receive(evt.data) };
+    socket.onmessage = function(evt) { receive(JSON.parse(evt.data)) };
   };
 
   this.close = function() { socket.close(); this.isClosed = true; };
@@ -36,7 +36,6 @@ function Connection(url) {
   var expectedSeq = 0;
 
   function receive(data) {
-    var data = JSON.parse(data);
     var params = data.message;
 
     if (data.seq <= expectedSeq) {

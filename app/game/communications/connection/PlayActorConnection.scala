@@ -8,8 +8,7 @@ import akka.actor.actorRef2Scala
 import akka.event.LoggingReceive
 import game.communications.commands.ClientCommand
 import game.communications.commands.ServerCommand
-import game.communications.commands.ServerQuit
-import game.communications.commands.ServerReady
+
 import play.api.libs.iteratee.Concurrent.Channel
 import play.api.libs.iteratee.Enumerator
 
@@ -26,24 +25,26 @@ object PlayActorConnection {
   case class ReturnEnum( enum: Enumerator[ String ] )
 }
 
-class PlayActorConnection( val player: ActorRef, val channel: Channel[ String ] ) extends Actor {
+class PlayActorConnection( val toServer: ActorRef, val toClient: Channel[ String ] ) extends Actor {
+  import ClientCommand.ServerQuit
+  import ClientCommand.ServerReady
   import PlayActorConnection._
 
   var seq: MessageId = 0
   var retryers: Map[ MessageId, ActorRef ] = Map()
 
   def retry( msg: String ) {
-    val prop = Retryer.props( msg, channel )
+    val prop = Retryer.props( msg, toClient )
     retryers += seq -> context.actorOf( prop, "retryer_" + seq.toString )
   }
 
   def send( cc: ClientCommand ) = {
-    val msg = s""" {
-        "seq" : $seq,
-        "ack":${cc.doRetry},
-        "type": "${cc.typ}",
-    	    "message" : ${cc.toJson}} """
-    channel push msg
+    val msg =
+      s""" {"seq" : $seq,
+            "ack":${cc.doRetry},
+            "type": "${cc.typ}",
+    	        "message" : ${cc.toJson}} """
+    toClient push msg
     if ( cc.doRetry ) {
       retry( msg )
       seq += 1
@@ -63,7 +64,7 @@ class PlayActorConnection( val player: ActorRef, val channel: Channel[ String ] 
 
   override def receive = LoggingReceive {
     case Ack( id )         ⇒ ack( id )
-    case pc: ServerCommand ⇒ context.parent ! pc
+    case pc: ServerCommand ⇒ toServer ! pc
     case cc: ClientCommand ⇒ send( cc )
   }
 
@@ -73,6 +74,6 @@ class PlayActorConnection( val player: ActorRef, val channel: Channel[ String ] 
 
   override def postStop {
     send( ServerQuit )
-    channel.eofAndEnd
+    toClient.eofAndEnd
   }
 }
