@@ -75,10 +75,9 @@ class PhysicsSystem( gx: Int, gy: Int ) extends System {
   }
 
   def applyInputs( snap: Snapshot, b2Mobile: Box2dMobile ) = {
-    if ( b2Mobile.grounded )
-      if ( !( snap.left ^ snap.right ) ) b2Mobile.setSpeed( 0 )
-      else if ( snap.left ) b2Mobile.setSpeed( -b2Mobile.speed )
-      else if ( snap.right ) b2Mobile.setSpeed( b2Mobile.speed )
+    if ( !( snap.left ^ snap.right ) ) b2Mobile.setSpeed( 0 )
+    else if ( snap.left ) b2Mobile.setSpeed( -b2Mobile.speed )
+    else if ( snap.right ) b2Mobile.setSpeed( b2Mobile.speed )
 
     if ( snap.jump && b2Mobile.grounded ) b2Mobile.jump()
   }
