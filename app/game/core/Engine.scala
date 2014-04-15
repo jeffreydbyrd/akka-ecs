@@ -61,7 +61,7 @@ class Engine extends Actor {
   private var systems: Set[ ActorRef ] = Set(
     context.actorOf( QuitSystem.props( self ), "quit_system" ),
     context.actorOf( VisualSystem.props, "visual_system" ),
-    context.actorOf( PhysicsSystem.props( 0, -10 ), "physics_system" )
+    context.actorOf( PhysicsSystem.props( 0, -30 ), "physics_system" )
   )
 
   def updateEntities( v: Long, ents: Set[ Entity ] ) = {
@@ -82,9 +82,9 @@ class Engine extends Actor {
     val output =
       context.actorOf( ObserverComponent.props( connection ), s"observer$version" )
     val dimensions =
-      context.actorOf( DimensionComponent.props( 10, 10, 1, 2 ), s"dimensions$version" )
+      context.actorOf( DimensionComponent.props( 10, 10, 2, 2 ), s"dimensions$version" )
     val velocity =
-      context.actorOf( MobileComponent.props( 5, 0 ), s"mobile$version" )
+      context.actorOf( MobileComponent.props( 5, .85F ), s"mobile$version" )
     sender ! Connected( connection, enumerator )
     connections += username -> connection
     context.watch( connection )

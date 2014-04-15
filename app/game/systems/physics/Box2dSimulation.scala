@@ -23,19 +23,24 @@ class Box2dSimulation( gx: Int, gy: Int ) {
   private val velocityIterations = 6
   private val positionIterations = 2
 
+  var b2Mobiles: Map[ Entity, Box2dMobile ] = Map()
+
   // create a box2d world
   private val world = new World( new Vec2( gx, gy ) )
+  private val contactListener = new Box2dContactListener
   world.setAllowSleep( true )
+  world.setContactListener( contactListener )
 
   def add( sd: StructData ): Body = sd match {
     case StructData( ent, p, Rect( w, h ) ) ⇒
       createStructure( p.x, p.y, w, h )
   }
 
-  def add( md: MobileData ): Box2dMobile = md match {
-    case MobileData( ent, p, Rect( w, h ), speed, hops ) ⇒
-      val body = createMobile( p.x, p.y, w, h )
-      new Box2dMobile( speed, hops, body )
+  def rem( e: Entity ) = {
+    val mobile = b2Mobiles( e )
+    contactListener.feet -= mobile.feet
+    b2Mobiles -= e
+    world.destroyBody( mobile.body )
   }
 
   def step() = {
@@ -58,22 +63,35 @@ class Box2dSimulation( gx: Int, gy: Int ) {
     body
   }
 
-  private def createMobile( x: Float, y: Float, w: Float, h: Float ): Body = {
-    val mobileBodyDef = new BodyDef
-    mobileBodyDef.fixedRotation = true
-    mobileBodyDef.position.set( x, y )
-    mobileBodyDef.`type` = BodyType.DYNAMIC
+  def createMobile( md: MobileData ): Box2dMobile = md match {
+    case MobileData( entity, position, r: Rect, speed, hops ) ⇒
+      // Define our body
+      val mobileBodyDef = new BodyDef
+      mobileBodyDef.fixedRotation = true
+      mobileBodyDef.position.set( position.x, position.y )
+      mobileBodyDef.`type` = BodyType.DYNAMIC
+      val body: Body = world.createBody( mobileBodyDef )
 
-    val blockShape = new PolygonShape
-    blockShape.setAsBox( w / 2, h / 2 )
+      // Define main fixture shape
+      val b2Shape = new PolygonShape
+      b2Shape.setAsBox( r.w / 2, r.h / 2 )
 
-    val fixtureDef = new FixtureDef
-    fixtureDef.shape = blockShape
-    fixtureDef.friction = 0
+      // Define body fixture
+      val fixtureDef = new FixtureDef
+      fixtureDef.shape = b2Shape
+      fixtureDef.density = 1
+      body.createFixture( fixtureDef )
 
-    val body: Body = world.createBody( mobileBodyDef )
-    body.createFixture( fixtureDef )
-    body
+      // Define foot sensor
+      b2Shape.setAsBox( r.w / 2.1F, 0.1F, new Vec2( 0, -( r.h / 2 ) ), 0 )
+      fixtureDef.isSensor = true
+      fixtureDef.density = 0
+      val footFixture = body.createFixture( fixtureDef )
+
+      val mobile = new Box2dMobile( speed, hops, gy, body, footFixture, false )
+      contactListener.feet += footFixture -> mobile
+      b2Mobiles += entity -> mobile
+      mobile
   }
 
 }

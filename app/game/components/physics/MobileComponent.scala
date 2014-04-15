@@ -6,7 +6,7 @@ import akka.event.LoggingReceive
 import game.components.Component.RequestSnapshot
 
 object MobileComponent {
-  def props( x: Float, y: Float ) = Props( classOf[MobileComponent], x, y )
+  def props( x: Float, y: Float ) = Props( classOf[ MobileComponent ], x, y )
 
   // received:
   case class Update( x: Float, y: Float )
@@ -15,6 +15,10 @@ object MobileComponent {
   case class Snapshot( speed: Float, hops: Float )
 }
 
+/**
+ * speed: think "meters / sec"
+ * hops: a number between 0.0 and 1.0 (percent gravity)
+ */
 class MobileComponent( var speed: Float, var hops: Float ) extends Actor {
   import MobileComponent._
 
