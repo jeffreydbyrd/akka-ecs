@@ -33,7 +33,7 @@ $ ./activator "test-only fully.qualified.className"
 
 # Activator UI
 
-You can the above (and more) with the activator UI.
+You can do the above (and more) with the activator UI.
 
 ```bash
 $ ./activator ui
