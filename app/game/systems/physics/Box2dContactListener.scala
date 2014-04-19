@@ -20,11 +20,12 @@ class Box2dContactListener extends ContactListener {
       m.grounded = true
     }
 
-  def endContact( contact: Contact ): Unit = {
-    val fixA = contact.getFixtureA
-    val fixB = contact.getFixtureB
-    feet.get( fixA ) foreach { m ⇒ m.grounded = false; println( "NOT grounded!" ) }
-    feet.get( fixB ) foreach { m ⇒ m.grounded = false; println( "NOT grounded!" ) }
+  def endContact( contact: Contact ): Unit = for {
+    f ← List( contact.getFixtureA, contact.getFixtureB )
+    m ← feet.get( f )
+  } {
+    println( "Not Grounded!" )
+    m.grounded = false
   }
 
   def postSolve( contact: Contact, impulse: ContactImpulse ): Unit = {}
