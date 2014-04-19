@@ -19,7 +19,7 @@ import game.entity.Entity
 class Box2dSimulation( gx: Int, gy: Int ) {
 
   // Not really sure what these are for... all the tutorials use these values
-  private val timestep = 1.0f / 50.0f
+  private val timestep = 1.0f / 25.0f
   private val velocityIterations = 6
   private val positionIterations = 2
 

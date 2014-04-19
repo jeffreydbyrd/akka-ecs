@@ -5,12 +5,13 @@ import scala.concurrent.Future
 
 import akka.actor.Actor
 import akka.actor.Props
+import akka.actor.actorRef2Scala
 import akka.event.LoggingReceive
 import akka.pattern.ask
 import akka.pattern.pipe
 import game.components.Component
-import game.components.ComponentType.Observer
 import game.components.ComponentType.Dimension
+import game.components.ComponentType.Observer
 import game.components.io.ObserverComponent
 import game.components.physics.DimensionComponent.Snapshot
 import game.core.Engine.Tick
