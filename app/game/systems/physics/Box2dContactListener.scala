@@ -11,22 +11,18 @@ class Box2dContactListener extends ContactListener {
 
   var feet: Map[ Fixture, Box2dMobile ] = Map()
 
-  def beginContact( contact: Contact ): Unit =
-    for {
-      f ← List( contact.getFixtureA, contact.getFixtureB )
-      m ← feet.get( f )
-    } {
-      println( "Grounded!" )
-      m.grounded = true
-    }
-
-  def endContact( contact: Contact ): Unit = for {
-    f ← List( contact.getFixtureA, contact.getFixtureB )
+  private def feetContact( landing: Boolean, c: Contact ) = for {
+    f ← List( c.getFixtureA, c.getFixtureB )
     m ← feet.get( f )
   } {
-    println( "Not Grounded!" )
-    m.grounded = false
+    m.grounded = landing
+    if ( landing ) {
+      m.remainingJumpSteps = Box2dMobile.maxJumpSteps
+    }
   }
+
+  def beginContact( contact: Contact ): Unit = feetContact( true, contact )
+  def endContact( contact: Contact ): Unit = feetContact( false, contact )
 
   def postSolve( contact: Contact, impulse: ContactImpulse ): Unit = {}
   def preSolve( contact: Contact, manifold: Manifold ): Unit = {}

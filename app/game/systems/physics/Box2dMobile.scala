@@ -7,13 +7,22 @@ import scala.math.abs
 import org.jbox2d.common.Vec2
 import org.jbox2d.dynamics.Fixture
 
+object Box2dMobile {
+  val maxJumpSteps = 10
+}
+
 class Box2dMobile(
     var speed: Float,
     var hops: Float,
-    var gravity: Float,
     val body: Body,
     val feet: Fixture,
-    var grounded: Boolean ) {
+    var grounded: Boolean = false ) {
+
+  var remainingJumpSteps = 0
+
+  def jump() = {
+    body.getLinearVelocity.y = hops
+  }
 
   def setSpeed( speed: Float ) = {
     val vel = body.getLinearVelocity()
@@ -26,9 +35,4 @@ class Box2dMobile(
 
     body.applyForce( new Vec2( force, 0 ), body.getWorldCenter() )
   }
-
-  def jump() = {
-    body.applyLinearImpulse( new Vec2( 0, -hops * gravity ), body.getWorldCenter() )
-  }
-
 }

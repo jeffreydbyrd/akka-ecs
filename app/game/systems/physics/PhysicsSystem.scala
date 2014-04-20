@@ -74,15 +74,8 @@ class PhysicsSystem( gx: Int, gy: Int ) extends System {
     }
   }
 
-  def applyInputs( snap: Snapshot, b2Mobile: Box2dMobile ) = {
-    if ( !( snap.left ^ snap.right ) ) b2Mobile.setSpeed( 0 )
-    else if ( snap.left ) b2Mobile.setSpeed( -b2Mobile.speed )
-    else if ( snap.right ) b2Mobile.setSpeed( b2Mobile.speed )
-
-    if ( snap.jump && b2Mobile.grounded ) b2Mobile.jump()
-  }
-
   override def receive = manage( 0, Set(), Set() )
+
   def manage( version: Long, structures: Set[ Entity ], mobiles: Set[ Entity ] ): Receive = LoggingReceive {
     case UpdateEntities( v, ents ) if v > version ⇒
       var newStructs: Set[ Entity ] = Set()
@@ -109,7 +102,7 @@ class PhysicsSystem( gx: Int, gy: Int ) extends System {
           yield ( e, ( e( Input ) ? RequestSnapshot ).mapTo[ Snapshot ] )
 
       for ( ( e, fs ) ← futureSnaps ) {
-        applyInputs( Await.result( fs, 1000 millis ), simulation.b2Mobiles( e ) )
+        simulation.applyInputs( e, Await.result( fs, 1000 millis ) )
       }
 
       simulation.step()

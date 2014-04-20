@@ -15,11 +15,11 @@ import game.systems.physics.PhysicsSystem.MobileData
 import game.systems.physics.PhysicsSystem.StructData
 import game.components.physics.Rect
 import game.entity.Entity
+import game.components.io.InputComponent
 
 class Box2dSimulation( gx: Int, gy: Int ) {
 
-  // Not really sure what these are for... all the tutorials use these values
-  private val timestep = 1.0f / 25.0f
+  private val timestep = 1.0f / 10.0f
   private val velocityIterations = 6
   private val positionIterations = 2
 
@@ -41,6 +41,22 @@ class Box2dSimulation( gx: Int, gy: Int ) {
     contactListener.feet -= mobile.feet
     b2Mobiles -= e
     world.destroyBody( mobile.body )
+  }
+
+  def applyInputs( e: Entity, snap: InputComponent.Snapshot ) = {
+    val m: Box2dMobile = b2Mobiles( e )
+    if ( !( snap.left ^ snap.right ) ) m.setSpeed( 0 )
+    else if ( snap.left ) m.setSpeed( -m.speed )
+    else if ( snap.right ) m.setSpeed( m.speed )
+
+    if ( snap.jump && m.remainingJumpSteps > 0 ) {
+      m.jump()
+      m.remainingJumpSteps -= 1
+    }
+
+    if ( !snap.jump && m.remainingJumpSteps < Box2dMobile.maxJumpSteps ) {
+      m.remainingJumpSteps = 0
+    }
   }
 
   def step() = {
@@ -88,7 +104,7 @@ class Box2dSimulation( gx: Int, gy: Int ) {
       fixtureDef.density = 0
       val footFixture = body.createFixture( fixtureDef )
 
-      val mobile = new Box2dMobile( speed, hops, gy, body, footFixture, false )
+      val mobile = new Box2dMobile( speed, hops, body, footFixture )
       contactListener.feet += footFixture -> mobile
       b2Mobiles += entity -> mobile
       mobile

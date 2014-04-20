@@ -42,6 +42,7 @@ object Engine {
     val v: Long
     val es: Set[ Entity ]
   }
+  
   case class Add( val v: Long, val es: Set[ Entity ] ) extends EntityOp
   case class Rem( val v: Long, val es: Set[ Entity ] ) extends EntityOp
   case object TickAck
@@ -61,7 +62,7 @@ class Engine extends Actor {
   private var systems: Set[ ActorRef ] = Set(
     context.actorOf( QuitSystem.props( self ), "quit_system" ),
     context.actorOf( VisualSystem.props, "visual_system" ),
-    context.actorOf( PhysicsSystem.props( 0, -30 ), "physics_system" )
+    context.actorOf( PhysicsSystem.props( 0, -10 ), "physics_system" )
   )
 
   def updateEntities( v: Long, ents: Set[ Entity ] ) = {
@@ -83,12 +84,12 @@ class Engine extends Actor {
       context.actorOf( ObserverComponent.props( connection ), s"observer$version" )
     val dimensions =
       context.actorOf( DimensionComponent.props( 10, 10, 2, 2 ), s"dimensions$version" )
-    val velocity =
-      context.actorOf( MobileComponent.props( 5, .85F ), s"mobile$version" )
+    val mobility =
+      context.actorOf( MobileComponent.props( 5, 8F ), s"mobile$version" )
     sender ! Connected( connection, enumerator )
     connections += username -> connection
     context.watch( connection )
-    new PlayerEntity( input, output, dimensions, velocity )
+    new PlayerEntity( input, output, dimensions, mobility )
   }
 
   var walls: Set[ Entity ] = Set(
