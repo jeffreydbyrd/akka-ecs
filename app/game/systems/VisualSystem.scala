@@ -29,26 +29,26 @@ class VisualSystem extends Actor {
 
   def manage( version: Long, clients: Set[ Entity ], visuals: Set[ Entity ] ): Receive =
     LoggingReceive {
-      case System.UpdateEntities( v, ents ) if v > version ⇒
+      case System.UpdateEntities( v, ents ) if v > version =>
         var newClients: Set[ Entity ] = Set()
         var newVisuals: Set[ Entity ] = Set()
-        for ( e ← ents ) {
+        for ( e <- ents ) {
           if ( e.components.contains( Dimension ) ) newVisuals += e
           if ( e.components.contains( Observer ) ) newClients += e
         }
         context.become( manage( v, newClients, newVisuals ) )
 
-      case Tick ⇒ // Send current Snapshot of the room to each client
+      case Tick => // Send current Snapshot of the room to each client
         val setOfFutures: Set[ Future[ ( EntityId, Snapshot ) ] ] =
-          visuals.map( v ⇒ ( v( Dimension ) ? Component.RequestSnapshot ).map {
-            case snap: Snapshot ⇒ ( v.id, snap )
+          visuals.map( v => ( v( Dimension ) ? Component.RequestSnapshot ).map {
+            case snap: Snapshot => ( v.id, snap )
           } )
 
         // that's some sexy code
         val futureSet: Future[ ObserverComponent.Update ] =
           Future.sequence( setOfFutures ).map { ObserverComponent.Update( _ ) }
 
-        for ( c ← clients ) futureSet.pipeTo( c( Observer ) )
+        for ( c <- clients ) futureSet.pipeTo( c( Observer ) )
         
         sender ! TickAck
     }

@@ -13,20 +13,20 @@ object ServerCommand {
     val parsed = Json.parse( json )
     val data = parsed \ "data"
     ( parsed \ "type" ).as[ String ] match {
-      case "started"    ⇒ ClientStarted
-      case "ack"        ⇒ PlayActorConnection.Ack( data.as[ Int ] )
-      case "LEFT"       ⇒ GoLeft
-      case "RIGHT"      ⇒ GoRight
-      case "JUMP"       ⇒ Jump
-      case "STOP_LEFT"  ⇒ StopLeft
-      case "STOP_RIGHT" ⇒ StopRight
-      case "STOP_JUMP"  ⇒ StopJump
-      case "QUIT"       ⇒ ClientQuit
-      case "click" ⇒
+      case "started"    => ClientStarted
+      case "ack"        => PlayActorConnection.Ack( data.as[ Int ] )
+      case "LEFT"       => GoLeft
+      case "RIGHT"      => GoRight
+      case "JUMP"       => Jump
+      case "STOP_LEFT"  => StopLeft
+      case "STOP_RIGHT" => StopRight
+      case "STOP_JUMP"  => StopJump
+      case "QUIT"       => ClientQuit
+      case "click" =>
         val x = ( data \ "x" ).as[ Int ]
         val y = ( data \ "y" ).as[ Int ]
         Click( x, y )
-      case s ⇒ Invalid( s )
+      case s => Invalid( s )
     }
   }
 }

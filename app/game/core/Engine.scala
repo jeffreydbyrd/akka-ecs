@@ -67,7 +67,7 @@ class Engine extends Actor {
 
   def updateEntities( v: Long, ents: Set[ Entity ] ) = {
     logger.info( s"Entities v-$v: $ents" )
-    for ( sys ← systems ) {
+    for ( sys <- systems ) {
       sys ! System.UpdateEntities( v, ents )
       context.become( manage( v, ents ) )
     }
@@ -100,31 +100,31 @@ class Engine extends Actor {
 
   var ready = true
   def manage( version: Long, entities: Set[ Entity ] ): Receive = LoggingReceive {
-    case Tick if !ready ⇒ ready = true
-    case Tick ⇒
+    case Tick if !ready => ready = true
+    case Tick =>
       ready = false
-      val futureAcks = for { sys ← systems } yield sys ? Tick
-      Future.sequence( futureAcks ).foreach( _ ⇒ self ! Tick )
+      val futureAcks = for { sys <- systems } yield sys ? Tick
+      Future.sequence( futureAcks ).foreach( _ => self ! Tick )
       system.scheduler.scheduleOnce( 20 millis, self, Tick )
 
-    case Add( `version`, es ) ⇒ updateEntities( version + 1, entities ++ es )
+    case Add( `version`, es ) => updateEntities( version + 1, entities ++ es )
 
-    case Rem( `version`, es ) ⇒
+    case Rem( `version`, es ) =>
       updateEntities( version + 1, entities -- es )
-      for ( e ← es; ( _, comp ) ← e.components ) comp ! PoisonPill
+      for ( e <- es; ( _, comp ) <- e.components ) comp ! PoisonPill
 
-    case op: EntityOp if op.v < version ⇒
+    case op: EntityOp if op.v < version =>
       sender ! System.UpdateEntities( version, entities )
 
-    case AddPlayer( username ) if !connections.contains( username ) ⇒
+    case AddPlayer( username ) if !connections.contains( username ) =>
       val v = version + 1
       updateEntities( v, entities + connectPlayer( username, v ) )
 
-    case AddPlayer( username ) ⇒
+    case AddPlayer( username ) =>
       sender ! NotConnected( s"username '$username' already in use" )
 
-    case Terminated( conn ) ⇒
-      connections = connections.filterNot { case ( usrName, actRef ) ⇒ actRef == conn }
+    case Terminated( conn ) =>
+      connections = connections.filterNot { case ( usrName, actRef ) => actRef == conn }
   }
 
   override def preStart() {

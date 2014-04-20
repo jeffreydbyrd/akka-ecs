@@ -56,16 +56,16 @@ class PlayActorConnection( val toServer: ActorRef, val toClient: Channel[ String
    * and removes it from the `helpers` map
    */
   def ack( id: MessageId ) {
-    for ( ref ← retryers.get( id ) ) {
+    for ( ref <- retryers.get( id ) ) {
       ref ! PoisonPill
     }
     retryers -= id
   }
 
   override def receive = LoggingReceive {
-    case Ack( id )         ⇒ ack( id )
-    case pc: ServerCommand ⇒ toServer ! pc
-    case cc: ClientCommand ⇒ send( cc )
+    case Ack( id )         => ack( id )
+    case pc: ServerCommand => toServer ! pc
+    case cc: ClientCommand => send( cc )
   }
 
   override def preStart = {

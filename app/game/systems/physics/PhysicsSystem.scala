@@ -36,17 +36,17 @@ object PhysicsSystem {
   case class StructData( e: Entity, p: Position, s: Shape )
 
   def getStructData( structs: Set[ Entity ] ): Set[ Future[ StructData ] ] =
-    structs.map { e ⇒
+    structs.map { e =>
       ( e( Dimension ) ? RequestSnapshot ).map {
-        case s: DimensionComponent.Snapshot ⇒ StructData( e, s.pos, s.shape )
+        case s: DimensionComponent.Snapshot => StructData( e, s.pos, s.shape )
       }
     }
 
   def getMobileData( mobs: Set[ Entity ] ): Set[ Future[ MobileData ] ] =
-    mobs.map( e ⇒ {
+    mobs.map( e => {
       val fDim = ( e( Dimension ) ? RequestSnapshot ).mapTo[ DimensionComponent.Snapshot ]
       val fMob = ( e( Mobility ) ? RequestSnapshot ).mapTo[ MobileComponent.Snapshot ]
-      for ( dim ← fDim; mob ← fMob )
+      for ( dim <- fDim; mob <- fMob )
         yield MobileData( e, dim.pos, dim.shape, mob.speed, mob.hops )
     } )
 }
@@ -60,15 +60,15 @@ class PhysicsSystem( gx: Int, gy: Int ) extends System {
   def updateEntities( addStructs: Set[ Future[ StructData ] ],
                       addMobiles: Set[ Future[ MobileData ] ],
                       remMobiles: Set[ Future[ MobileData ] ] ) = {
-    for ( futureStruct ← addStructs )
+    for ( futureStruct <- addStructs )
       simulation.add( Await.result( futureStruct, 1000 millis ) )
 
-    for ( futureMobile ← addMobiles ) {
+    for ( futureMobile <- addMobiles ) {
       val data = Await.result( futureMobile, 1000 millis )
       simulation.createMobile( data )
     }
 
-    for ( futureMobile ← remMobiles ) {
+    for ( futureMobile <- remMobiles ) {
       val data = Await.result( futureMobile, 1000 millis )
       simulation.rem( data.e )
     }
@@ -77,11 +77,11 @@ class PhysicsSystem( gx: Int, gy: Int ) extends System {
   override def receive = manage( 0, Set(), Set() )
 
   def manage( version: Long, structures: Set[ Entity ], mobiles: Set[ Entity ] ): Receive = LoggingReceive {
-    case UpdateEntities( v, ents ) if v > version ⇒
+    case UpdateEntities( v, ents ) if v > version =>
       var newStructs: Set[ Entity ] = Set()
       var newMobiles: Set[ Entity ] = Set()
 
-      for ( e ← ents ) {
+      for ( e <- ents ) {
         if ( e.hasComponents( mobileComponents ) ) newMobiles += e
         val comps = e.components
         if ( comps.contains( Dimension ) && !comps.contains( Mobility ) )
@@ -93,22 +93,22 @@ class PhysicsSystem( gx: Int, gy: Int ) extends System {
 
       context.become( manage( v, newStructs, newMobiles ) )
 
-    case Tick ⇒
+    case Tick =>
       import InputComponent.Snapshot
 
       // Get inputs and apply them
       val futureSnaps: Set[ ( Entity, Future[ Snapshot ] ) ] =
-        for ( e ← mobiles )
+        for ( e <- mobiles )
           yield ( e, ( e( Input ) ? RequestSnapshot ).mapTo[ Snapshot ] )
 
-      for ( ( e, fs ) ← futureSnaps ) {
+      for ( ( e, fs ) <- futureSnaps ) {
         simulation.applyInputs( e, Await.result( fs, 1000 millis ) )
       }
 
       simulation.step()
 
       // Update the components with new positions
-      for ( ( e, b2Mob ) ← simulation.b2Mobiles ) {
+      for ( ( e, b2Mob ) <- simulation.b2Mobiles ) {
         val x = b2Mob.body.getPosition.x
         val y = b2Mob.body.getPosition.y
         e( Dimension ) ! DimensionComponent.UpdatePosition( x, y )

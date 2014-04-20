@@ -30,22 +30,22 @@ class QuitSystem( val engine: ActorRef ) extends System {
 
   def manage( version: Long, entities: Set[ Entity ] ): Receive =
     LoggingReceive {
-      case System.UpdateEntities( v, ents ) if v > version ⇒
-        val es = for ( e ← ents if e.hasComponents( requiredComponents ) )
+      case System.UpdateEntities( v, ents ) if v > version =>
+        val es = for ( e <- ents if e.hasComponents( requiredComponents ) )
           yield e
         context.become( manage( v, es ) )
 
-      case Tick ⇒
+      case Tick =>
         val setOfFutures: Set[ Future[ Entity ] ] =
-          entities.map { e ⇒
+          entities.map { e =>
             ( e( Input ) ? Component.RequestSnapshot )
               .mapTo[ Snapshot ]
               .filter( _.quit )
-              .map( _ ⇒ e )
+              .map( _ => e )
           }
 
         val futureSet: Future[ Set[ Entity ] ] = Future.sequence( setOfFutures )
-        futureSet.foreach { set ⇒
+        futureSet.foreach { set =>
           if ( set.nonEmpty ) engine ! Engine.Rem( version, set )
         }
         

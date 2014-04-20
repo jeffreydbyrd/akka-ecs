@@ -44,7 +44,7 @@ object ClientCommand {
     override val typ = "update_positions";
 
     var json = Json.obj()
-    for ( ( id, ( x, y ) ) ← positions ) {
+    for ( ( id, ( x, y ) ) <- positions ) {
       json += ( id -> Json.arr( x, y ) )
     }
 

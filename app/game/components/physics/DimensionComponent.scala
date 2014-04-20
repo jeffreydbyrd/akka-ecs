@@ -27,12 +27,12 @@ class DimensionComponent( x: Float, y: Float,
   var shape = Rect( w, h )
 
   override def receive = LoggingReceive {
-    case UpdateAll( x, y, w, h ) ⇒
+    case UpdateAll( x, y, w, h ) =>
       position = Position( x, y )
       shape = Rect( w, h )
 
-    case UpdatePosition( x, y ) ⇒ position = Position( x, y )
+    case UpdatePosition( x, y ) => position = Position( x, y )
 
-    case RequestSnapshot        ⇒ sender ! Snapshot( position, shape )
+    case RequestSnapshot        => sender ! Snapshot( position, shape )
   }
 }

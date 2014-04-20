@@ -23,10 +23,10 @@ class MobileComponent( var speed: Float, var hops: Float ) extends Actor {
   import MobileComponent._
 
   override def receive = LoggingReceive {
-    case Update( x, y ) ⇒
+    case Update( x, y ) =>
       speed = x
       hops = y
 
-    case RequestSnapshot ⇒ sender ! Snapshot( speed, hops )
+    case RequestSnapshot => sender ! Snapshot( speed, hops )
   }
 }

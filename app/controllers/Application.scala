@@ -31,18 +31,18 @@ object Application extends Controller {
    * Iteratee[String] handles incoming messages from the client, and the Enumerator[String] pushes messages
    * to the client. Play will wire everything else together for us.
    *
-   * In this case, we ask the game to add a Player with username, and the game sends back an ActorRef, which
-   * our Iteratee[String] forwards all incoming data to, and an Enumerator.
+   * In this case, we ask the engine to add a Player with username, and the engine sends back an Enumerator
+   * and an ActorRef, which our Iteratee[String] forwards all incoming data to.
    */
-  def websocket( username: String ) = WebSocket.async[ String ] { implicit request ⇒
+  def websocket( username: String ) = WebSocket.async[ String ] { implicit request =>
     logger.info( s"$username requested WebSocket connection" )
     ( Engine.engine ? AddPlayer( username ) ) map {
 
-      case Engine.Connected( connection, enumerator ) ⇒ // Success
+      case Engine.Connected( connection, enumerator ) => // Success
         val iter = Iteratee.foreach[ String ] { connection ! ServerCommand.getCommand( _ ) }
         ( iter, enumerator )
 
-      case Engine.NotConnected( message ) ⇒ // Connection error
+      case Engine.NotConnected( message ) => // Connection error
         // A finished Iteratee sending EOF
         val iter = Done[ String, Unit ]( (), Input.EOF )
         // Send an error and close the socket

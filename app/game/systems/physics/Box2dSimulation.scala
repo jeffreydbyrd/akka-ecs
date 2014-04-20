@@ -32,7 +32,7 @@ class Box2dSimulation( gx: Int, gy: Int ) {
   world.setContactListener( contactListener )
 
   def add( sd: StructData ): Body = sd match {
-    case StructData( ent, p, Rect( w, h ) ) ⇒
+    case StructData( ent, p, Rect( w, h ) ) =>
       createStructure( p.x, p.y, w, h )
   }
 
@@ -80,7 +80,7 @@ class Box2dSimulation( gx: Int, gy: Int ) {
   }
 
   def createMobile( md: MobileData ): Box2dMobile = md match {
-    case MobileData( entity, position, r: Rect, speed, hops ) ⇒
+    case MobileData( entity, position, r: Rect, speed, hops ) =>
       // Define our body
       val mobileBodyDef = new BodyDef
       mobileBodyDef.fixedRotation = true

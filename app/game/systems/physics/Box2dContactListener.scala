@@ -12,8 +12,8 @@ class Box2dContactListener extends ContactListener {
   var feet: Map[ Fixture, Box2dMobile ] = Map()
 
   private def feetContact( landing: Boolean, c: Contact ) = for {
-    f ← List( c.getFixtureA, c.getFixtureB )
-    m ← feet.get( f )
+    f <- List( c.getFixtureA, c.getFixtureB )
+    m <- feet.get( f )
   } {
     m.grounded = landing
     if ( landing ) {

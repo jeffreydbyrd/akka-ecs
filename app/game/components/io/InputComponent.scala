@@ -34,15 +34,15 @@ class InputComponent extends Component {
   var quit = false;
 
   override def receive = LoggingReceive {
-    case Jump       ⇒ jump = true
-    case StopJump   ⇒ jump = false
-    case GoLeft     ⇒ left = true
-    case GoRight    ⇒ right = true
-    case StopLeft   ⇒ left = false
-    case StopRight  ⇒ right = false
-    case ClientQuit ⇒ quit = true
+    case Jump       => jump = true
+    case StopJump   => jump = false
+    case GoLeft     => left = true
+    case GoRight    => right = true
+    case StopLeft   => left = false
+    case StopRight  => right = false
+    case ClientQuit => quit = true
 
-    case RequestSnapshot ⇒
+    case RequestSnapshot =>
       sender ! Snapshot( left, right, jump, quit )
   }
 }
