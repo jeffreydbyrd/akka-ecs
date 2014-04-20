@@ -19,7 +19,6 @@ import engine.components.io.InputComponent
 import engine.components.io.ObserverComponent
 import engine.components.physics.DimensionComponent
 import engine.components.physics.MobileComponent
-import engine.core.Engine.TickAck
 import engine.entity.Entity
 import engine.entity.PlayerEntity
 import engine.entity.StructureEntity
@@ -31,7 +30,7 @@ import engine.util.logging.AkkaLoggingService
 import play.api.libs.iteratee.Enumerator
 
 object Engine {
-  implicit val timeout: akka.util.Timeout = 1 second
+  implicit val timeout: akka.util.Timeout = 1.second
   val system: ActorSystem = akka.actor.ActorSystem( "Doppelsystem" )
   val props = Props( classOf[ Engine ] )
   val engine: ActorRef = system.actorOf( props, name = "engine" )
@@ -43,8 +42,8 @@ object Engine {
     val es: Set[ Entity ]
   }
   
-  case class Add( val v: Long, val es: Set[ Entity ] ) extends EntityOp
-  case class Rem( val v: Long, val es: Set[ Entity ] ) extends EntityOp
+  case class Add( v: Long, es: Set[ Entity ] ) extends EntityOp
+  case class Rem( v: Long, es: Set[ Entity ] ) extends EntityOp
   case object TickAck
 
   // sent:
@@ -59,7 +58,7 @@ class Engine extends Actor {
 
   val logger = new AkkaLoggingService( this, context )
 
-  private var systems: Set[ ActorRef ] = Set(
+  private val systems: Set[ ActorRef ] = Set(
     context.actorOf( QuitSystem.props( self ), "quit_system" ),
     context.actorOf( VisualSystem.props, "visual_system" ),
     context.actorOf( PhysicsSystem.props( 0, -10 ), "physics_system" )

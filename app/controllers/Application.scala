@@ -43,9 +43,7 @@ object Application extends Controller {
         ( iter, enumerator )
 
       case Engine.NotConnected( message ) => // Connection error
-        // A finished Iteratee sending EOF
         val iter = Done[ String, Unit ]( (), Input.EOF )
-        // Send an error and close the socket
         val enum = Enumerator[ String ]( message ).andThen( Enumerator.enumInput( Input.EOF ) )
         ( iter, enum )
     }
