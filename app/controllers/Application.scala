@@ -3,8 +3,8 @@ package controllers
 import scala.concurrent.ExecutionContext.Implicits.global
 import akka.actor.actorRef2Scala
 import akka.pattern.ask
-import game.communications.commands.ServerCommand
-import game.util.logging.PlayLoggingService
+import engine.communications.commands.ServerCommand
+import engine.util.logging.PlayLoggingService
 import play.api.libs.iteratee.Done
 import play.api.libs.iteratee.Enumerator
 import play.api.libs.iteratee.Input
@@ -12,9 +12,9 @@ import play.api.libs.iteratee.Iteratee
 import play.api.mvc.Action
 import play.api.mvc.Controller
 import play.api.mvc.WebSocket
-import game.core.Engine
-import game.core.Engine.AddPlayer
-import game.core.Engine.timeout
+import engine.core.Engine
+import engine.core.Engine.AddPlayer
+import engine.core.Engine.timeout
 
 /**
  * Defines a Play controller that serves the client-side engine and handles
