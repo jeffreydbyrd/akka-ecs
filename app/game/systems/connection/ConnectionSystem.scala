@@ -1,10 +1,8 @@
-package game.systems
+package game.systems.connection
 
-import scala.concurrent.ExecutionContext.Implicits.global
 
 import akka.actor._
 import akka.event.LoggingReceive
-import akka.pattern.ask
 import engine.system.System
 import play.api.libs.iteratee.Enumerator
 import game.components.io.{ObserverComponent, InputComponent}
@@ -48,27 +46,22 @@ class ConnectionSystem extends System {
       context.actorOf(PlayActorConnection.props(channel), s"conn$numConnections")
 
     val input =
-      new ComponentConfig(InputComponent.props, s"input$numConnections")
+      new ComponentConfig(InputComponent.props, s"input_plr$numConnections")
     val observer =
-      new ComponentConfig(ObserverComponent.props, s"observer$numConnections")
+      new ComponentConfig(ObserverComponent.props, s"observer_plr$numConnections")
     val dimensions =
-      new ComponentConfig(DimensionComponent.props(10, 10, 2, 2), s"dimensions$numConnections")
+      new ComponentConfig(DimensionComponent.props(10, 10, 2, 2), s"dimensions_plr$numConnections")
     val mobility =
-      new ComponentConfig(MobileComponent.props(5, 8F), s"mobile$numConnections")
+      new ComponentConfig(MobileComponent.props(5, 8F), s"mobile_plr$numConnections")
 
     val configs: EntityConfig = Map(
       Input -> input, Observer -> observer,
       Dimension -> dimensions, Mobility -> mobility
     )
 
-    (context.parent ? Add(entityVersion, Set(configs))) foreach {
-      case EntityOpAck(v) =>
-        val inputSel = context.actorSelection(s"../input$numConnections")
-        for (ref <- inputSel.resolveOne) connection ! ref
-
-        val observerSel = context.actorSelection(s"../observer$numConnections")
-        for (ref <- observerSel.resolveOne) ref ! connection
-    }
+    context.actorOf(
+      Helper.props(context.parent, connection, numConnections, entityVersion, configs),
+      s"helper$numConnections")
 
     sender ! Connected(connection, enumerator)
     numConnections += 1

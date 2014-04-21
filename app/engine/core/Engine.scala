@@ -30,6 +30,8 @@ object Engine {
 
   trait EntityOp {
     val v: Long
+
+    override val toString = s"EntityOp-$v"
   }
 
   case class Add(v: Long, props: Set[EntityConfig]) extends EntityOp

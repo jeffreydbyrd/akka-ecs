@@ -13,10 +13,11 @@ import play.api.libs.iteratee.Iteratee
 import play.api.mvc.Action
 import play.api.mvc.Controller
 import play.api.mvc.WebSocket
-import game.systems.ConnectionSystem.AddPlayer
-import game.systems.ConnectionSystem
+import game.systems.connection.ConnectionSystem
+import ConnectionSystem.AddPlayer
 import akka.util.Timeout
 import game.Game
+import game.systems.connection.ConnectionSystem
 
 /**
  * Defines a Play controller that serves the client-side engine and handles
