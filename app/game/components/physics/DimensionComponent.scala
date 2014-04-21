@@ -1,10 +1,10 @@
-package engine.components.physics
+package game.components.physics
 
 import akka.actor.Actor
 import akka.actor.Props
 import akka.actor.actorRef2Scala
 import akka.event.LoggingReceive
-import engine.components.Component.RequestSnapshot
+import engine.component.Component.RequestSnapshot
 
 object DimensionComponent {
   def props( x: Float, y: Float, w: Float, h: Float ) =
@@ -21,7 +21,7 @@ object DimensionComponent {
 class DimensionComponent( x: Float, y: Float,
                           w: Float, h: Float ) extends Actor {
   import DimensionComponent._
-  import engine.components.Component._
+  import engine.component.Component._
 
   var position = Position( x, y )
   var shape = Rect( w, h )

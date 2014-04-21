@@ -1,4 +1,4 @@
-package engine.systems.physics
+package game.systems.physics
 
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -8,26 +8,24 @@ import akka.actor.Props
 import akka.actor.actorRef2Scala
 import akka.event.LoggingReceive
 import akka.pattern.ask
-import engine.components.Component.RequestSnapshot
-import engine.components.ComponentType.Dimension
-import engine.components.ComponentType.Input
-import engine.components.ComponentType.Mobility
-import engine.components.io.InputComponent.Snapshot
-import engine.components.physics.DimensionComponent
-import engine.components.physics.MobileComponent
-import engine.components.physics.Position
-import engine.components.physics.Shape
+import engine.component.Component.RequestSnapshot
+import engine.component.ComponentType.Dimension
+import engine.component.ComponentType.Input
+import engine.component.ComponentType.Mobility
+import game.components.physics.DimensionComponent
+import game.components.physics.MobileComponent
 import engine.core.Engine.Tick
 import engine.core.Engine.TickAck
-import engine.core.Engine.timeout
 import engine.entity.Entity
-import engine.systems.System
-import engine.systems.System.UpdateEntities
-import engine.components.io.InputComponent
+import engine.system.System
+import engine.system.System.UpdateEntities
+import game.components.io.InputComponent
+import game.components.physics.Shape
+import game.components.physics.Position
+import akka.util.Timeout
 
 object PhysicsSystem {
-  import engine.components.physics.Shape
-  import engine.components.physics.Position
+  implicit val timeout = Timeout(1.second)
 
   def props( gx: Int, gy: Int ) = Props( classOf[ PhysicsSystem ], gx, gy )
 

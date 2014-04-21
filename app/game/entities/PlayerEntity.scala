@@ -1,10 +1,8 @@
-package engine.entity
+package game.entities
 
-import engine.components.Component
-import engine.components.ComponentType
-import engine.components.io.InputComponent
-import engine.components.io.ObserverComponent
+import engine.component.ComponentType
 import akka.actor.ActorRef
+import engine.entity.{EntityId, Entity}
 
 class PlayerEntity( inputComponent: ActorRef,
                     observerComponent: ActorRef,

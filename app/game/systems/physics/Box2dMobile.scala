@@ -1,6 +1,6 @@
-package engine.systems.physics
+package game.systems.physics
 
-import engine.components.physics.Position
+import game.components.physics.Position
 import org.jbox2d.dynamics.Body
 import engine.entity.Entity
 import scala.math.abs

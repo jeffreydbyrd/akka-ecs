@@ -1,4 +1,4 @@
-package engine.systems.physics
+package game.systems.physics
 
 import akka.actor.Actor
 import akka.actor.Props
@@ -9,13 +9,13 @@ import org.jbox2d.dynamics.Body
 import org.jbox2d.dynamics.World
 import org.jbox2d.common.Vec2
 import org.jbox2d.dynamics.BodyType
-import engine.components.physics.Position
+import game.components.physics.Position
 import scala.math.abs
-import engine.systems.physics.PhysicsSystem.MobileData
-import engine.systems.physics.PhysicsSystem.StructData
-import engine.components.physics.Rect
+import game.systems.physics.PhysicsSystem.MobileData
+import game.systems.physics.PhysicsSystem.StructData
+import game.components.physics.Rect
 import engine.entity.Entity
-import engine.components.io.InputComponent
+import game.components.io.InputComponent
 
 class Box2dSimulation( gx: Int, gy: Int ) {
 

@@ -1,4 +1,4 @@
-package engine.systems
+package game.systems
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -9,16 +9,17 @@ import akka.actor.actorRef2Scala
 import akka.event.LoggingReceive
 import akka.pattern.ask
 import akka.pattern.pipe
-import engine.components.Component
-import engine.components.ComponentType.Dimension
-import engine.components.ComponentType.Observer
-import engine.components.io.ObserverComponent
-import engine.components.physics.DimensionComponent.Snapshot
+import engine.component.Component
+import engine.component.ComponentType.Dimension
+import engine.component.ComponentType.Observer
+import game.components.io.ObserverComponent
+import game.components.physics.DimensionComponent.Snapshot
 import engine.core.Engine.Tick
 import engine.core.Engine.TickAck
 import engine.core.Engine.timeout
 import engine.entity.Entity
 import engine.entity.EntityId
+import engine.system.System
 
 object VisualSystem {
   def props = Props( classOf[ VisualSystem ] )
@@ -44,7 +45,6 @@ class VisualSystem extends Actor {
             case snap: Snapshot => ( v.id, snap )
           } )
 
-        // that's some sexy code
         val futureSet: Future[ ObserverComponent.Update ] =
           Future.sequence( setOfFutures ).map { ObserverComponent.Update( _ ) }
 

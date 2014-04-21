@@ -1,7 +1,7 @@
 package engine.communications.commands
 
-import engine.components.physics.Rect
-import engine.components.physics.Position
+import game.components.physics.Rect
+import game.components.physics.Position
 import play.api.libs.json.Json
 
 /**

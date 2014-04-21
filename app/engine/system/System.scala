@@ -1,4 +1,4 @@
-package engine.systems
+package engine.system
 
 import akka.actor.Actor
 import engine.entity.Entity

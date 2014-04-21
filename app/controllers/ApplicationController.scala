@@ -1,7 +1,8 @@
 package controllers
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import akka.actor.actorRef2Scala
+import scala.concurrent.duration._
+import akka.actor.ActorRef
 import akka.pattern.ask
 import engine.communications.commands.ServerCommand
 import engine.util.logging.PlayLoggingService
@@ -12,16 +13,19 @@ import play.api.libs.iteratee.Iteratee
 import play.api.mvc.Action
 import play.api.mvc.Controller
 import play.api.mvc.WebSocket
-import engine.core.Engine
-import engine.core.Engine.AddPlayer
-import engine.core.Engine.timeout
+import game.systems.ConnectionSystem.AddPlayer
+import game.systems.ConnectionSystem
+import akka.util.Timeout
+import game.Game
 
 /**
  * Defines a Play controller that serves the client-side engine and handles
  * WebSocket creation.
  */
-object Application extends Controller {
+object ApplicationController extends Controller {
+  implicit val timeout = Timeout(1.second)
   val logger = new PlayLoggingService
+  var connectionSystem:ActorRef = _
 
   /** Serves the main page */
   def index = Action { Ok { views.html.index() } }
@@ -36,13 +40,13 @@ object Application extends Controller {
    */
   def websocket( username: String ) = WebSocket.async[ String ] { implicit request =>
     logger.info( s"$username requested WebSocket connection" )
-    ( Engine.engine ? AddPlayer( username ) ) map {
+    ( Game.connectionSystem ? AddPlayer( username ) ) map {
 
-      case Engine.Connected( connection, enumerator ) => // Success
+      case ConnectionSystem.Connected( connection, enumerator ) => // Success
         val iter = Iteratee.foreach[ String ] { connection ! ServerCommand.getCommand( _ ) }
         ( iter, enumerator )
 
-      case Engine.NotConnected( message ) => // Connection error
+      case ConnectionSystem.NotConnected( message ) => // Connection error
         val iter = Done[ String, Unit ]( (), Input.EOF )
         val enum = Enumerator[ String ]( message ).andThen( Enumerator.enumInput( Input.EOF ) )
         ( iter, enum )

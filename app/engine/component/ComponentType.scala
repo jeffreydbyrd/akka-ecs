@@ -1,4 +1,4 @@
-package engine.components
+package engine.component
 
 trait ComponentType
 
