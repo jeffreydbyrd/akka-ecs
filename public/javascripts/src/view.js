@@ -49,10 +49,6 @@ function View(canvasX, canvasY, kx, ky) {
   };
 
   self.bindTo = function(conn) {
-    conn.onReceive("started", function(args) {
-      conn.send({ type:"started" })
-    });
-
     conn.onReceive("create", function(params) {
       self.create( params.id, params.position[0], params.position[1],
                    params.dimensions[0], params.dimensions[1] );

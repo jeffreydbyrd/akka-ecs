@@ -6,11 +6,12 @@ import akka.actor.PoisonPill
 import akka.actor.Props
 import akka.actor.actorRef2Scala
 import akka.event.LoggingReceive
-import engine.communications.commands.ClientCommand
-import engine.communications.commands.ServerCommand
 
 import play.api.libs.iteratee.Concurrent.Channel
 import play.api.libs.iteratee.Enumerator
+import engine.communications.commands.ClientCommand
+import game.components.io.ServerCommand
+import play.api.libs.json.{JsValue, Json}
 
 object PlayActorConnection {
   type MessageId = Long
@@ -30,7 +31,6 @@ object PlayActorConnection {
 class PlayActorConnection(val toClient: Channel[String]) extends Actor {
 
   import ClientCommand.ServerQuit
-  import ClientCommand.ServerReady
   import PlayActorConnection._
 
   var toServer: Option[ActorRef] = None
@@ -67,14 +67,16 @@ class PlayActorConnection(val toClient: Channel[String]) extends Actor {
   }
 
   override def receive = LoggingReceive {
-    case server:ActorRef => toServer = Some(server)
-    case Ack(id) => ack(id)
-    case pc: ServerCommand if toServer.isDefined => toServer.get ! pc
-    case cc: ClientCommand => send(cc)
-  }
+    case s: String if toServer.isDefined =>
+      val parsed: JsValue = Json.parse(s)
+      val data = parsed \ "data"
+      (parsed \ "type").as[String] match {
+        case "ack" => ack(data.as[Int])
+        case _ => toServer.get ! parsed
+      }
 
-  override def preStart() = {
-    send(ServerReady)
+    case cc: ClientCommand => send(cc)
+    case server: ActorRef => toServer = Some(server)
   }
 
   override def postStop() {
