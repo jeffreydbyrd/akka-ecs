@@ -14,6 +14,7 @@ import scala.concurrent.duration._
 import game.systems.connection.ConnectionSystem
 import scala.concurrent.{Await, Future}
 import engine.system.SystemConfig
+import engine.entity.EntityConfig
 
 object MyGame {
   private val sysConfigs: Set[SystemConfig] = Set(
@@ -29,7 +30,7 @@ object MyGame {
     Dimension -> new ComponentConfig(DimensionComponent.props(50, 25, 1, 50), "right_wall")
   )
 
-  private val wallConfigs: Set[Map[ComponentType, ComponentConfig]] = walls.map(Map(_))
+  private val wallConfigs: Set[EntityConfig] = walls.map(Map(_))
 
   implicit val timeout: akka.util.Timeout = 1.second
 
