@@ -12,7 +12,7 @@ import akka.actor.actorRef2Scala
 import akka.event.LoggingReceive
 import akka.pattern.ask
 import engine.entity.{EntityConfig, Entity}
-import engine.system.System
+import engine.system.{SystemConfig, System}
 import engine.util.logging.AkkaLoggingService
 import engine.component.ComponentType
 import akka.util.Timeout
@@ -20,8 +20,8 @@ import akka.util.Timeout
 object Engine {
   implicit val timeout = Timeout(1.second)
 
-  def props(systemsConfigs: Set[(Props, String)]) =
-    Props(classOf[Engine], systemsConfigs)
+  def props(sysConfigs: Set[SystemConfig]) =
+    Props(classOf[Engine], sysConfigs)
 
   // Received:
   case class SetSystems(props: Set[(Props, String)])
@@ -45,14 +45,14 @@ object Engine {
 
 }
 
-class Engine(sysConfigs: Set[(Props, String)]) extends Actor {
+class Engine(sysConfigs: Set[SystemConfig]) extends Actor {
 
   import Engine._
 
   private val logger = new AkkaLoggingService(this, context)
 
   private val systems: Set[ActorRef] =
-    for ((prop, id) <- sysConfigs) yield {
+    for (SystemConfig(prop, id) <- sysConfigs) yield {
       context.actorOf(prop, name = id)
     }
 
