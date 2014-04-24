@@ -1,4 +1,4 @@
-package engine.communications.commands
+package game.components.io
 
 import game.components.physics.Rect
 import game.components.physics.Position

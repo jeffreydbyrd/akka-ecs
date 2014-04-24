@@ -11,8 +11,8 @@ import engine.component.{ComponentConfig, ComponentType}
 import engine.core.Engine
 import engine.system.System.UpdateEntities
 import akka.actor.Terminated
-import engine.communications.connection.PlayActorConnection
 import engine.entity.EntityConfig
+import game.components.io.connection.PlayActorConnection
 
 object ConnectionSystem {
   def props = Props(classOf[ConnectionSystem])

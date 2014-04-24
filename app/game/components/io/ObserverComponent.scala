@@ -8,7 +8,6 @@ import akka.event.LoggingReceive
 import engine.component.Component
 import game.components.physics.DimensionComponent
 import engine.entity.EntityId
-import engine.communications.commands.ClientCommand
 
 object ObserverComponent {
   val props = Props(classOf[ObserverComponent])

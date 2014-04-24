@@ -1,9 +1,9 @@
 package game.communications.commands
 
 import org.scalatest.FunSuite
-import engine.communications.connection.PlayActorConnection
 import game.components.io._
 import game.components.io.Click
+import game.components.io.connection.PlayActorConnection
 
 class PlayerCommandSpec extends FunSuite {
   import ServerCommand._

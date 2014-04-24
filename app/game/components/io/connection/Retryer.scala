@@ -1,4 +1,4 @@
-package engine.communications.connection
+package game.components.io.connection
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.DurationInt
