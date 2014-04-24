@@ -60,7 +60,7 @@ Lastly, there is an optional Play! plugin for Eclipse that makes it a pleasure t
 The Eclipse Scala IDE was giving me problems with refactoring packages, so here's a quick guide to IntelliJ. 
 
 - [Download IntelliJ IDEA](http://www.jetbrains.com/idea/)
-- Generate this project's IntelliJ files: `$ ./activator idea`
+- Generate this project's IntelliJ files: `$ ./activator gen-idea`
 - Open IntelliJ and open the doppelengine project
 - Install the Scala plugin: 
     - Preferences > Plugins > Install JetBrains plugin... 

@@ -76,7 +76,7 @@ class Engine(sysConfigs: Set[SystemConfig], minTickInterval: FiniteDuration) ext
       ready = false
       val futureAcks = for {sys <- systems} yield sys ? Tick
       Future.sequence(futureAcks).foreach(_ => self ! Tick)
-      context.system.scheduler.scheduleOnce(20 millis, self, Tick)
+      context.system.scheduler.scheduleOnce(minTickInterval, self, Tick)
 
     case Add(`version`, configs) =>
       val components: Set[Map[ComponentType, ActorRef]] =
