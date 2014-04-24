@@ -2,7 +2,7 @@ package engine.core
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import scala.concurrent.duration.DurationInt
+import scala.concurrent.duration.{FiniteDuration, DurationInt}
 
 import akka.actor.Actor
 import akka.actor.ActorRef
@@ -20,8 +20,8 @@ import akka.util.Timeout
 object Engine {
   implicit val timeout = Timeout(1.second)
 
-  def props(sysConfigs: Set[SystemConfig]) =
-    Props(classOf[Engine], sysConfigs)
+  def props(sysConfigs: Set[SystemConfig], minTickInterval: FiniteDuration) =
+    Props(classOf[Engine], sysConfigs, minTickInterval)
 
   // Received:
   case class SetSystems(props: Set[(Props, String)])
@@ -45,7 +45,7 @@ object Engine {
 
 }
 
-class Engine(sysConfigs: Set[SystemConfig]) extends Actor {
+class Engine(sysConfigs: Set[SystemConfig], minTickInterval: FiniteDuration) extends Actor {
 
   import Engine._
 
