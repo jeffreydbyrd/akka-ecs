@@ -3,11 +3,11 @@ package game.systems.connection
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import akka.actor.{Props, PoisonPill, ActorRef, Actor}
+import akka.event.Logging
 import engine.entity.EntityConfig
 import engine.core.Engine
 import engine.system.System.UpdateEntities
 import akka.util.Timeout
-import engine.util.logging.AkkaLoggingService
 
 object Helper {
   def props(ngin: ActorRef, conn: ActorRef, numConns: Int, v: Long, config: EntityConfig) =
@@ -17,7 +17,7 @@ object Helper {
 class Helper(ngin: ActorRef, conn: ActorRef, numConns: Int, var v: Long, config: EntityConfig) extends Actor {
   implicit val timeout: akka.util.Timeout = Timeout(1.second)
 
-  val logger = new AkkaLoggingService(this, context)
+  val logger = Logging(context.system, this)
 
   def attempt() = {
     ngin ! Engine.Add(v, Set(config))

@@ -8,8 +8,7 @@ import akka.actor.actorRef2Scala
 import akka.event.LoggingReceive
 import akka.pattern.ask
 import engine.component.Component
-import engine.component.ComponentType.Input
-import engine.component.ComponentType.Observer
+import game.components.types.{Input, Observer}
 import game.components.io.InputComponent.Snapshot
 import engine.core.Engine
 import engine.core.Engine.Tick

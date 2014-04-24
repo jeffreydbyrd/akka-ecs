@@ -10,8 +10,7 @@ import akka.event.LoggingReceive
 import akka.pattern.ask
 import akka.pattern.pipe
 import engine.component.Component
-import engine.component.ComponentType.Dimension
-import engine.component.ComponentType.Observer
+import game.components.types.{Dimension, Observer}
 import game.components.io.ObserverComponent
 import game.components.physics.DimensionComponent.Snapshot
 import engine.core.Engine.Tick

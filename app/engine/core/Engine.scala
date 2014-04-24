@@ -10,10 +10,10 @@ import akka.actor.PoisonPill
 import akka.actor.Props
 import akka.actor.actorRef2Scala
 import akka.event.LoggingReceive
+import akka.event.Logging
 import akka.pattern.ask
 import engine.entity.{EntityConfig, Entity}
 import engine.system.{SystemConfig, System}
-import engine.util.logging.AkkaLoggingService
 import engine.component.ComponentType
 import akka.util.Timeout
 
@@ -49,7 +49,7 @@ class Engine(sysConfigs: Set[SystemConfig]) extends Actor {
 
   import Engine._
 
-  private val logger = new AkkaLoggingService(this, context)
+  private val logger = Logging(context.system, this)
 
   private val systems: Set[ActorRef] =
     for (SystemConfig(prop, id) <- sysConfigs) yield {

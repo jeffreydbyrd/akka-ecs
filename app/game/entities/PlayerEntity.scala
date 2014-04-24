@@ -3,6 +3,7 @@ package game.entities
 import engine.component.ComponentType
 import akka.actor.ActorRef
 import engine.entity.{EntityId, Entity}
+import game.components.types._
 
 class PlayerEntity( inputComponent: ActorRef,
                     observerComponent: ActorRef,
@@ -11,9 +12,9 @@ class PlayerEntity( inputComponent: ActorRef,
   override val id: EntityId = EntityId( inputComponent.path.toString )
 
   override val components: Map[ ComponentType, ActorRef ] = Map(
-    ComponentType.Input -> inputComponent,
-    ComponentType.Observer -> observerComponent,
-    ComponentType.Dimension -> dimensionsComponent,
-    ComponentType.Mobility -> mobileComponent
+    Input -> inputComponent,
+    Observer -> observerComponent,
+    Dimension -> dimensionsComponent,
+    Mobility -> mobileComponent
   )
 }

@@ -7,7 +7,7 @@ import engine.system.System
 import play.api.libs.iteratee.Enumerator
 import game.components.io.{ObserverComponent, InputComponent}
 import game.components.physics.{MobileComponent, DimensionComponent}
-import engine.component.{ComponentConfig, ComponentType}
+import engine.component.ComponentConfig
 import engine.core.Engine
 import engine.system.System.UpdateEntities
 import akka.actor.Terminated
@@ -32,7 +32,7 @@ object ConnectionSystem {
 class ConnectionSystem extends System {
 
   import ConnectionSystem._
-  import ComponentType._
+  import game.components.types._
   import Engine._
 
   var connections: Map[String, ActorRef] = Map()

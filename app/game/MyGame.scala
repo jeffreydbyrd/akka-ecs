@@ -8,7 +8,7 @@ import engine.core.Engine
 import game.systems.{VisualSystem, QuitSystem}
 import game.systems.physics.PhysicsSystem
 import game.components.physics.DimensionComponent
-import engine.component.ComponentType.Dimension
+import game.components.types.Dimension
 import engine.component.{ComponentType, ComponentConfig}
 import scala.concurrent.duration._
 import game.systems.connection.ConnectionSystem

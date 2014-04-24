@@ -9,9 +9,7 @@ import akka.actor.actorRef2Scala
 import akka.event.LoggingReceive
 import akka.pattern.ask
 import engine.component.Component.RequestSnapshot
-import engine.component.ComponentType.Dimension
-import engine.component.ComponentType.Input
-import engine.component.ComponentType.Mobility
+import game.components.types.{Dimension, Input, Mobility}
 import game.components.physics.DimensionComponent
 import game.components.physics.MobileComponent
 import engine.core.Engine.Tick

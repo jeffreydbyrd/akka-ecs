@@ -3,7 +3,6 @@ package controllers
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import akka.pattern.ask
-import engine.util.logging.PlayLoggingService
 import play.api.libs.iteratee.Done
 import play.api.libs.iteratee.Enumerator
 import play.api.libs.iteratee.Input
@@ -21,8 +20,9 @@ import game.systems.connection.ConnectionSystem
  * WebSocket creation.
  */
 object PlayController extends Controller {
+  import play.Logger
+
   implicit val timeout = Timeout(1.second)
-  val logger = new PlayLoggingService
 
   /** Serves the main page */
   def index = Action {
@@ -41,7 +41,7 @@ object PlayController extends Controller {
    */
   def websocket(username: String) = WebSocket.async[String] {
     implicit request =>
-      logger.info(s"$username requested WebSocket connection")
+      Logger.info(s"$username requested WebSocket connection")
       (game.MyGame.connectionSystem ? AddPlayer(username)) map {
 
         case ConnectionSystem.Connected(connection, enumerator) => // Success
