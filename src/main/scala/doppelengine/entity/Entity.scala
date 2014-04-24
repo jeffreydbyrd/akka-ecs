@@ -1,10 +1,10 @@
-package engine.entity
+package doppelengine.entity
 
 import akka.actor.ActorRef
-import engine.component.ComponentType
+import doppelengine.component.ComponentType
 
 object Entity {
-  def apply(_id: String, _components: Map[ComponentType, ActorRef]) =
+  def apply(_id: String, _components: Map[ComponentType, ActorRef]):Entity =
     new Entity {
       val id = EntityId(_id)
       val components = _components

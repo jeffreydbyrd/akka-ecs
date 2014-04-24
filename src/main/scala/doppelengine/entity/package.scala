@@ -1,6 +1,6 @@
-package engine
+package doppelengine
 
-import engine.component.{ComponentType, ComponentConfig}
+import doppelengine.component.{ComponentType, ComponentConfig}
 
 package object entity {
   type EntityConfig = Map[ComponentType, ComponentConfig]

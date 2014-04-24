@@ -1,3 +1,3 @@
-package engine.component
+package doppelengine.component
 
 trait ComponentType

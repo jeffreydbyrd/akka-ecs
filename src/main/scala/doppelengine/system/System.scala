@@ -1,7 +1,7 @@
-package engine.system
+package doppelengine.system
 
 import akka.actor.Actor
-import engine.entity.Entity
+import doppelengine.entity.Entity
 
 object System {
   // Received
