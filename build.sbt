@@ -1,5 +1,7 @@
 name := """doppelengine"""
 
+organization := """com.doppelgamer"""
+
 version := "0.0-SNAPSHOT"
 
 scalaVersion  := "2.10.3"
