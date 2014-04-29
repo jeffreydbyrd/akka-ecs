@@ -4,17 +4,14 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.concurrent.duration.{FiniteDuration, DurationInt}
 
-import akka.actor.Actor
-import akka.actor.ActorRef
-import akka.actor.PoisonPill
-import akka.actor.Props
-import akka.actor.actorRef2Scala
+import akka.actor._
 import akka.event.LoggingReceive
 import akka.pattern.ask
 import doppelengine.entity.{EntityConfig, Entity}
-import doppelengine.system.{SystemConfig, System}
+import doppelengine.system.System
 import doppelengine.component.ComponentType
 import akka.util.Timeout
+import doppelengine.system.SystemConfig
 
 object Engine {
   implicit val timeout = Timeout(1.second)
@@ -40,7 +37,13 @@ object Engine {
   case class Rem(v: Long, es: Set[Entity]) extends EntityOp
 
   // sent:
-  case class OpAck(v: Long)
+  trait OpAck {
+    val v: Long
+  }
+
+  case class OpSuccess(v: Long) extends OpAck
+
+  case class OpFailure(v: Long, ents: Set[Entity]) extends OpAck
 
   case object Tick
 
@@ -73,7 +76,7 @@ class Engine(sysConfigs: Set[SystemConfig],
 
   def manage(version: Long, entities: Set[Entity]): Receive = {
     for (sys <- systems) sys ! System.UpdateEntities(version, entities)
-    sender ! OpAck(version)
+    sender ! OpSuccess(version)
 
     LoggingReceive {
       case Tick if !ready => ready = true
@@ -88,11 +91,11 @@ class Engine(sysConfigs: Set[SystemConfig],
         context.become(manage(version + 1, entities ++ es))
 
       case Rem(`version`, es) =>
-        context.become(manage(version + 1, entities -- es))
         for (e <- es; (_, comp) <- e.components) comp ! PoisonPill
+        context.become(manage(version + 1, entities -- es))
 
       case op: EntityOp if op.v < version =>
-        sender ! System.UpdateEntities(version, entities)
+        sender ! OpFailure(version, entities)
     }
   }
 
