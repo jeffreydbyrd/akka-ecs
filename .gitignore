@@ -28,3 +28,5 @@ test-output/
 .project
 .shell_history
 *~
+activator*
+project/activator*
