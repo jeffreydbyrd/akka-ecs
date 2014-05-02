@@ -3,18 +3,12 @@ package doppelengine.system
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.duration.FiniteDuration
-import akka.actor.{Props, Actor}
+import akka.actor.Actor
 import doppelengine.entity.Entity
 import doppelengine.system.System.UpdateAck
 import akka.event.LoggingReceive
 
 object System {
-
-  def props(behavior: SystemBehavior, tickInterval: FiniteDuration) =
-    Props(classOf[System], behavior, tickInterval)
-
-  def config(behavior: SystemBehavior, tickInterval: FiniteDuration, name: String) =
-    SystemConfig(props(behavior, tickInterval), name)
 
   // Received
   case class UpdateEntities(version: Long, ents: Set[Entity])
@@ -26,20 +20,24 @@ object System {
 
 }
 
-class System(behavior: SystemBehavior, tickInterval: FiniteDuration) extends Actor {
+abstract class System(tickInterval: FiniteDuration) extends Actor {
 
   import System.Tick
 
   var version: Long = 0
 
+  def updateEntities(entities:Set[Entity]):Unit
+
+  def onTick():Unit
+
   override def receive: Receive = LoggingReceive {
     case System.UpdateEntities(v, ents) if v > version =>
-      behavior.updateEntities(ents)
+      updateEntities(ents)
       sender ! UpdateAck(v)
       version = v
 
     case Tick =>
-      behavior.onTick()
+      onTick()
       context.system.scheduler.scheduleOnce(tickInterval, self, Tick)
   }
 
