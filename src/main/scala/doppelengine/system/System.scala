@@ -6,7 +6,6 @@ import scala.concurrent.duration.FiniteDuration
 import akka.actor.Actor
 import doppelengine.entity.Entity
 import doppelengine.system.System.UpdateAck
-import akka.event.LoggingReceive
 
 object System {
 
@@ -26,11 +25,11 @@ abstract class System(tickInterval: FiniteDuration) extends Actor {
 
   var version: Long = 0
 
-  def updateEntities(entities:Set[Entity]):Unit
+  def updateEntities(entities: Set[Entity]): Unit
 
-  def onTick():Unit
+  def onTick(): Unit
 
-  override def receive: Receive = LoggingReceive {
+  override def receive: Receive = {
     case System.UpdateEntities(v, ents) if v > version =>
       updateEntities(ents)
       sender ! UpdateAck(v)

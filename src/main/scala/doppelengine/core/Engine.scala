@@ -3,7 +3,6 @@ package doppelengine.core
 import scala.concurrent.duration.DurationInt
 
 import akka.actor._
-import akka.event.LoggingReceive
 import doppelengine.entity.{EntityConfig, Entity}
 import doppelengine.component.ComponentType
 import akka.util.Timeout
@@ -40,11 +39,12 @@ object Engine {
 
 }
 
-class Engine(sysConfigs: Set[SystemConfig], entityConfigs: Set[EntityConfig]) extends Actor {
+class Engine(sysConfigs: Set[SystemConfig], entityConfigs: Set[EntityConfig])
+  extends Actor
+  with ActorLogging {
 
   import Engine._
 
-  /** System --> Updater */
   var updaters: Set[ActorRef] = Set()
 
   val systems: Set[ActorRef] =
@@ -62,11 +62,16 @@ class Engine(sysConfigs: Set[SystemConfig], entityConfigs: Set[EntityConfig]) ex
       Entity(map.head._2.path.toString, map)
   }
 
+  var updaterCount = 0
+
   def updateEntities(v: Long, ents: Set[Entity]): Unit = {
     for (updater <- updaters) updater ! PoisonPill
 
     updaters =
-      for (sys <- systems) yield context.actorOf(Updater.props(sys, v, ents))
+      for (sys <- systems) yield {
+        updaterCount += 1
+        context.actorOf(Updater.props(sys, v, ents), s"updater-$updaterCount")
+      }
   }
 
   override def receive = manage(0, toEntities(entityConfigs))
@@ -75,7 +80,7 @@ class Engine(sysConfigs: Set[SystemConfig], entityConfigs: Set[EntityConfig]) ex
     updateEntities(version, entities)
     if (sender != context.system.deadLetters) sender ! OpSuccess(version)
 
-    LoggingReceive {
+    {
       case Updated => updaters -= sender
 
       case Add(`version`, configs) =>
