@@ -1,17 +1,18 @@
 package doppelengine.system
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import akka.testkit.{TestProbe, TestActorRef, TestKit}
 import akka.actor.{Props, ActorRef, ActorSystem}
 import org.scalatest._
 import akka.util.Timeout
 import scala.concurrent.duration._
 import doppelengine.entity.Entity
-import doppelengine.system.System.Tick
+import scala.concurrent.{Await, Future}
+import java.util.Date
 
 class SystemSpec
   extends TestKit(ActorSystem("SystemSpec"))
   with FunSuiteLike
-  with MustMatchers
   with BeforeAndAfterAll {
 
   implicit val timeout: Timeout = 1.second
@@ -20,13 +21,12 @@ class SystemSpec
     system.shutdown()
   }
 
-  test("System should wait until user defined onTick() is finished before sending another Tick") {
+  test("System should wait until user defined onTick() is finished before Ticking again") {
     val probe = TestProbe()
-    TestActorRef[TestSystem](Props(classOf[TestSystem], probe.ref, 200.millis))
-
-    probe.expectMsg(Tick)
-    probe.expectNoMsg(100.millis)
-    probe.expectMsg(Tick)
+    TestActorRef[TestSystem](Props(classOf[TestSystem], probe.ref, 50.millis))
+    probe.expectMsg("tick!")
+    probe.expectNoMsg(150.millis)
+    probe.expectMsg("tick!")
   }
 
   test("A System shouldn't Tick if tickInterval <= 0") {
@@ -38,5 +38,11 @@ class SystemSpec
 
 class TestSystem(probe: ActorRef, interval: FiniteDuration) extends System(interval) {
   override def updateEntities(entities: Set[Entity]): Unit = {}
-  override def onTick(): Unit = probe ! Tick
+
+  override def onTick(): Unit = {
+    val start = (new Date).getTime
+    Thread.sleep(200)
+    probe ! "tick!"
+    println("onTick took " + ((new Date).getTime - start))
+  }
 }

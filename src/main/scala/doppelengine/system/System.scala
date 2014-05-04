@@ -6,6 +6,7 @@ import scala.concurrent.duration.FiniteDuration
 import akka.actor.Actor
 import doppelengine.entity.Entity
 import doppelengine.system.System.UpdateAck
+import java.util.Date
 
 object System {
 
@@ -36,8 +37,8 @@ abstract class System(tickInterval: FiniteDuration) extends Actor {
       version = v
 
     case Tick =>
-      onTick()
       context.system.scheduler.scheduleOnce(tickInterval, self, Tick)
+      onTick()
   }
 
   override def preStart() = {
