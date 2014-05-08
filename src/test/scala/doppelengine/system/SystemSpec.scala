@@ -40,9 +40,7 @@ class TestSystem(probe: ActorRef, interval: FiniteDuration) extends System(inter
   override def updateEntities(entities: Set[Entity]): Unit = {}
 
   override def onTick(): Unit = {
-    val start = (new Date).getTime
     Thread.sleep(200)
     probe ! "tick!"
-    println("onTick took " + ((new Date).getTime - start))
   }
 }

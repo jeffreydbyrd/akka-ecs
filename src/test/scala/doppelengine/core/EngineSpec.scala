@@ -7,10 +7,10 @@ import scala.concurrent.duration._
 import doppelengine.system.SystemConfig
 import akka.util.Timeout
 import doppelengine.system.System.{UpdateAck, UpdateEntities}
-import doppelengine.core.Engine.{Rem, OpSuccess, Add}
 import doppelengine.component.ComponentConfig
 import doppelengine.entity.{Entity, EntityConfig}
 import scala.concurrent.Await
+import doppelengine.core.Engine.{SetSystemsFailure, SetSystemsAck, SetSystems}
 
 class EngineSpec
   extends TestKit(ActorSystem("EngineSpec"))
@@ -24,8 +24,7 @@ class EngineSpec
     system.shutdown()
   }
 
-
-  test("1: Engine should update Systems on instantiation") {
+  test("Engine should update Systems on instantiation") {
     val probe = TestProbe()
     val props: Props = Props(classOf[ForwardingActor], probe.ref)
     val sysConfigs = Set(SystemConfig(props, "forwarding-system-1"))
@@ -33,7 +32,7 @@ class EngineSpec
     probe.expectMsg(UpdateEntities(0, Set()))
   }
 
-  test("2: Engine should update Systems when I Add a component") {
+  test("Engine should update Systems when I Add a component") {
     val systemProbe = TestProbe()
     val componentProbe = TestProbe()
     systemProbe.ignoreMsg {
@@ -51,15 +50,15 @@ class EngineSpec
     val entityConfig: EntityConfig = Map(TestComponent -> compConfig)
 
     val probe = TestProbe()
-    probe.send(engine, Add(0, Set(entityConfig)))
-    probe.expectMsg(OpSuccess(1))
+    probe.send(engine, CreateEntities(0, Set(entityConfig)))
+    probe.expectMsg(EntityOpSuccess(1))
 
     systemProbe.expectMsgPF() {
       case ue@UpdateEntities(1, ents) if ents.size > 0 => ue
     }
   }
 
-  test("3: Engine should terminate components when Removed") {
+  test("Engine should terminate components when Removed") {
     val systemProbe = TestProbe()
     val componentProbe = TestProbe()
 
@@ -81,13 +80,13 @@ class EngineSpec
       }
 
     val probe = TestProbe()
-    probe.send(engine, Rem(0, ents))
-    probe.expectMsg(OpSuccess(1))
+    probe.send(engine, RemoveEntities(0, ents))
+    probe.expectMsg(EntityOpSuccess(1))
 
     componentProbe.expectTerminated(compRef)
   }
 
-  test("4: Engine should retry UpdateEntities until it receives an UpdateAck") {
+  test("Engine should retry UpdateEntities until it receives an UpdateAck") {
     val systemProbe = TestProbe()
     val props: Props = Props(classOf[ForwardingActor], systemProbe.ref)
     val sysConfigs = Set(SystemConfig(props, "forwarding-system-4"))
@@ -105,7 +104,7 @@ class EngineSpec
     engine.underlyingActor.updaters.size mustBe 0
   }
 
-  test("5: Engine should retry UpdateEntities until another Update cancels it") {
+  test("Engine should retry UpdateEntities until another Update cancels it") {
     val systemProbe = TestProbe()
     val componentProbe = TestProbe()
 
@@ -125,14 +124,60 @@ class EngineSpec
     systemProbe.expectMsg(UpdateEntities(0, Set()))
 
     val probe = TestProbe()
-    probe.send(engine, Add(0, Set(entityConfig)))
-    probe.expectMsg(OpSuccess(1))
+    probe.send(engine, CreateEntities(0, Set(entityConfig)))
+    probe.expectMsg(EntityOpSuccess(1))
 
     systemProbe.expectMsgPF() {
       case ue: UpdateEntities if ue.version == 1 => ue
     }
 
     engine.underlyingActor.updaters.size mustBe 1
+  }
+
+  test("Engine should send SetSystemsFailure if I lose out to someone else sending SetSystems") {
+    val engine = TestActorRef[Engine](Props(classOf[Engine], Set(), Set()))
+
+    val probe = TestProbe()
+    engine.tell(SetSystems(0, Set()), probe.ref)
+    probe.expectMsg(SetSystemsAck(0))
+
+    engine.tell(SetSystems(0, Set()), probe.ref)
+    probe.expectMsg(SetSystemsFailure(1))
+  }
+
+  test("Engine should send PoisonPill to deleted Systems when I send SetSystems") {
+    val systemProbe = TestProbe()
+
+    systemProbe.ignoreMsg({
+      case _: UpdateEntities => true
+      case _ => false
+    })
+
+    val props: Props = Props(classOf[ForwardingActor], systemProbe.ref)
+
+    val sysConfigs = Set(SystemConfig(props, "forwarding-system-7"))
+    val engine = TestActorRef[Engine](Props(classOf[Engine], sysConfigs, Set()))
+
+    val f1 = system.actorSelection(engine.path / "forwarding-system-7").resolveOne
+    val sysRef = Await.result(f1, 1.second)
+    systemProbe.watch(sysRef)
+
+    val probe = TestProbe()
+    engine.tell(SetSystems(0, Set()), probe.ref)
+    probe.expectMsg(SetSystemsAck(0))
+
+    systemProbe.expectTerminated(sysRef)
+  }
+
+  test("Engine should send UpdateEntities to new Systems") {
+    val engine = TestActorRef[Engine](Props(classOf[Engine], Set(), Set()))
+
+    val systemProbe = TestProbe()
+    val props: Props = Props(classOf[ForwardingActor], systemProbe.ref)
+    val sysConfigs = Set(SystemConfig(props, "forwarding-system-8"))
+
+    engine ! SetSystems(0, sysConfigs)
+    systemProbe.expectMsg(UpdateEntities(0, Set()))
   }
 
 }

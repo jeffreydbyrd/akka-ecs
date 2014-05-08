@@ -8,6 +8,7 @@ import doppelengine.component.ComponentType
 import akka.util.Timeout
 import doppelengine.system.SystemConfig
 import doppelengine.core.Updater.Updated
+import doppelengine.core.Engine.{SetSystemsFailure, SetSystemsAck, SetSystems}
 
 object Engine {
   implicit val timeout = Timeout(1.second)
@@ -16,26 +17,12 @@ object Engine {
     Props(classOf[Engine], sysConfigs, entConfigs)
 
   // Received:
-  case class SetSystems(props: Set[(Props, String)])
+  case class SetSystems(v: Long, props: Set[SystemConfig])
 
-  trait EntityOp {
-    val v: Long
+  // Sent:
+  case class SetSystemsAck(v: Long)
 
-    override val toString = s"EntityOp-$v"
-  }
-
-  case class Add(v: Long, props: Set[EntityConfig]) extends EntityOp
-
-  case class Rem(v: Long, es: Set[Entity]) extends EntityOp
-
-  // sent:
-  trait OpAck {
-    val v: Long
-  }
-
-  case class OpSuccess(v: Long) extends OpAck
-
-  case class OpFailure(v: Long, ents: Set[Entity]) extends OpAck
+  case class SetSystemsFailure(v: Long)
 
 }
 
@@ -43,12 +30,16 @@ class Engine(sysConfigs: Set[SystemConfig], entityConfigs: Set[EntityConfig])
   extends Actor
   with ActorLogging {
 
-  import Engine._
+  var systems: Set[ActorRef] = toSystems(sysConfigs)
+  var entities: Set[Entity] = toEntities(entityConfigs)
+  var sysVersion: Long = 0
+  var entVersion: Long = 0
 
+  var updaterCount = 0
   var updaters: Set[ActorRef] = Set()
 
-  val systems: Set[ActorRef] =
-    for (SystemConfig(prop, id) <- sysConfigs) yield {
+  def toSystems(configs: Set[SystemConfig]): Set[ActorRef] =
+    for (SystemConfig(prop, id) <- configs) yield {
       context.actorOf(prop, name = id)
     }
 
@@ -62,37 +53,51 @@ class Engine(sysConfigs: Set[SystemConfig], entityConfigs: Set[EntityConfig])
       Entity(map.head._2.path.toString, map)
   }
 
-  var updaterCount = 0
-
-  def updateEntities(v: Long, ents: Set[Entity]): Unit = {
+  def updateSystems(): Unit = {
     for (updater <- updaters) updater ! PoisonPill
 
     updaters =
       for (sys <- systems) yield {
         updaterCount += 1
-        context.actorOf(Updater.props(sys, v, ents), s"updater-$updaterCount")
+        context.actorOf(Updater.props(sys, entVersion, entities), s"updater-$updaterCount")
       }
   }
 
-  override def receive = manage(0, toEntities(entityConfigs))
+  def onEntityUpdate(): Unit = {
+    entVersion += 1
+    updateSystems()
+    if (sender != context.system.deadLetters)
+      sender ! EntityOpSuccess(entVersion)
+  }
 
-  def manage(version: Long, entities: Set[Entity]): Receive = {
-    updateEntities(version, entities)
-    if (sender != context.system.deadLetters) sender ! OpSuccess(version)
+  override def receive = {
+    case SetSystems(v, _) if v < sysVersion =>
+      sender ! SetSystemsFailure(sysVersion)
 
-    {
-      case Updated => updaters -= sender
+    case SetSystems(v, configs) if v == sysVersion =>
+      sysVersion += 1
+      for (sys <- systems) sys ! PoisonPill
+      systems = toSystems(configs)
+      updateSystems()
+      if (sender != context.system.deadLetters)
+        sender ! SetSystemsAck(v)
 
-      case Add(`version`, configs) =>
-        val es = toEntities(configs)
-        context.become(manage(version + 1, entities ++ es))
+    case Updated => updaters -= sender
 
-      case Rem(`version`, es) =>
-        for (e <- es; (_, comp) <- e.components) comp ! PoisonPill
-        context.become(manage(version + 1, entities -- es))
+    case CreateEntities(v, configs) if v == entVersion =>
+      entities = entities ++ toEntities(configs)
+      onEntityUpdate()
 
-      case op: EntityOp if op.v < version =>
-        sender ! OpFailure(version, entities)
-    }
+    case RemoveEntities(v, es) if v == entVersion =>
+      for (e <- es; (_, comp) <- e.components) comp ! PoisonPill
+      entities = entities -- es
+      onEntityUpdate()
+
+    case op: EntityOp if op.v < entVersion =>
+      sender ! EntityOpFailure(entVersion, entities)
+  }
+
+  override def preStart() = {
+    updateSystems()
   }
 }
