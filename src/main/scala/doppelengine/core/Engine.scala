@@ -8,22 +8,12 @@ import doppelengine.component.ComponentType
 import akka.util.Timeout
 import doppelengine.system.SystemConfig
 import doppelengine.core.Updater.Updated
-import doppelengine.core.Engine.{SetSystemsFailure, SetSystemsAck, SetSystems}
 
 object Engine {
   implicit val timeout = Timeout(1.second)
 
   def props(sysConfigs: Set[SystemConfig], entConfigs: Set[EntityConfig]) =
     Props(classOf[Engine], sysConfigs, entConfigs)
-
-  // Received:
-  case class SetSystems(v: Long, props: Set[SystemConfig])
-
-  // Sent:
-  case class SetSystemsAck(v: Long)
-
-  case class SetSystemsFailure(v: Long)
-
 }
 
 class Engine(sysConfigs: Set[SystemConfig], entityConfigs: Set[EntityConfig])
@@ -32,7 +22,6 @@ class Engine(sysConfigs: Set[SystemConfig], entityConfigs: Set[EntityConfig])
 
   var systems: Set[ActorRef] = toSystems(sysConfigs)
   var entities: Set[Entity] = toEntities(entityConfigs)
-  var sysVersion: Long = 0
   var entVersion: Long = 0
 
   var updaterCount = 0
@@ -71,16 +60,17 @@ class Engine(sysConfigs: Set[SystemConfig], entityConfigs: Set[EntityConfig])
   }
 
   override def receive = {
-    case SetSystems(v, _) if v < sysVersion =>
-      sender ! SetSystemsFailure(sysVersion)
-
-    case SetSystems(v, configs) if v == sysVersion =>
-      sysVersion += 1
-      for (sys <- systems) sys ! PoisonPill
-      systems = toSystems(configs)
+    case AddSystems(configs) =>
+      systems = systems ++ toSystems(configs)
       updateSystems()
       if (sender != context.system.deadLetters)
-        sender ! SetSystemsAck(v)
+        sender ! SystemsOpAck
+
+    case RemSystems(refs) =>
+      systems = systems -- refs
+      for (r <- refs) r ! PoisonPill
+      if (sender != context.system.deadLetters)
+        sender ! SystemsOpAck
 
     case Updated => updaters -= sender
 
