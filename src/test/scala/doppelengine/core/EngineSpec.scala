@@ -8,7 +8,7 @@ import doppelengine.system.SystemConfig
 import akka.util.Timeout
 import doppelengine.system.System.{UpdateAck, UpdateEntities}
 import doppelengine.component.ComponentConfig
-import doppelengine.entity.{Entity, EntityConfig}
+import doppelengine.entity.{EntityId, Entity, EntityConfig}
 import scala.concurrent.Await
 
 class EngineSpec
@@ -46,7 +46,7 @@ class EngineSpec
     val engine = TestActorRef[Engine](Props(classOf[Engine], sysConfigs, Set()))
 
     val compConfig = ComponentConfig(comProps, "forwarding-component-2")
-    val entityConfig: EntityConfig = Map(TestComponent -> compConfig)
+    val entityConfig: EntityConfig = EntityConfig(EntityId("id-2"), Map(TestComponent -> compConfig))
 
     val probe = TestProbe()
     probe.send(engine, CreateEntities(0, Set(entityConfig)))
@@ -66,7 +66,9 @@ class EngineSpec
 
     val sysConfigs = Set(SystemConfig(sysProps, "forwarding-system-3"))
     val compConfig = ComponentConfig(comProps, "forwarding-component-3")
-    val entityConfigs = Set(Map(TestComponent -> compConfig))
+    val entityConfigs: Set[EntityConfig] = Set(
+      EntityConfig(EntityId("id-3"), Map(TestComponent -> compConfig))
+    )
     val engine = TestActorRef[Engine](Props(classOf[Engine], sysConfigs, entityConfigs))
 
     val f = system.actorSelection(engine.path / "forwarding-component-3").resolveOne
@@ -114,7 +116,7 @@ class EngineSpec
     val engine = TestActorRef[Engine](Props(classOf[Engine], sysConfigs, Set()))
 
     val compConfig = ComponentConfig(comProps, "forwarding-component-5")
-    val entityConfig: EntityConfig = Map(TestComponent -> compConfig)
+    val entityConfig: EntityConfig = EntityConfig(EntityId("id-5"), Map(TestComponent -> compConfig))
 
     engine.underlyingActor.updaters.size mustBe 1
 

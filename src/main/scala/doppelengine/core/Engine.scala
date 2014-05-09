@@ -32,15 +32,13 @@ class Engine(sysConfigs: Set[SystemConfig], entityConfigs: Set[EntityConfig])
       context.actorOf(prop, name = id)
     }
 
-  def toEntities(configs: Set[EntityConfig]): Set[Entity] = {
-    val components: Set[Map[ComponentType, ActorRef]] =
-      for (map <- configs) yield
-        for {(typ, config) <- map} yield
-          typ -> context.actorOf(config.p, config.id)
-
-    for (map <- components) yield
-      Entity(map.head._2.path.toString, map)
-  }
+  def toEntities(configs: Set[EntityConfig]): Set[Entity] =
+    for (entConfig <- configs) yield {
+      val components =
+        for {(typ, compConfig) <- entConfig.components} yield
+          typ -> context.actorOf(compConfig.p, compConfig.id)
+      new Entity(entConfig.id, components)
+    }
 
   def updateSystems(): Unit = {
     for (updater <- updaters) updater ! PoisonPill

@@ -1,5 +1,3 @@
 package doppelengine.entity
 
-case class EntityId( str: String ) {
-  override def toString = str
-}
+case class EntityId(id: String, name: String = "")
