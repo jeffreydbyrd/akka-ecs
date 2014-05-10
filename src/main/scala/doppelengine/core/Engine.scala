@@ -66,7 +66,6 @@ class Engine(sysConfigs: Set[SystemConfig], entityConfigs: Set[EntityConfig])
 
     case RemSystems(refs) =>
       systems = systems -- refs
-      for (r <- refs) r ! PoisonPill
       if (sender != context.system.deadLetters)
         sender ! SystemsOpAck
 
@@ -77,7 +76,6 @@ class Engine(sysConfigs: Set[SystemConfig], entityConfigs: Set[EntityConfig])
       onEntityUpdate()
 
     case RemoveEntities(v, es) if v == entVersion =>
-      for (e <- es; (_, comp) <- e.components) comp ! PoisonPill
       entities = entities -- es
       onEntityUpdate()
 

@@ -57,36 +57,6 @@ class EngineSpec
     }
   }
 
-  test("Engine should terminate components when Removed") {
-    val systemProbe = TestProbe()
-    val componentProbe = TestProbe()
-
-    val sysProps: Props = Props(classOf[ForwardingActor], systemProbe.ref)
-    val comProps: Props = Props(classOf[ForwardingActor], componentProbe.ref)
-
-    val sysConfigs = Set(SystemConfig(sysProps, "forwarding-system-3"))
-    val compConfig = ComponentConfig(comProps, "forwarding-component-3")
-    val entityConfigs: Set[EntityConfig] = Set(
-      EntityConfig(EntityId("id-3"), Map(TestComponent -> compConfig))
-    )
-    val engine = TestActorRef[Engine](Props(classOf[Engine], sysConfigs, entityConfigs))
-
-    val f = system.actorSelection(engine.path / "forwarding-component-3").resolveOne
-    val compRef = Await.result(f, 1.second)
-    componentProbe.watch(compRef)
-
-    val ents: Set[Entity] =
-      systemProbe.expectMsgPF() {
-        case ue@UpdateEntities(0, es) if es.size == 1 => es
-      }
-
-    val probe = TestProbe()
-    probe.send(engine, RemoveEntities(0, ents))
-    probe.expectMsg(EntityOpSuccess(1))
-
-    componentProbe.expectTerminated(compRef)
-  }
-
   test("Engine should retry UpdateEntities until it receives an UpdateAck") {
     val systemProbe = TestProbe()
     val props: Props = Props(classOf[ForwardingActor], systemProbe.ref)
@@ -133,29 +103,6 @@ class EngineSpec
     }
 
     engine.underlyingActor.updaters.size mustBe 1
-  }
-
-  test("Engine should send PoisonPill to deleted Systems") {
-    val systemProbe = TestProbe()
-
-    systemProbe.ignoreMsg({
-      case _: UpdateEntities => true
-      case _ => false
-    })
-
-    val props: Props = Props(classOf[ForwardingActor], systemProbe.ref)
-
-    val sysConfigs = Set(SystemConfig(props, "forwarding-system-6"))
-    val engine = TestActorRef[Engine](Props(classOf[Engine], sysConfigs, Set()))
-
-    val f1 = system.actorSelection(engine.path / "forwarding-system-6").resolveOne
-    val sysRef = Await.result(f1, 1.second)
-    systemProbe.watch(sysRef)
-
-    val probe = TestProbe()
-    engine.tell(RemSystems(Set(sysRef)), probe.ref)
-    probe.expectMsg(SystemsOpAck)
-    systemProbe.expectTerminated(sysRef)
   }
 
   test("Engine should send UpdateEntities to added Systems") {
