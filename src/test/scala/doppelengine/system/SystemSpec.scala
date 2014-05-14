@@ -1,14 +1,11 @@
 package doppelengine.system
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import akka.testkit.{TestProbe, TestActorRef, TestKit}
 import akka.actor.{Props, ActorRef, ActorSystem}
 import org.scalatest._
 import akka.util.Timeout
 import scala.concurrent.duration._
 import doppelengine.entity.Entity
-import scala.concurrent.{Await, Future}
-import java.util.Date
 
 class SystemSpec
   extends TestKit(ActorSystem("SystemSpec"))

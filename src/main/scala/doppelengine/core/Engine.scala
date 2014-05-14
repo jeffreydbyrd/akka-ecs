@@ -4,7 +4,6 @@ import scala.concurrent.duration.DurationInt
 
 import akka.actor._
 import doppelengine.entity.{EntityConfig, Entity}
-import doppelengine.component.ComponentType
 import akka.util.Timeout
 import doppelengine.system.SystemConfig
 import doppelengine.core.Updater.Updated
@@ -22,6 +21,8 @@ class Engine(sysConfigs: Set[SystemConfig], entityConfigs: Set[EntityConfig])
 
   var systems: Set[ActorRef] = toSystems(sysConfigs)
   var entities: Set[Entity] = toEntities(entityConfigs)
+
+  var sysVersion: Long = 0
   var entVersion: Long = 0
 
   var updaterCount = 0
@@ -50,6 +51,12 @@ class Engine(sysConfigs: Set[SystemConfig], entityConfigs: Set[EntityConfig])
       }
   }
 
+  def onSystemsUpdate(): Unit = {
+    sysVersion += 1
+    if (sender != context.system.deadLetters)
+      sender ! SystemsOpAck(sysVersion)
+  }
+
   def onEntityUpdate(): Unit = {
     entVersion += 1
     updateSystems()
@@ -58,18 +65,14 @@ class Engine(sysConfigs: Set[SystemConfig], entityConfigs: Set[EntityConfig])
   }
 
   override def receive = {
-    case AddSystems(configs) =>
+    case AddSystems(v, configs) if v == sysVersion =>
       systems = systems ++ toSystems(configs)
       updateSystems()
-      if (sender != context.system.deadLetters)
-        sender ! SystemsOpAck
+      onSystemsUpdate()
 
-    case RemSystems(refs) =>
+    case RemSystems(v, refs) if v == sysVersion =>
       systems = systems -- refs
-      if (sender != context.system.deadLetters)
-        sender ! SystemsOpAck
-
-    case Updated => updaters -= sender
+      onSystemsUpdate()
 
     case CreateEntities(v, configs) if v == entVersion =>
       entities = entities ++ toEntities(configs)
@@ -79,8 +82,13 @@ class Engine(sysConfigs: Set[SystemConfig], entityConfigs: Set[EntityConfig])
       entities = entities -- es
       onEntityUpdate()
 
+    case op: SystemsOp if op.v < sysVersion =>
+      sender ! SystemsOpFailure(sysVersion)
+
     case op: EntityOp if op.v < entVersion =>
       sender ! EntityOpFailure(entVersion, entities)
+
+    case Updated => updaters -= sender
   }
 
   override def preStart() = {

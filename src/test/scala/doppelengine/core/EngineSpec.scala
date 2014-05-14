@@ -8,8 +8,7 @@ import doppelengine.system.SystemConfig
 import akka.util.Timeout
 import doppelengine.system.System.{UpdateAck, UpdateEntities}
 import doppelengine.component.ComponentConfig
-import doppelengine.entity.{EntityId, Entity, EntityConfig}
-import scala.concurrent.Await
+import doppelengine.entity.{EntityId, EntityConfig}
 
 class EngineSpec
   extends TestKit(ActorSystem("EngineSpec"))
@@ -112,7 +111,7 @@ class EngineSpec
     val props: Props = Props(classOf[ForwardingActor], systemProbe.ref)
     val sysConfigs = Set(SystemConfig(props, "forwarding-system-8"))
 
-    engine ! AddSystems(sysConfigs)
+    engine ! AddSystems(0, sysConfigs)
     systemProbe.expectMsg(UpdateEntities(0, Set()))
   }
 
