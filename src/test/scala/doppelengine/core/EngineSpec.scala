@@ -9,6 +9,7 @@ import akka.util.Timeout
 import doppelengine.system.System.{UpdateAck, UpdateEntities}
 import doppelengine.component.ComponentConfig
 import doppelengine.entity.{EntityId, EntityConfig}
+import doppelengine.core.operations.{AddSystems, EntityOpSuccess, CreateEntities}
 
 class EngineSpec
   extends TestKit(ActorSystem("EngineSpec"))

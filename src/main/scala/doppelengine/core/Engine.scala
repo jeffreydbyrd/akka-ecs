@@ -3,10 +3,16 @@ package doppelengine.core
 import scala.concurrent.duration.DurationInt
 
 import akka.actor._
-import doppelengine.entity.{EntityConfig, Entity}
+import doppelengine.entity.Entity
 import akka.util.Timeout
-import doppelengine.system.SystemConfig
 import doppelengine.core.Updater.Updated
+import doppelengine.core.operations._
+import doppelengine.core.operations.EntityOpSuccess
+import doppelengine.core.operations.RemSystems
+import doppelengine.core.operations.SystemsOpAck
+import doppelengine.core.operations.AddSystems
+import doppelengine.entity.EntityConfig
+import doppelengine.system.SystemConfig
 
 object Engine {
   implicit val timeout = Timeout(1.second)
