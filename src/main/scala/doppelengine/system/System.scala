@@ -46,14 +46,14 @@ abstract class System(tickInterval: FiniteDuration) extends Actor {
 
   def createEntities(engine: ActorRef, configs: Set[EntityConfig]): Future[Unit] = {
     val p: Promise[Unit] = Promise()
-    val props: Props = Helper.addEntityHelper(engine, p, configs)
+    val props: Props = Helper.addEntityHelper(engine, p, configs, version)
     context.actorOf(props)
     p.future
   }
 
   def removeEntities(engine: ActorRef, ents: Set[Entity]): Future[Unit] = {
     val p: Promise[Unit] = Promise()
-    val props: Props = Helper.remEntityHelper(engine, p, ents)
+    val props: Props = Helper.remEntityHelper(engine, p, ents, version)
     context.actorOf(props)
     p.future
   }

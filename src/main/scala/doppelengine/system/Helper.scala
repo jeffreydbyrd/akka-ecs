@@ -25,14 +25,16 @@ object Helper {
 
   def addEntityHelper(engine: ActorRef,
                       p: Promise[Unit],
-                      configs: Set[EntityConfig]) = {
+                      configs: Set[EntityConfig],
+                      v: Long) = {
     val getCommand = (v: Long) => CreateEntities(v, configs)
-    Props(classOf[Helper], engine, p, getCommand)
+    Props(classOf[Helper], engine, p, v, getCommand)
   }
 
   def remEntityHelper(engine: ActorRef,
                       p: Promise[Unit],
-                      entities: Set[Entity]) = {
+                      entities: Set[Entity],
+                      v: Long) = {
     val getCommand = (v: Long) => RemoveEntities(v, entities)
     Props(classOf[Helper], engine, p, getCommand)
   }
@@ -42,13 +44,12 @@ object Helper {
 
 }
 
-abstract class Helper(engine: ActorRef,
-                      p: Promise[Unit],
-                      getCommand: Long => Operation) extends Actor {
+class Helper(engine: ActorRef,
+             p: Promise[Unit],
+             var v: Long = 0,
+             val getCommand: Long => Operation) extends Actor {
 
   import Helper._
-
-  var v: Long
 
   val timer: Cancellable = context.system.scheduler.schedule(0.millis, 100.millis, self, Retry)
 
