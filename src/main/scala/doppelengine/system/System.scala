@@ -6,8 +6,7 @@ import scala.concurrent.duration.FiniteDuration
 import akka.actor.{Props, ActorRef, Actor}
 import doppelengine.entity.{EntityConfig, Entity}
 import doppelengine.system.System.UpdateAck
-import doppelengine.system.EntityHelper.EntityHelperAck
-import doppelengine.system.SystemHelper.SystemHelperAck
+import scala.concurrent.{Promise, Future}
 
 object System {
 
@@ -26,31 +25,37 @@ abstract class System(tickInterval: FiniteDuration) extends Actor {
   import System.Tick
 
   var version: Long = 0
-  var entityHelpers: Set[ActorRef] = Set()
-  var systemHelpers: Set[ActorRef] = Set()
 
   def updateEntities(entities: Set[Entity]): Unit
 
   def onTick(): Unit
 
-  def addSystems(engine: ActorRef, configs: Set[SystemConfig]): Unit = {
-    val props: Props = SystemHelper.add(engine, configs)
-    systemHelpers += context.actorOf(props)
+  def addSystems(engine: ActorRef, configs: Set[SystemConfig]): Future[Unit] = {
+    val p: Promise[Unit] = Promise()
+    val props: Props = Helper.addSystemsHelper(engine, p, configs)
+    context.actorOf(props)
+    p.future
   }
 
-  def remSystems(engine: ActorRef, configs: Set[ActorRef]): Unit = {
-    val props: Props = SystemHelper.rem(engine, configs)
-    systemHelpers += context.actorOf(props)
+  def remSystems(engine: ActorRef, systems: Set[ActorRef]): Future[Unit] = {
+    val p: Promise[Unit] = Promise()
+    val props: Props = Helper.remSystemsHelper(engine, p, systems)
+    context.actorOf(props)
+    p.future
   }
 
-  def createEntities(engine: ActorRef, configs: Set[EntityConfig]): Unit = {
-    val props: Props = EntityHelper.create(engine, configs, version)
-    entityHelpers += context.actorOf(props)
+  def createEntities(engine: ActorRef, configs: Set[EntityConfig]): Future[Unit] = {
+    val p: Promise[Unit] = Promise()
+    val props: Props = Helper.addEntityHelper(engine, p, configs)
+    context.actorOf(props)
+    p.future
   }
 
-  def removeEntities(engine: ActorRef, ents: Set[Entity]): Unit = {
-    val props: Props = EntityHelper.remove(engine, ents, version)
-    entityHelpers += context.actorOf(props)
+  def removeEntities(engine: ActorRef, ents: Set[Entity]): Future[Unit] = {
+    val p: Promise[Unit] = Promise()
+    val props: Props = Helper.remEntityHelper(engine, p, ents)
+    context.actorOf(props)
+    p.future
   }
 
   override def receive: Receive = {
@@ -62,9 +67,6 @@ abstract class System(tickInterval: FiniteDuration) extends Actor {
     case Tick =>
       context.system.scheduler.scheduleOnce(tickInterval, self, Tick)
       onTick()
-
-    case EntityHelperAck(helper) => entityHelpers -= helper
-    case SystemHelperAck(helper) => systemHelpers -= helper
   }
 
   override def preStart() = {

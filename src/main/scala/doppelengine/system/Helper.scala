@@ -1,15 +1,50 @@
 package doppelengine.system
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import akka.actor.{PoisonPill, ActorRef, Cancellable, Actor}
+import akka.actor._
 import scala.concurrent.duration._
 import doppelengine.core.operations._
+import scala.concurrent.Promise
+import doppelengine.entity.{Entity, EntityConfig}
 
 object Helper {
+
+  def addSystemsHelper(engine: ActorRef,
+                       p: Promise[Unit],
+                       configs: Set[SystemConfig]): Props = {
+    val getCommand = (v: Long) => AddSystems(v, configs)
+    Props(classOf[Helper], engine, p, getCommand)
+  }
+
+  def remSystemsHelper(engine: ActorRef,
+                       p: Promise[Unit],
+                       systems: Set[ActorRef]): Props = {
+    val getCommand = (v: Long) => RemSystems(v, systems)
+    Props(classOf[Helper], engine, p, getCommand)
+  }
+
+  def addEntityHelper(engine: ActorRef,
+                      p: Promise[Unit],
+                      configs: Set[EntityConfig]) = {
+    val getCommand = (v: Long) => CreateEntities(v, configs)
+    Props(classOf[Helper], engine, p, getCommand)
+  }
+
+  def remEntityHelper(engine: ActorRef,
+                      p: Promise[Unit],
+                      entities: Set[Entity]) = {
+    val getCommand = (v: Long) => RemoveEntities(v, entities)
+    Props(classOf[Helper], engine, p, getCommand)
+  }
+
+
   private object Retry
+
 }
 
-abstract class Helper(engine: ActorRef) extends Actor {
+abstract class Helper(engine: ActorRef,
+                      p: Promise[Unit],
+                      getCommand: Long => Operation) extends Actor {
 
   import Helper._
 
@@ -19,12 +54,8 @@ abstract class Helper(engine: ActorRef) extends Actor {
 
   var successful = false
 
-  def command(): Operation
-
-  def onSuccess(): Unit
-
   def attempt(): Unit = {
-    engine ! command()
+    engine ! getCommand(v)
   }
 
   override def receive: Receive = {
@@ -33,7 +64,7 @@ abstract class Helper(engine: ActorRef) extends Actor {
     case _: Ack if !successful =>
       successful = true
       timer.cancel()
-      onSuccess()
+      p.success({})
       self ! PoisonPill
 
     case f: Failure =>
