@@ -13,14 +13,14 @@ object Helper {
                        p: Promise[Unit],
                        configs: Set[SystemConfig]): Props = {
     val getCommand = (v: Long) => AddSystems(v, configs)
-    Props(classOf[Helper], engine, p, getCommand)
+    Props(classOf[Helper], engine, p, 0L, getCommand)
   }
 
   def remSystemsHelper(engine: ActorRef,
                        p: Promise[Unit],
                        systems: Set[ActorRef]): Props = {
     val getCommand = (v: Long) => RemSystems(v, systems)
-    Props(classOf[Helper], engine, p, getCommand)
+    Props(classOf[Helper], engine, p, 0L, getCommand)
   }
 
   def addEntityHelper(engine: ActorRef,
@@ -28,7 +28,7 @@ object Helper {
                       configs: Set[EntityConfig],
                       v: Long) = {
     val getCommand = (v: Long) => CreateEntities(v, configs)
-    Props(classOf[Helper], engine, p, v, getCommand)
+      Props(classOf[Helper], engine, p, v, getCommand)
   }
 
   def remEntityHelper(engine: ActorRef,
@@ -36,9 +36,8 @@ object Helper {
                       entities: Set[Entity],
                       v: Long) = {
     val getCommand = (v: Long) => RemoveEntities(v, entities)
-    Props(classOf[Helper], engine, p, getCommand)
+    Props(classOf[Helper], engine, p, v, getCommand)
   }
-
 
   private object Retry
 
@@ -64,11 +63,14 @@ class Helper(engine: ActorRef,
 
     case _: Ack if !successful =>
       successful = true
-      timer.cancel()
       p.success({})
       self ! PoisonPill
 
     case f: Failure =>
       v = f.v
+  }
+
+  override def postStop() = {
+    timer.cancel()
   }
 }

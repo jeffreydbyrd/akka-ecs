@@ -10,4 +10,6 @@ class Entity(val id: EntityId,
     types.forall(components.contains)
 
   def apply(typ: ComponentType): ActorRef = components(typ)
+
+  override def toString = s"${id.name}:[${components.keySet}}]"
 }

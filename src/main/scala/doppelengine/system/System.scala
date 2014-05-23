@@ -30,30 +30,30 @@ abstract class System(tickInterval: FiniteDuration) extends Actor {
 
   def onTick(): Unit
 
-  def addSystems(engine: ActorRef, configs: Set[SystemConfig]): Future[Unit] = {
+  def addSystems(configs: Set[SystemConfig]): Future[Unit] = {
     val p: Promise[Unit] = Promise()
-    val props: Props = Helper.addSystemsHelper(engine, p, configs)
+    val props: Props = Helper.addSystemsHelper(context.parent, p, configs)
     context.actorOf(props)
     p.future
   }
 
-  def remSystems(engine: ActorRef, systems: Set[ActorRef]): Future[Unit] = {
+  def remSystems(systems: Set[ActorRef]): Future[Unit] = {
     val p: Promise[Unit] = Promise()
-    val props: Props = Helper.remSystemsHelper(engine, p, systems)
+    val props: Props = Helper.remSystemsHelper(context.parent, p, systems)
     context.actorOf(props)
     p.future
   }
 
-  def createEntities(engine: ActorRef, configs: Set[EntityConfig]): Future[Unit] = {
+  def createEntities(configs: Set[EntityConfig]): Future[Unit] = {
     val p: Promise[Unit] = Promise()
-    val props: Props = Helper.addEntityHelper(engine, p, configs, version)
+    val props: Props = Helper.addEntityHelper(context.parent, p, configs, version)
     context.actorOf(props)
     p.future
   }
 
-  def removeEntities(engine: ActorRef, ents: Set[Entity]): Future[Unit] = {
+  def removeEntities(ents: Set[Entity]): Future[Unit] = {
     val p: Promise[Unit] = Promise()
-    val props: Props = Helper.remEntityHelper(engine, p, ents, version)
+    val props: Props = Helper.remEntityHelper(context.parent, p, ents, version)
     context.actorOf(props)
     p.future
   }
@@ -63,6 +63,9 @@ abstract class System(tickInterval: FiniteDuration) extends Actor {
       updateEntities(ents)
       sender ! UpdateAck(v)
       version = v
+
+    case System.UpdateEntities(v, _) if v <= version =>
+      sender ! UpdateAck(v)
 
     case Tick =>
       context.system.scheduler.scheduleOnce(tickInterval, self, Tick)

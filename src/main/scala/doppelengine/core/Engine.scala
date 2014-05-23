@@ -5,7 +5,6 @@ import scala.concurrent.duration.DurationInt
 import akka.actor._
 import doppelengine.entity.Entity
 import akka.util.Timeout
-import doppelengine.core.Updater.Updated
 import doppelengine.core.operations._
 import doppelengine.core.operations.EntityOpSuccess
 import doppelengine.core.operations.RemSystems
@@ -32,7 +31,6 @@ class Engine(sysConfigs: Set[SystemConfig], entityConfigs: Set[EntityConfig])
   var entVersion: Long = 0
 
   var updaterCount = 0
-  var updaters: Set[ActorRef] = Set()
 
   def toSystems(configs: Set[SystemConfig]): Set[ActorRef] =
     for (SystemConfig(prop, id) <- configs) yield {
@@ -47,33 +45,32 @@ class Engine(sysConfigs: Set[SystemConfig], entityConfigs: Set[EntityConfig])
       new Entity(entConfig.id, components)
     }
 
-  def updateSystems(): Unit = {
-    for (updater <- updaters) updater ! PoisonPill
-
-    updaters =
-      for (sys <- systems) yield {
-        updaterCount += 1
-        context.actorOf(Updater.props(sys, entVersion, entities), s"updater-$updaterCount")
-      }
-  }
-
   def onSystemsUpdate(): Unit = {
     sysVersion += 1
     if (sender != context.system.deadLetters)
       sender ! SystemsOpAck(sysVersion)
   }
 
+  def sendOutUpdates(_systems: Set[ActorRef]) = {
+    for (sys <- _systems) {
+      updaterCount += 1
+      context.actorOf(Updater.props(sys, entVersion, entities), s"updater-$updaterCount")
+    }
+
+  }
+
   def onEntityUpdate(): Unit = {
     entVersion += 1
-    updateSystems()
+    sendOutUpdates(systems)
     if (sender != context.system.deadLetters)
       sender ! EntityOpSuccess(entVersion)
   }
 
   override def receive = {
     case AddSystems(v, configs) if v == sysVersion =>
-      systems = systems ++ toSystems(configs)
-      updateSystems()
+      val newSystems: Set[ActorRef] = toSystems(configs)
+      systems = systems ++ newSystems
+      sendOutUpdates(newSystems)
       onSystemsUpdate()
 
     case RemSystems(v, refs) if v == sysVersion =>
@@ -93,11 +90,9 @@ class Engine(sysConfigs: Set[SystemConfig], entityConfigs: Set[EntityConfig])
 
     case op: EntityOp if op.v < entVersion =>
       sender ! EntityOpFailure(entVersion, entities)
-
-    case Updated => updaters -= sender
   }
 
   override def preStart() = {
-    updateSystems()
+    sendOutUpdates(systems)
   }
 }
